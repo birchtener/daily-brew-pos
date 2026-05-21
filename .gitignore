@@ -1,0 +1,57 @@
+# ==============================================================================
+# 1. GLOBAL / SYSTEM IGNORES
+# ==============================================================================
+node_modules/
+.npm/
+.eslintcache
+.stylelintcache
+*.log
+*.log.*
+.DS_Store
+Thumbs.db
+
+# ==============================================================================
+# 2. ENVIRONMENT & SECRETS (Crucial for security)
+# ==============================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.pem
+
+# ==============================================================================
+# 3. FRONTEND (React / Vite / Next.js)
+# ==============================================================================
+# Production build outputs
+dist/
+build/
+out/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+
+# Testing
+coverage/
+.nyc_output
+
+# ==============================================================================
+# 4. BACKEND & DATABASE (Express + Prisma)
+# ==============================================================================
+# TypeScript compiled output
+/backend/dist/
+/backend/build/
+
+# Prisma specific ignores
+/backend/prisma/migrations/unapplied_migrations/
+
+# If you use SQLite locally, ignore the actual database file
+*.db
+*.db-journal
+
+# Compiled binary components (Prisma engines)
+*.node
+
+guide.md

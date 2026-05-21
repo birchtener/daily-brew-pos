@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat  = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum LogCategory {
+  authentication
+  supplier
+  ingredient
+  recipe
+  category
+  product
+  discount
+  order
+  inventory
+}
+
+enum LogType {
+  info
+  success
+  warn
+  error
+}
+
+model Log {
+  id         Int          @id @default(autoincrement())
+  log        String       @db.Text
+  created_at DateTime     @default(now()) @db.Timestamptz
+  updated_at DateTime     @updatedAt @db.Timestamptz
+  user_id    String       @db.Uuid
+  log_type   LogType      @default(info)
+  category   LogCategory 
+
+  // Relations
+  logger User @relation(fields: [user_id], references: [id])
+}
+
+model User {
+  id         String   @id @default(uuid()) @db.Uuid
+  first_name String   @db.VarChar(20)
+  last_name  String   @db.VarChar(20)
+  username   String   @unique @db.VarChar(20)
+  password   String   @db.VarChar(255)
+  role       Role     @default(staff)
+  avatar_url String?  @db.VarChar(255)
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  logs Log[]
+
+  created_suppliers Suppliers[] @relation("SupplierCreator")
+  updated_suppliers Suppliers[] @relation("SupplierUpdater")
+
+  created_products Product[] @relation("ProductCreator")
+  updated_products Product[] @relation("ProductUpdater")
+
+  created_ingredients Ingredients[] @relation("IngredientCreator")
+  updated_ingredients Ingredients[] @relation("IngredientUpdater")
+
+  created_recipes Recipes[] @relation("RecipeCreator")
+  updated_recipes Recipes[] @relation("RecipeUpdater")
+
+  created_categories Category[] @relation("CategoryCreator")
+  updated_categories Category[] @relation("CategoryUpdater")
+
+  created_discounts Discount[] @relation("DiscountCreator")
+  updated_discounts Discount[] @relation("DiscountUpdater")
+
+  created_orders Orders[] @relation("OrderCreator")
+
+  ordered_supplier_orders SupplierOrders[] @relation("SupplierOrderCreator")
+}
+
+enum Role {
+  admin
+  staff
+}
+
+model Suppliers {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(100)
+  contact_name   String?  @db.VarChar(50)
+  contact_number String?  @db.VarChar(15)
+  created_by     String   @db.Uuid
+  updated_by     String   @db.Uuid
+  created_at     DateTime @default(now()) @db.Timestamptz
+  updated_at     DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  supplier_orders SupplierOrders[]
+  created_by_user User @relation("SupplierCreator", fields: [created_by], references: [id])
+  updated_by_user User @relation("SupplierUpdater", fields: [updated_by], references: [id])
+}
+
+model SupplierOrders {
+  id          String   @id @default(uuid()) @db.Uuid
+  supplier_id String   @db.Uuid
+  ordered_at  DateTime @default(now()) @db.Timestamptz
+  ordered_by  String   @db.Uuid
+
+  // Relations
+  supplier        Suppliers           @relation(fields: [supplier_id], references: [id])
+  batches         IngredientBatches[]
+  ordered_by_user User                @relation("SupplierOrderCreator", fields: [ordered_by], references: [id])
+}
+
+enum Unit {
+  kg
+  g
+  mg
+  l
+  ml
+  oz
+  pcs
+  box
+  can
+}
+
+model Ingredients {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(50)
+  unit       Unit
+  img_path   String?  @db.VarChar(50)
+  created_by String   @db.Uuid
+  updated_by String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+
+  // Relations
+  batches         IngredientBatches[]
+  recipes         Recipes[]
+  created_by_user User                @relation("IngredientCreator", fields: [created_by], references: [id])
+  updated_by_user User                @relation("IngredientUpdater", fields: [updated_by], references: [id])
+}
+
+model IngredientBatches {
+  id                 String   @id @default(uuid()) @db.Uuid
+  ingredient_id      String   @db.Uuid
+  supplier_order_id  String   @db.Uuid
+  quantity_received  Decimal  @db.Decimal(10, 3)
+  quantity_remaining Decimal  @db.Decimal(10, 3)
+  cost_per_unit      Decimal  @db.Decimal(10, 2) // 🔥 NEW: Essential for Analytics/COGS tracking
+  expiry             DateTime @db.Date
+  received_at        DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  ingredient      Ingredients                   @relation(fields: [ingredient_id], references: [id])
+  supplier_order  SupplierOrders                @relation(fields: [supplier_order_id], references: [id])
+  stock_deductions OrderItemStockDeductions[]  // 🔥 NEW: Connects batches directly to point of sale usage
+}
+
+model Recipes {
+  id            String   @id @default(uuid()) @db.Uuid
+  product_id    String   @db.Uuid
+  ingredient_id String   @db.Uuid
+  quantity      Decimal  @db.Decimal(10, 3)
+  unit          Unit   
+  created_at    DateTime @default(now()) @db.Timestamptz
+  updated_at    DateTime @updatedAt @db.Timestamptz
+  updated_by    String   @db.Uuid
+  created_by    String   @db.Uuid
+
+  @@unique([product_id, ingredient_id])
+
+  // Relations
+  product         Product     @relation(fields: [product_id], references: [id])
+  ingredient      Ingredients @relation(fields: [ingredient_id], references: [id])
+  created_by_user User        @relation("RecipeCreator", fields: [created_by], references: [id])
+  updated_by_user User        @relation("RecipeUpdater", fields: [updated_by], references: [id])
+}
+
+model Category {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar(50)
+  created_at DateTime @default(now()) @db.Timestamptz
+  created_by String   @db.Uuid
+  updated_at DateTime @updatedAt @db.Timestamptz
+  updated_by String   @db.Uuid
+
+  // Relations
+  products        Product[]
+  created_by_user User      @relation("CategoryCreator", fields: [created_by], references: [id])
+  updated_by_user User      @relation("CategoryUpdater", fields: [updated_by], references: [id])
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(50)
+  price       Decimal  @db.Decimal(10, 2) // 🔥 NEW: Current menu price for front-end catalogs
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @updatedAt @db.Timestamptz
+  img_path    String?  @db.VarChar(255)
+  created_by  String   @db.Uuid
+  updated_by  String   @db.Uuid
+  category_id String   @db.Uuid
+
+  // Relations
+  recipes         Recipes[]
+  category        Category     @relation(fields: [category_id], references: [id])
+  items           OrderItems[]
+  created_by_user User         @relation("ProductCreator", fields: [created_by], references: [id])
+  updated_by_user User         @relation("ProductUpdater", fields: [updated_by], references: [id])
+}
+
+model Discount {
+  id         String   @id @default(uuid()) @db.Uuid
+  code       String   @unique @db.VarChar(50)
+  name       String   @db.VarChar(50)
+  percentage Int
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @updatedAt @db.Timestamptz
+  updated_by String   @db.Uuid
+  created_by String   @db.Uuid
+
+  // Relations
+  orders          Orders[]
+  created_by_user User     @relation("DiscountCreator", fields: [created_by], references: [id])
+  updated_by_user User     @relation("DiscountUpdater", fields: [updated_by], references: [id])  
+}
+
+model Orders {
+  id            String      @id @default(uuid()) @db.Uuid
+  discount_code String?     @db.VarChar(50)
+  sub_total     Decimal     @db.Decimal(10, 2)
+  total         Decimal     @db.Decimal(10, 2)
+  order_status  OrderStatus @default(pending)
+  created_at    DateTime    @default(now()) @db.Timestamptz
+  created_by    String      @db.Uuid
+
+  // Relations
+  discount        Discount?    @relation(fields: [discount_code], references: [code])
+  items           OrderItems[]
+  payment         Payments?
+  created_by_user User         @relation("OrderCreator", fields: [created_by], references: [id])
+}
+
+enum OrderStatus {
+  pending
+  parked
+  completed
+  cancelled
+}
+
+model OrderItems {
+  id         String   @id @default(uuid()) @db.Uuid
+  order_id   String   @db.Uuid
+  product_id String   @db.Uuid
+  quantity   Int
+  price      Decimal  @db.Decimal(10, 2)
+  sub_total  Decimal  @db.Decimal(10, 2)
+
+  @@unique([order_id, product_id])
+
+  // Relations
+  order            Orders                     @relation(fields: [order_id], references: [id])
+  product          Product                    @relation(fields: [product_id], references: [id])
+  stock_deductions OrderItemStockDeductions[] // 🔥 NEW: Links the line item back to the exact batches consumed
+}
+
+// 🔥 NEW TABLE: This is the heartbeat of your FIFO and Profit Analytics system
+model OrderItemStockDeductions {
+  id                String   @id @default(uuid()) @db.Uuid
+  order_item_id     String   @db.Uuid
+  batch_id          String   @db.Uuid
+  quantity_deducted Decimal  @db.Decimal(10, 3) // Tracks exactly how much was pulled from this batch
+  cost_at_sale      Decimal  @db.Decimal(10, 2) // Historical cost (quantity_deducted * batch.cost_per_unit)
+
+  // Relations
+  order_item OrderItems        @relation(fields: [order_item_id], references: [id], onDelete: Cascade)
+  batch      IngredientBatches @relation(fields: [batch_id], references: [id])
+
+  @@index([batch_id])
+  @@index([order_item_id])
+}
+
+model Payments {
+  id       String   @id @default(uuid()) @db.Uuid
+  order_id String   @db.Uuid @unique
+  amount   Decimal  @db.Decimal(10, 2)
+  method   String   @db.VarChar(20)
+  paid_at  DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  order Orders @relation(fields: [order_id], references: [id])
+}
