@@ -1,4 +1,4 @@
-# Enterprise POS & FIFO Inventory Management System: Technical Engine Documentation
+# POS & FIFO Inventory Management System: Documentation
 ## Note: Frontend TODO
 ### This reference document provides a complete, low-level operational breakdown of the Point-of-Sale (POS) and First-In, First-Out (FIFO) Inventory Management backend engine.
 
