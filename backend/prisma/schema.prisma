@@ -144,14 +144,14 @@ model IngredientBatches {
   supplier_order_id  String   @db.Uuid
   quantity_received  Decimal  @db.Decimal(10, 3)
   quantity_remaining Decimal  @db.Decimal(10, 3)
-  cost_per_unit      Decimal  @db.Decimal(10, 2) // 🔥 NEW: Essential for Analytics/COGS tracking
+  cost_per_unit      Decimal  @db.Decimal(10, 2)
   expiry             DateTime @db.Date
   received_at        DateTime @default(now()) @db.Timestamptz
 
   // Relations
   ingredient      Ingredients                   @relation(fields: [ingredient_id], references: [id])
   supplier_order  SupplierOrders                @relation(fields: [supplier_order_id], references: [id])
-  stock_deductions OrderItemStockDeductions[]  // 🔥 NEW: Connects batches directly to point of sale usage
+  stock_deductions OrderItemStockDeductions[]
 }
 
 model Recipes {
@@ -191,7 +191,7 @@ model Category {
 model Product {
   id          String   @id @default(uuid()) @db.Uuid
   name        String   @db.VarChar(50)
-  price       Decimal  @db.Decimal(10, 2) // 🔥 NEW: Current menu price for front-end catalogs
+  price       Decimal  @db.Decimal(10, 2)
   created_at  DateTime @default(now()) @db.Timestamptz
   updated_at  DateTime @updatedAt @db.Timestamptz
   img_path    String?  @db.VarChar(255)
@@ -259,16 +259,15 @@ model OrderItems {
   // Relations
   order            Orders                     @relation(fields: [order_id], references: [id])
   product          Product                    @relation(fields: [product_id], references: [id])
-  stock_deductions OrderItemStockDeductions[] // 🔥 NEW: Links the line item back to the exact batches consumed
+  stock_deductions OrderItemStockDeductions[]
 }
 
-// 🔥 NEW TABLE: This is the heartbeat of your FIFO and Profit Analytics system
 model OrderItemStockDeductions {
   id                String   @id @default(uuid()) @db.Uuid
   order_item_id     String   @db.Uuid
   batch_id          String   @db.Uuid
-  quantity_deducted Decimal  @db.Decimal(10, 3) // Tracks exactly how much was pulled from this batch
-  cost_at_sale      Decimal  @db.Decimal(10, 2) // Historical cost (quantity_deducted * batch.cost_per_unit)
+  quantity_deducted Decimal  @db.Decimal(10, 3)
+  cost_at_sale      Decimal  @db.Decimal(10, 2)
 
   // Relations
   order_item OrderItems        @relation(fields: [order_item_id], references: [id], onDelete: Cascade)
