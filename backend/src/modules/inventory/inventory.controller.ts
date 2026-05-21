@@ -9,6 +9,8 @@ import {
   CreateIngredientSchema, 
   SupplierOrderSchema 
 } from './inventory.validation';
+import { streamUpload } from '../../config/cloudinary';
+
 
 export class InventoryController {
   static async addCategory(req: Request, res: Response) {
@@ -18,8 +20,22 @@ export class InventoryController {
   }
 
   static async addProduct(req: Request, res: Response) {
-    const cleanData = CreateProductSchema.parse(req.body);
+    let secureUrl: string | null = null;
+
+    if (req.file) {
+      secureUrl = await streamUpload(req.file.buffer, 'products');
+    }
+
+    const parsedPayload = {
+      name: req.body.name,
+      price: req.body.price ? Number(req.body.price) : undefined,
+      category_id: req.body.category_id,
+      img_path: secureUrl
+    };
+
+    const cleanData = CreateProductSchema.parse(parsedPayload);
     const data = await InventoryService.createProduct(cleanData, req.user!.id);
+
     res.status(201).json({ success: true, data });
   }
 
@@ -30,7 +46,19 @@ export class InventoryController {
   }
 
   static async addIngredient(req: Request, res: Response) {
-    const cleanData = CreateIngredientSchema.parse(req.body);
+    let secureUrl: string | null = null;
+
+    if (req.file) {
+      secureUrl = await streamUpload(req.file.buffer, 'ingredients');
+    }
+
+    const parsedPayload = {
+      name: req.body.name,
+      unit: req.body.unit,
+      img_path: secureUrl
+    };
+
+    const cleanData = CreateIngredientSchema.parse(parsedPayload);
     const data = await InventoryService.createIngredient(cleanData, req.user!.id);
     res.status(201).json({ success: true, data });
   }
