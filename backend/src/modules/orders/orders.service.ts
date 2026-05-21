@@ -1,5 +1,5 @@
 import { prisma } from '../../config/db';
-import { FIFOService } from '../inventory/fifo.service';
+import { FIFOService } from '../inventory/services/fifo.service';
 import { LogCategory, LogType, Prisma } from '../../generated/prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { z } from 'zod';
