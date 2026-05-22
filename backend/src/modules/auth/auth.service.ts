@@ -4,7 +4,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import { AuditService } from '../audit/audit.service';
 import { LogCategory, LogType, Prisma } from '../../generated/prisma/client';
 import { z } from 'zod';
-import { RegisterSchema, LoginSchema } from './auth.validation';
+import { LoginSchema } from './auth.validation';
 import { AuthenticatedUser } from '../../middlewares/auth.middleware';
 
 const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
@@ -52,59 +52,26 @@ export class AuthService {
         first_name: true,
         last_name: true,
         avatar_url: true,
+        is_password_temp: true,
         role: true,
+        deleted_at: true,
       },
     });
 
-    if (!user) {
+    if (!user || user.deleted_at) {
       throw createHttpError('Validation Failure: Target resource not found.', 404);
     }
 
     return user;
   }
 
-  static async register(input: z.infer<typeof RegisterSchema>, currentActorId?: string) {
-    try {
-      const hashedPassword = await bcrypt.hash(input.password, 12);
-
-      const newUser = await prisma.user.create({
-        data: {
-          first_name: input.first_name,
-          last_name: input.last_name,
-          username: input.username,
-          password: hashedPassword,
-          role: input.role || 'staff',
-        },
-      });
-
-      void AuditService.log({
-        message: `ACCOUNT CREATION: User [${newUser.username}] registered as Role [${newUser.role}].`,
-        category: LogCategory.authentication,
-        type: LogType.success,
-        userId: currentActorId || newUser.id,
-      });
-
-      const tokens = this.issueAuthTokens({
-        id: newUser.id,
-        username: newUser.username,
-        role: newUser.role,
-      });
-
-      return {
-        ...tokens,
-        user: { id: newUser.id, username: newUser.username, role: newUser.role },
-      };
-    } catch (error) {
-      if (isKnownPrismaError(error, 'P2002')) {
-        throw createHttpError('Validation Failure: Username already assigned to an employee.', 409);
-      }
-
-      throw createHttpError('Validation Failure: Registration failed.', 500);
-    }
-  }
-
   static async login(input: z.infer<typeof LoginSchema>) {
-    const user = await prisma.user.findUnique({ where: { username: input.username } });
+    const user = await prisma.user.findFirst({
+      where: {
+        username: input.username,
+        deleted_at: null,
+      },
+    });
     if (!user || !(await bcrypt.compare(input.password, user.password))) {
       throw createHttpError('Invalid application credentials specified.', 401);
     }
@@ -130,6 +97,7 @@ export class AuthService {
         firstName: user.first_name,
         lastName: user.last_name,
         avatarUrl: user.avatar_url,
+        is_password_temp: user.is_password_temp,
         role: user.role,
       },
     };
@@ -153,6 +121,7 @@ export class AuthService {
           firstName: user.first_name,
           lastName: user.last_name,
           avatarUrl: user.avatar_url,
+          is_password_temp: user.is_password_temp,
           role: user.role,
         },
       };

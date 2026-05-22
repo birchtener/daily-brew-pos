@@ -11,7 +11,7 @@ import {
   FieldError,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Coffee, Eye, EyeOff, LoaderCircle } from "lucide-react"
+import { Eye, EyeOff, LoaderCircle } from "lucide-react"
 import { extractErrorMessage } from "@/lib/extractErrorMessage"
 import { useStore } from "@/store/useStore"
 import * as z from "zod"

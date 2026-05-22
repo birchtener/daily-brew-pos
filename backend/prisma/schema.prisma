@@ -41,14 +41,16 @@ model Log {
 }
 
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  first_name String   @db.VarChar(20)
-  last_name  String   @db.VarChar(20)
-  username   String   @unique @db.VarChar(20)
-  password   String   @db.VarChar(255)
-  role       Role     @default(staff)
-  avatar_url String?  @db.VarChar(255)
-  created_at DateTime @default(now()) @db.Timestamptz
+  id               String    @id @default(uuid()) @db.Uuid
+  first_name       String    @db.VarChar(20)
+  last_name        String    @db.VarChar(20)
+  username         String    @db.VarChar(20)
+  password         String    @db.VarChar(255)
+  role             Role      @default(staff)
+  avatar_url       String?   @db.VarChar(255)
+  is_password_temp Boolean @default(false)
+  deleted_at       DateTime? @db.Timestamptz
+  created_at       DateTime  @default(now()) @db.Timestamptz
 
   // Relations
   logs Log[]
@@ -74,6 +76,9 @@ model User {
   created_orders Orders[] @relation("OrderCreator")
 
   ordered_supplier_orders SupplierOrders[] @relation("SupplierOrderCreator")
+
+  // Username reuse for soft-deleted users is enforced by a partial unique index in migration SQL.
+  @@index([username])
 }
 
 enum Role {

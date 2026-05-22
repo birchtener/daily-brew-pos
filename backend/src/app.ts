@@ -5,6 +5,7 @@ import { errorHandler } from './middlewares/error.middleware';
 
 import inventoryRoutes from './modules/inventory/inventory.routes';
 import authRoutes from './modules/auth/auth.routes';
+import usersRoutes from './modules/users/users.routes';
 import ordersRoutes from './modules/orders/orders.routes';
 import analyticsRoutes from './modules/analytics/analytics.routes';
 
@@ -23,6 +24,7 @@ app.get('/health', (req, res) => {
 
 app.use('/api/v1/inventory', inventoryRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/orders', ordersRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 

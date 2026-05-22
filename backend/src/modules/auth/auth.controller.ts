@@ -1,11 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { RegisterSchema, LoginSchema } from './auth.validation';
-import { streamUpload } from '../../config/cloudinary';
-import { prisma } from '../../config/db';
-import { LogCategory, LogType } from '../../generated/prisma/client';
-import { AuditService } from '../audit/audit.service';
-import { AuthenticatedUser } from '../../middlewares/auth.middleware';
+import { LoginSchema } from './auth.validation';
 
 const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
 
@@ -66,6 +61,7 @@ const serializeUser = (user: {
   first_name: string;
   last_name: string;
   avatar_url: string | null;
+  is_password_temp: boolean;
   role: string;
 }) => ({
   id: user.id,
@@ -73,17 +69,11 @@ const serializeUser = (user: {
   firstName: user.first_name,
   lastName: user.last_name,
   avatarUrl: user.avatar_url,
+  is_password_temp: user.is_password_temp,
   role: user.role,
 });
 
 export class AuthController {
-  static async register(req: Request, res: Response) {
-    const data = RegisterSchema.parse(req.body);
-    
-    const outcome = await AuthService.register(data, req.user?.id);
-    res.status(201).json({ success: true, data: outcome });
-  }
-
   static async login(req: Request, res: Response) {
     const data = LoginSchema.parse(req.body);
     const outcome = await AuthService.login(data);
@@ -114,47 +104,5 @@ export class AuthController {
   static async logout(req: Request, res: Response) {
     clearAuthCookies(res);
     res.status(200).json({ success: true, data: { loggedOut: true } });
-  }
-
-  static async updateAvatar(req: Request, res: Response) {
-    if (!req.file) {
-      throw createHttpError('Bad Request: No avatar image file provided.', 400);
-    }
-
-    try {
-      const secureUrl = await streamUpload(req.file.buffer, 'avatars');
-
-      const updatedUser = await prisma.user.update({
-        where: { id: req.user!.id },
-        data: { avatar_url: secureUrl },
-        select: {
-          id: true,
-          username: true,
-          first_name: true,
-          last_name: true,
-          avatar_url: true,
-          role: true
-        }
-      });
-
-      void AuditService.log({
-        message: `PROFILE UPDATE: User [${updatedUser.username}] updated their profile avatar image.`,
-        category: LogCategory.authentication,
-        type: LogType.info,
-        userId: req.user!.id
-      });
-
-      res.status(200).json({
-        success: true,
-        message: 'Avatar image updated successfully.',
-        data: updatedUser
-      });
-    } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'P2025') {
-        throw createHttpError('Validation Failure: Target resource not found.', 404);
-      }
-
-      throw createHttpError('Validation Failure: Avatar upload failed.', 500);
-    }
   }
 }
