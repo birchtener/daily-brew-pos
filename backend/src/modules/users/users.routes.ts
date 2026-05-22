@@ -17,6 +17,9 @@ router.put(
     UsersController.updateAvatar
 );
 
+router.put('/profile', protect, restrictTo(Role.admin, Role.staff), UsersController.updateProfile);
+router.put('/password', protect, restrictTo(Role.admin, Role.staff), UsersController.updatePassword);
+
 router.delete('/:userId', protect, restrictTo(Role.admin), UsersController.deleteUser);
 
 export default router;

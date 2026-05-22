@@ -51,6 +51,7 @@ export function LoginForm({
     try {
         const result = await loginRequest(values)
         localStorage.setItem('daily_brew_user', JSON.stringify(result))
+        useStore.getState().loadUser()
       navigate('/', { replace: true })
     } catch (error) {
         const message = extractErrorMessage(error, 'Login failed. Please try again.')

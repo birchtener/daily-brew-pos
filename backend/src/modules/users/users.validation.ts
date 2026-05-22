@@ -6,3 +6,13 @@ export const RegisterSchema = z.object({
   username: z.string().min(5).max(20).regex(/^[a-zA-Z0-9_]+$/, 'Only alphanumeric chars and underscores allowed'),
   role: z.enum(['admin', 'staff']),
 });
+
+export const UpdateProfileSchema = z.object({
+  first_name: z.string().min(3).max(20),
+  last_name: z.string().min(3).max(20),
+});
+
+export const UpdatePasswordSchema = z.object({
+  currentPassword: z.string().min(6).max(100),
+  newPassword: z.string().min(6).max(100),
+});

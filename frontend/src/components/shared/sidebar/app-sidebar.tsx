@@ -26,7 +26,7 @@ import { NavUser } from "./nav-user"
 import { useStore } from "@/store/useStore"
 import Logo from "../icon/Logo"
 import { useIsMobile } from "@/hooks/use-mobile"
-import type { User, ParsedUser } from "@/types/userTypes"
+import type { ParsedUser } from "@/types/userTypes"
 
 const data = {
   mainMenu: [
@@ -74,36 +74,14 @@ const fallbackUser: ParsedUser = {
   avatar_url: null,
 }
 
-const readUser = (): ParsedUser => {
-  try {
-    const rawUser: string | null = localStorage.getItem('daily_brew_user');
-
-    if (!rawUser) {
-      return fallbackUser;
-    }
-
-    const parsed = JSON.parse(rawUser) as User;
-
-    return {
-      username: parsed.username,
-      role: parsed.role,
-      first_name: parsed.firstName || parsed.username,
-      last_name: parsed.lastName || '',
-      avatar_url: parsed.avatarUrl ?? null,
-      id: parsed.id,
-    };
-  } catch {
-    return fallbackUser;
-  }
-}
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { pathname } = useLocation();
   const { dark } = useStore();
   const { state } = useSidebar();
   const isMobile = useIsMobile();
   const isCollapsed = state === "collapsed" && !isMobile;
-  const user = readUser();
+  const storeUser = useStore((s) => s.user);
+  const user = storeUser ?? fallbackUser;
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

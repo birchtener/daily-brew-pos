@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 
 import { resolveSession } from '@/api/auth';
+import { useStore } from '@/store/useStore';
 
 export const AuthGuard = () => {
   const [status, setStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
@@ -18,6 +19,7 @@ export const AuthGuard = () => {
 
       if (session) {
         localStorage.setItem('daily_brew_user', JSON.stringify(session));
+        useStore.getState().loadUser();
         setStatus('authenticated');
         return;
       }

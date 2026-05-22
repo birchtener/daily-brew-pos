@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UsersService } from './users.service';
-import { RegisterSchema } from './users.validation';
+import { RegisterSchema, UpdateProfileSchema, UpdatePasswordSchema } from './users.validation';
 
 export class UsersController {
   static async register(req: Request, res: Response) {
@@ -21,6 +21,27 @@ export class UsersController {
       success: true,
       message: 'Avatar image updated successfully.',
       data: updatedUser,
+    });
+  }
+
+  static async updateProfile(req: Request, res: Response) {
+    const data = UpdateProfileSchema.parse(req.body);
+    const updatedUser = await UsersService.updateProfile(req.user!.id, data);
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully.',
+      data: updatedUser,
+    });
+  }
+
+  static async updatePassword(req: Request, res: Response) {
+    const data = UpdatePasswordSchema.parse(req.body);
+    await UsersService.updatePassword(req.user!.id, data.currentPassword, data.newPassword);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully.',
     });
   }
 

@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { AuditService } from '../audit/audit.service';
 import { LogCategory, LogType, Prisma } from '../../generated/prisma/client';
 import { z } from 'zod';
-import { RegisterSchema } from './users.validation';
+import { RegisterSchema, UpdateProfileSchema } from './users.validation';
 import { streamUpload } from '../../config/cloudinary';
 
 const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
@@ -92,6 +92,46 @@ export class UsersService {
       return updatedUser;
     } catch (error) {
       throw createHttpError('Validation Failure: Avatar upload failed.', 500);
+    }
+  }
+
+  static async updateProfile(userId: string, input: z.infer<typeof UpdateProfileSchema>) {
+    const userExists = await prisma.user.findFirst({ where: { id: userId, deleted_at: null } });
+    if (!userExists) {
+      throw createHttpError('Validation Failure: Target resource not found.', 404);
+    }
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          first_name: input.first_name,
+          last_name: input.last_name,
+        },
+        select: {
+          id: true,
+          username: true,
+          first_name: true,
+          last_name: true,
+          avatar_url: true,
+          role: true,
+          is_password_temp: true,
+        },
+      });
+
+      void AuditService.log({
+        message: `PROFILE UPDATE: User [${updatedUser.username}] updated their profile information.`,
+        category: LogCategory.authentication,
+        type: LogType.info,
+        userId,
+      });
+
+      return updatedUser;
+    } catch (error) {
+      if (isKnownPrismaError(error, 'P2025')) {
+        throw createHttpError('Validation Failure: Target resource not found.', 404);
+      }
+      throw createHttpError('Validation Failure: Profile update failed.', 500);
     }
   }
 
