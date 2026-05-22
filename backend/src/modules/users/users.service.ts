@@ -95,6 +95,40 @@ export class UsersService {
     }
   }
 
+  static async deleteAvatar(userId: string) {
+    const userExists = await prisma.user.findFirst({ where: { id: userId, deleted_at: null } });
+    if (!userExists) {
+      throw createHttpError('Validation Failure: Target resource not found.', 404);
+    }
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { avatar_url: null },
+        select: {
+          id: true,
+          username: true,
+          first_name: true,
+          last_name: true,
+          avatar_url: true,
+          role: true,
+          is_password_temp: true,
+        },
+      });
+
+      void AuditService.log({
+        message: `PROFILE UPDATE: User [${updatedUser.username}] deleted their profile avatar.`,
+        category: LogCategory.authentication,
+        type: LogType.info,
+        userId,
+      });
+
+      return updatedUser;
+    } catch (error) {
+      throw createHttpError('Validation Failure: Avatar deletion failed.', 500);
+    }
+  }
+
   static async updateProfile(userId: string, input: z.infer<typeof UpdateProfileSchema>) {
     const userExists = await prisma.user.findFirst({ where: { id: userId, deleted_at: null } });
     if (!userExists) {

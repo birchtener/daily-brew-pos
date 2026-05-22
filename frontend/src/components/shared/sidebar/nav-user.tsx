@@ -55,7 +55,11 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user?.avatar_url || undefined} alt={user?.first_name + " " + user?.last_name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {user?.first_name && user?.last_name &&
+                    `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`
+                  }
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user?.first_name} {user?.last_name}</span>
@@ -74,7 +78,11 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user?.avatar_url || undefined} alt={user?.first_name + " " + user?.last_name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user?.first_name && user?.last_name &&
+                      `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`
+                    }
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user?.first_name} {user?.last_name}</span>

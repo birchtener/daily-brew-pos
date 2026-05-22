@@ -16,6 +16,7 @@ router.put(
     upload.single('avatar'),
     UsersController.updateAvatar
 );
+router.delete('/avatar', protect, restrictTo(Role.admin, Role.staff), UsersController.deleteAvatar);
 
 router.put('/profile', protect, restrictTo(Role.admin, Role.staff), UsersController.updateProfile);
 router.put('/password', protect, restrictTo(Role.admin, Role.staff), UsersController.updatePassword);

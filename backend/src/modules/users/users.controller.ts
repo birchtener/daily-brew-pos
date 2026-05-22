@@ -24,6 +24,16 @@ export class UsersController {
     });
   }
 
+  static async deleteAvatar(req: Request, res: Response) {
+    const updatedUser = await UsersService.deleteAvatar(req.user!.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Avatar image deleted successfully.',
+      data: updatedUser,
+    });
+  }
+
   static async updateProfile(req: Request, res: Response) {
     const data = UpdateProfileSchema.parse(req.body);
     const updatedUser = await UsersService.updateProfile(req.user!.id, data);

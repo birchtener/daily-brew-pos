@@ -27,6 +27,11 @@ export async function uploadAvatar(file: File) {
   return data.data;
 }
 
+export async function deleteAvatar() {
+  const { data } = await apiClient.delete<ApiResponse<UpdatedUser>>('/users/avatar');
+  return data.data;
+}
+
 export async function updateProfile(payload: { first_name: string; last_name: string }) {
   const { data } = await apiClient.put<ApiResponse<UpdatedUser>>('/users/profile', payload);
   return data.data;

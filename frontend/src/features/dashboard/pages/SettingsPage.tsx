@@ -1,22 +1,15 @@
 import { useRef, useState, useCallback } from "react";
-import { User, Camera, Lock, LoaderCircle, Check, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { User, Camera, Lock, LoaderCircle, Check, AlertCircle, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useStore } from "@/store/useStore";
-import { uploadAvatar, updateProfile, updatePassword } from "@/api/users";
+import { uploadAvatar, updateProfile, updatePassword, deleteAvatar } from "@/api/users";
 import { extractErrorMessage } from "@/lib/extractErrorMessage";
 import type { ParsedUser } from "@/types/userTypes";
 import type { UpdatedUser } from "@/api/users";
 
 /* ── helpers ───────────────────────────────────────────────── */
-
-function getInitials(user: ParsedUser | null) {
-  if (!user) return "?";
-  const f = user.first_name?.[0] ?? "";
-  const l = user.last_name?.[0] ?? "";
-  return (f + l).toUpperCase() || user.username[0]?.toUpperCase() ?? "?";
-}
 
 function syncStoreFromBackend(updated: UpdatedUser, setUser: (u: ParsedUser) => void) {
   setUser({
@@ -148,6 +141,27 @@ function AvatarSection({
     if (fileRef.current) fileRef.current.value = "";
   };
 
+  const handleDelete = async () => {
+    setUploading(true);
+    setFeedback(null);
+
+    try {
+      const updated = await deleteAvatar();
+      syncStoreFromBackend(updated, setUser);
+      setPreview(null);
+      setSelectedFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+      setFeedback({ type: "success", message: "Avatar deleted successfully!" });
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message: extractErrorMessage(error, "Avatar deletion failed."),
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const displaySrc = preview ?? user?.avatar_url ?? undefined;
 
   return (
@@ -171,7 +185,9 @@ function AvatarSection({
           <Avatar className="size-24 ring-2 ring-border ring-offset-2 ring-offset-background transition-shadow group-hover:ring-primary/50">
             <AvatarImage src={displaySrc} alt="Profile picture" />
             <AvatarFallback className="text-xl font-semibold bg-muted">
-              {getInitials(user)}
+              {user?.first_name && user?.last_name &&
+                `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`
+              }
             </AvatarFallback>
           </Avatar>
           <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -209,6 +225,12 @@ function AvatarSection({
                 <Camera className="size-3.5 mr-1.5" />
                 Change Photo
               </Button>
+              {user?.avatar_url && (
+                <Button onClick={handleDelete} variant="destructive" size="sm" className="ml-2">
+                  <Trash2 className="size-3.5 mr-1.5" />
+                  Remove Photo
+                </Button>
+              )}
             </div>
           )}
         </div>
