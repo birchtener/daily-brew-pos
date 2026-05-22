@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import LoginPage from './features/auth/LoginPage';
@@ -14,8 +15,18 @@ import { useStore } from '@/store/useStore';
 export default function App() {
   const { dark } = useStore();
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark);
+    document.body.classList.toggle('dark', dark);
+
+    return () => {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    };
+  }, [dark]);
+
   return (
-    <div className={`${dark ? 'dark' : ''} text-primary`}>
+    <div className="text-primary">
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

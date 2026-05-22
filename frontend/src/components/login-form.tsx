@@ -19,6 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
 import { loginRequest } from "@/api/auth"
+import Logo from "./shared/icon/Logo"
 
 const loginSchema = z.object({
   username: z.string().min(5, { message: 'Username must be at least 5 characters long' }),
@@ -64,7 +65,7 @@ export function LoginForm({
           <FieldGroup className="gap-5">
             <div className="flex flex-col items-center gap-3 text-center">
               <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-black/10">
-                <Coffee className="size-7" />
+                <Logo color={dark ? '#18181b' : '#ffffff'} width={28} />
               </div>
               <div className="flex flex-col justify-center items-center">
                 <h1 className="text-2xl font-semibold tracking-tight">Welcome to Daily Brew</h1>
