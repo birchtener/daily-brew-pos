@@ -59,7 +59,7 @@ export function LoginForm({
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <div className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-2xl shadow-black/5 backdrop-blur-xl">
+      <div>
         <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup className="gap-5">
             <div className="flex flex-col items-center gap-3 text-center">

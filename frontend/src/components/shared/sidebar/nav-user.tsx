@@ -36,20 +36,28 @@ export function NavUser({
   user: User
 }) {
   const navigate = useNavigate();
-  const { isMobile } = useSidebar()
-  const handleLogout = () => {
-    void logoutRequest().finally(() => {
+  const { setOpenMobile } = useSidebar()
+
+  const handleLogout = async () => {
+    setOpenMobile(false);
+
+    try {
+      await logoutRequest();
+    } finally {
       localStorage.removeItem('daily_brew_user');
-      navigate('/login', { replace: true });
-    });
+      window.requestAnimationFrame(() => {
+        navigate('/login', { replace: true });
+      });
+    }
   };
 
   return (
-    <SidebarMenu >
+    <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
+              size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
@@ -65,7 +73,7 @@ export function NavUser({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
+            side="bottom"
             align="end"
             sideOffset={4}
           >
