@@ -1,0 +1,113 @@
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import { ChevronsUpDownIcon, BellIcon, LogOutIcon, ScrollText, Settings } from "lucide-react"
+import { useNavigate } from "react-router-dom";
+import { logoutRequest } from "@/api/auth";
+
+interface User {
+  username: string;
+  role: string;
+  first_name: string;
+  last_name: string;
+  avatar_url: string | null;
+}
+
+export function NavUser({
+  user,
+}: {
+  user: User
+}) {
+  const navigate = useNavigate();
+  const { isMobile } = useSidebar()
+  const handleLogout = () => {
+    void logoutRequest().finally(() => {
+      localStorage.removeItem('daily_brew_user');
+      navigate('/login', { replace: true });
+    });
+  };
+
+  return (
+    <SidebarMenu >
+      <SidebarMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            >
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={user?.avatar_url || undefined} alt={user?.first_name + " " + user?.last_name} />
+                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{user?.first_name} {user?.last_name}</span>
+                <span className="truncate text-xs">{user?.username}</span>
+              </div>
+              <ChevronsUpDownIcon className="ml-auto size-4" />
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            side={isMobile ? "bottom" : "right"}
+            align="end"
+            sideOffset={4}
+          >
+            <DropdownMenuLabel className="p-0 font-normal">
+              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                <Avatar className="h-8 w-8 rounded-lg">
+                  <AvatarImage src={user?.avatar_url || undefined} alt={user?.first_name + " " + user?.last_name} />
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{user?.first_name} {user?.last_name}</span>
+                  <span className="truncate text-xs">{user?.username}</span>
+                </div>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <Settings
+                />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <ScrollText
+                />
+              Logs
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <BellIcon
+                />
+                Notifications
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={handleLogout}>
+              <LogOutIcon
+              />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  )
+}
