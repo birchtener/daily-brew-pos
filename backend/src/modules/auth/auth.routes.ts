@@ -8,6 +8,9 @@ import { upload } from '../../config/cloudinary';
 const router = Router();
 
 router.post('/login', AuthController.login);
+router.get('/me', protect, AuthController.me);
+router.post('/refresh', AuthController.refresh);
+router.post('/logout', AuthController.logout);
 
 router.post('/register', protect, restrictTo(Role.admin), AuthController.register);
 

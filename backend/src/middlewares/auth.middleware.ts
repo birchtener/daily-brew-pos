@@ -10,6 +10,25 @@ export interface AuthenticatedUser {
   role: Role;
 }
 
+const parseCookies = (cookieHeader?: string) => {
+  if (!cookieHeader) {
+    return {} as Record<string, string>;
+  }
+
+  return cookieHeader.split(';').reduce<Record<string, string>>((cookies, pair) => {
+    const separatorIndex = pair.indexOf('=');
+
+    if (separatorIndex === -1) {
+      return cookies;
+    }
+
+    const key = pair.slice(0, separatorIndex).trim();
+    const value = pair.slice(separatorIndex + 1).trim();
+    cookies[key] = decodeURIComponent(value);
+    return cookies;
+  }, {});
+};
+
 declare global {
   namespace Express {
     interface Request {
@@ -23,6 +42,10 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 
   if (req.headers.authorization?.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    token = parseCookies(req.headers.cookie)['daily_brew_access_token'];
   }
 
   if (!token) {
