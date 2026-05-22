@@ -26,6 +26,7 @@ import { NavUser } from "./nav-user"
 import { useStore } from "@/store/useStore"
 import Logo from "../icon/Logo"
 import { useIsMobile } from "@/hooks/use-mobile"
+import type { User, ParsedUser } from "@/types/userTypes"
 
 const data = {
   mainMenu: [
@@ -64,15 +65,8 @@ const data = {
   ],
 }
 
-interface User {
-  username: string;
-  role: string;
-  first_name: string;
-  last_name: string;
-  avatar_url: string | null;
-}
-
-const fallbackUser: User = {
+const fallbackUser: ParsedUser = {
+  id: '12345',
   username: 'master',
   role: 'admin',
   first_name: 'Master',
@@ -80,21 +74,15 @@ const fallbackUser: User = {
   avatar_url: null,
 }
 
-const readUser = (): User => {
+const readUser = (): ParsedUser => {
   try {
-    const rawUser = localStorage.getItem('daily_brew_user');
+    const rawUser: string | null = localStorage.getItem('daily_brew_user');
 
     if (!rawUser) {
       return fallbackUser;
     }
 
-    const parsed = JSON.parse(rawUser) as {
-      username: string;
-      role: string;
-      firstName?: string;
-      lastName?: string;
-      avatarUrl?: string | null;
-    };
+    const parsed = JSON.parse(rawUser) as User;
 
     return {
       username: parsed.username,
@@ -102,6 +90,7 @@ const readUser = (): User => {
       first_name: parsed.firstName || parsed.username,
       last_name: parsed.lastName || '',
       avatar_url: parsed.avatarUrl ?? null,
+      id: parsed.id,
     };
   } catch {
     return fallbackUser;

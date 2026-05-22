@@ -50,6 +50,7 @@ export function LoginForm({
 
     try {
         const result = await loginRequest(values)
+        console.log(JSON.stringify(result))
         localStorage.setItem('daily_brew_user', JSON.stringify(result))
       navigate('/', { replace: true })
     } catch (error) {

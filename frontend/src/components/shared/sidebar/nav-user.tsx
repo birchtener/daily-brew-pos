@@ -21,19 +21,12 @@ import {
 import { ChevronsUpDownIcon, BellIcon, LogOutIcon, ScrollText, Settings } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { logoutRequest } from "@/api/auth";
-
-interface User {
-  username: string;
-  role: string;
-  first_name: string;
-  last_name: string;
-  avatar_url: string | null;
-}
+import type { ParsedUser } from "@/types/userTypes"
 
 export function NavUser({
   user,
 }: {
-  user: User
+  user: ParsedUser
 }) {
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar()
@@ -66,7 +59,7 @@ export function NavUser({
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user?.first_name} {user?.last_name}</span>
-                <span className="truncate text-xs">{user?.username}</span>
+                <span className="truncate text-xs uppercase">{user?.role}</span>
               </div>
               <ChevronsUpDownIcon className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -85,7 +78,7 @@ export function NavUser({
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user?.first_name} {user?.last_name}</span>
-                  <span className="truncate text-xs">{user?.username}</span>
+                  <span className="truncate text-xs uppercase">{user?.role}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
