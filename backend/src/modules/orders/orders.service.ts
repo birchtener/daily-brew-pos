@@ -4,10 +4,13 @@ import { LogCategory, LogType, Prisma } from '../../generated/prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { z } from 'zod';
 import { CreateOrderSchema, FinalizeParkedOrderSchema } from './orders.validation';
+import { StockMonitorService } from '../inventory/services/stockMonitor.service';
 
 export class OrdersService {
   static async processOrder(input: z.infer<typeof CreateOrderSchema>, userId: string) {
-    return await prisma.$transaction(async (tx) => {
+    const ingredientsToScan = new Set<string>();
+
+    const order = await prisma.$transaction(async (tx) => {
       const productIds = input.items.map(i => i.product_id);
       const targetProducts = await tx.product.findMany({ where: { id: { in: productIds } } });
 
@@ -35,7 +38,7 @@ export class OrdersService {
       const totalDeductionMultiplier = new Prisma.Decimal(1 - discountPercentage / 100);
       const calculatedTotal = subTotal.times(totalDeductionMultiplier);
 
-      const order = await tx.orders.create({
+      const createdOrder = await tx.orders.create({
         data: {
           discount_code: input.discount_code || null,
           sub_total: subTotal,
@@ -48,7 +51,7 @@ export class OrdersService {
       for (const item of processingLineItems) {
         const createdLine = await tx.orderItems.create({
           data: {
-            order_id: order.id,
+            order_id: createdOrder.id,
             product_id: item.product_id,
             quantity: item.quantity,
             price: item.price,
@@ -57,23 +60,35 @@ export class OrdersService {
         });
 
         if (!input.park) {
-          await this.executeStockDeductionLoop(tx, createdLine.id, item.product_id, item.quantity);
+          await this.executeStockDeductionLoop(tx, createdLine.id, item.product_id, item.quantity, ingredientsToScan);
         }
       }
 
       await AuditService.log({
-        message: `POS SALE: Order [${order.id}] saved with state context [${order.order_status.toUpperCase()}]. Total: $${calculatedTotal.toFixed(2)}.`,
+        message: `POS SALE: Order [${createdOrder.id}] saved with state context [${createdOrder.order_status.toUpperCase()}]. Total: $${calculatedTotal.toFixed(2)}.`,
         category: LogCategory.order,
         type: LogType.success,
         userId
       });
 
-      return order;
+      return createdOrder;
     });
+
+    if (!input.park) {
+      for (const ingredientId of ingredientsToScan) {
+        StockMonitorService.checkThreshold(ingredientId).catch((err) => 
+          console.error(`BACKGROUND WORKER CRASH: Threshold verify failed for Ingredient [${ingredientId}]:`, err)
+        );
+      }
+    }
+
+    return order;
   }
 
   static async checkoutParkedOrder(orderId: string, input: z.infer<typeof FinalizeParkedOrderSchema>, userId: string) {
-    return await prisma.$transaction(async (tx) => {
+    const ingredientsToScan = new Set<string>();
+
+    const updatedOrder = await prisma.$transaction(async (tx) => {
       const activeOrder = await tx.orders.findUnique({
         where: { id: orderId },
         include: { items: true }
@@ -111,7 +126,7 @@ export class OrdersService {
       }
       const calculatedTotal = subTotal.times(new Prisma.Decimal(1 - discountPercentage / 100));
 
-      const updatedOrder = await tx.orders.update({
+      const finalizedOrder = await tx.orders.update({
         where: { id: orderId },
         data: {
           discount_code: input.discount_code || null,
@@ -124,7 +139,7 @@ export class OrdersService {
       for (const item of newlyMappedLineItems) {
         const createdLine = await tx.orderItems.create({
           data: {
-            order_id: updatedOrder.id,
+            order_id: finalizedOrder.id,
             product_id: item.product_id,
             quantity: item.quantity,
             price: item.price,
@@ -132,12 +147,12 @@ export class OrdersService {
           }
         });
 
-        await this.executeStockDeductionLoop(tx, createdLine.id, item.product_id, item.quantity);
+        await this.executeStockDeductionLoop(tx, createdLine.id, item.product_id, item.quantity, ingredientsToScan);
       }
 
       await tx.payments.create({
         data: {
-          order_id: updatedOrder.id,
+          order_id: finalizedOrder.id,
           amount: calculatedTotal,
           method: input.payment_method
         }
@@ -150,20 +165,31 @@ export class OrdersService {
         userId
       });
 
-      return updatedOrder;
+      return finalizedOrder;
     });
+
+    for (const ingredientId of ingredientsToScan) {
+      StockMonitorService.checkThreshold(ingredientId).catch((err) => 
+        console.error(`BACKGROUND WORKER CRASH: Threshold verify failed for Ingredient [${ingredientId}]:`, err)
+      );
+    }
+
+    return updatedOrder;
   }
 
   private static async executeStockDeductionLoop(
     tx: Prisma.TransactionClient,
     orderItemId: string,
     productId: string,
-    orderQuantity: number
+    orderQuantity: number,
+    ingredientsSet: Set<string>
   ) {
     const productRecipe = await tx.recipes.findMany({ where: { product_id: productId } });
 
     for (const step of productRecipe) {
       const totalNeededVolume = new Prisma.Decimal(step.quantity).times(orderQuantity).toNumber();
+
+      ingredientsSet.add(step.ingredient_id);
 
       const batchAllocations = await FIFOService.calculateFIFODeduction(tx, step.ingredient_id, totalNeededVolume);
 

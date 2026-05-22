@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db';
 import { LogCategory, LogType } from '../../generated/prisma/client';
+import { globalEventBus, APP_EVENTS } from '../../config/events';
 
 export class AuditService {
   static async log({
@@ -14,7 +15,7 @@ export class AuditService {
     userId: string;
   }): Promise<void> {
     try {
-      await prisma.log.create({
+      const newLogRecord = await prisma.log.create({
         data: {
           log: message,
           category,
@@ -22,6 +23,9 @@ export class AuditService {
           user_id: userId,
         },
       });
+
+      globalEventBus.emit(APP_EVENTS.AUDIT_LOG_CREATED, newLogRecord);
+
     } catch (error) {
       console.error('CRITICAL: Failed to write database log trace:', error);
       console.error(`Original log message: [${category}] [${type}] ${message}`);

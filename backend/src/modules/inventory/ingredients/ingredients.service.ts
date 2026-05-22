@@ -3,38 +3,42 @@ import { LogCategory, LogType } from '../../../generated/prisma/client';
 import { AuditService } from '../../audit/audit.service';
 import { z } from 'zod';
 import { CreateIngredientSchema, UpdateIngredientSchema } from './ingredients.validation';
+import { globalEventBus, APP_EVENTS } from '../../../config/events';
 
 export class IngredientsService {
     static async createIngredient(input: z.infer<typeof CreateIngredientSchema>, userId: string) {
         const ingredients = await prisma.ingredients.create({
             data: {
-            ...input,
-            created_by: userId,
-            updated_by: userId,
+                ...input,
+                created_by: userId,
+                updated_by: userId,
             }
         });
 
         await AuditService.log({
-            message: `CATALOG: Ingredient [${ingredients.name}] created.`,
+            message: `CATALOG: Ingredient [${ingredients.name}] created with dynamic alert threshold set to ${ingredients.low_stock_threshold} ${ingredients.unit}.`,
             category: LogCategory.ingredient,
             type: LogType.success,
             userId
         });
+
+        globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
 
         return ingredients;
     }
 
     static async getIngredient(id: string, userId: string) {
         const ingredient = await prisma.ingredients.findUnique({
-            where: { id }
+            where: { id },
+            include: { batches: true }
         });
 
         if (!ingredient) {
-            throw new Error('Ingredient not found');
+            Object.assign(new Error('Ingredient not found'), { statusCode: 404 });
         }
 
         await AuditService.log({
-            message: `CATALOG: Ingredient [${ingredient.name}] retrieved.`,
+            message: `CATALOG: Ingredient [${ingredient?.name}] retrieved.`,
             category: LogCategory.ingredient,
             type: LogType.info,
             userId
@@ -44,10 +48,12 @@ export class IngredientsService {
     }
 
     static async getIngredients(userId: string) {
-        const ingredients = await prisma.ingredients.findMany();
+        const ingredients = await prisma.ingredients.findMany({
+            orderBy: { name: 'asc' },
+        });
 
         await AuditService.log({
-            message: `CATALOG: All ingredients retrieved.`,
+            message: `CATALOG: All ingredients retrieved. Total item count: ${ingredients.length}.`,
             category: LogCategory.ingredient,
             type: LogType.info,
             userId
@@ -57,30 +63,28 @@ export class IngredientsService {
     }
 
     static async updateIngredient(id: string, input: z.infer<typeof UpdateIngredientSchema>, userId: string) {
-        const existingIngredient = await prisma.ingredients.findUnique({
-            where: { id }
-        });
+        try {
+            const updatedIngredient = await prisma.ingredients.update({
+                where: { id },
+                data: {
+                    ...input,
+                    updated_by: userId,
+                }
+            });
 
-        if (!existingIngredient) {
-            throw new Error('Ingredient not found');
-        }  
+            await AuditService.log({
+                message: `CATALOG: Ingredient [${updatedIngredient.name}] details updated successfully.`,
+                category: LogCategory.ingredient,
+                type: LogType.success,
+                userId
+            });
 
-        const updatedIngredient = await prisma.ingredients.update({
-            where: { id },
-            data: {
-                ...input,
-                updated_by: userId,
-            }
-        });
+            globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
 
-        await AuditService.log({
-            message: `CATALOG: Ingredient [${updatedIngredient.name}] updated.`,
-            category: LogCategory.ingredient,
-            type: LogType.success,
-            userId
-        });
-
-        return updatedIngredient;
+            return updatedIngredient;
+        } catch (error) {
+            throw Object.assign(new Error('Ingredient not found or update validation failed'), { statusCode: 404 });
+        }
     }
 
     static async deleteIngredient(id: string, userId: string) {
@@ -102,7 +106,7 @@ export class IngredientsService {
             });
 
             if (!ingredientWithRelations) {
-                throw new Error('Ingredient not found');
+                throw Object.assign(new Error('Ingredient not found'), { statusCode: 404 });
             }
 
             const productIdsToDelete: string[] = [];
@@ -166,6 +170,8 @@ export class IngredientsService {
                 type: LogType.warn,
                 userId
             });
+
+            globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
 
             return deletedIngredient;
         });
