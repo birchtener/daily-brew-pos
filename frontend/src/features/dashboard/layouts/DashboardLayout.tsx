@@ -51,7 +51,7 @@ function DashboardShell() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/75 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-border bg-background backdrop-blur-xl">
         <div className="mx-auto flex items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-3">
             <SidebarTrigger />
@@ -81,25 +81,7 @@ function DashboardShell() {
       </header>
 
       <main className="flex-1 overflow-y-auto bg-background p-8">
-        <section className="mb-8 grid gap-4 md:grid-cols-[1.5fr_0.8fr]">
-          <div className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-sm backdrop-blur">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Session status</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight">You are signed in.</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              The dashboard sidebar is now the primary navigation surface for POS and inventory work.
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-sm backdrop-blur">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Backend token</p>
-            <p className="mt-2 break-all text-sm text-muted-foreground">Session is secured with HttpOnly cookies.</p>
-            <p className="mt-4 text-sm text-muted-foreground">{user ? `User: ${user}` : 'User payload not cached.'}</p>
-          </div>
-        </section>
-
-        <div className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-sm backdrop-blur">
-          <Outlet />
-        </div>
+        <Outlet />
       </main>
     </>
   );

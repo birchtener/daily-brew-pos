@@ -19,15 +19,16 @@ export const errorHandler = async (
     : err.message || 'Internal Server Error';
 
   const executionUser = (req as any).user?.id;
+  const isClientError = statusCode < 500;
 
-  if (executionUser) {
+  if (executionUser && !isClientError) {
     void AuditService.log({
       message: `ROUTE EXCEPTION: ${message} | Stack: ${err.stack}`,
       category: LogCategory.authentication,
       type: LogType.error,
       userId: executionUser,
     });
-  } else {
+  } else if (!isClientError) {
     console.error(`[Unhandled System Error] ${message}`, err.stack);
   }
 

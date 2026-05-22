@@ -1,11 +1,19 @@
+import { User } from "lucide-react";
+
 export default function SettingsPage() {
   return (
-    <div className="rounded-2xl border border-border/60 bg-background p-6 shadow-sm">
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">Settings</p>
-      <h1 className="mt-2 text-2xl font-semibold">Application settings</h1>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-        Configure account preferences, system behavior, and future app controls here.
-      </p>
+    <div className="flex flex-col px-36">
+        <div>
+            <h1 className="text-2xl font-semibold">Settings</h1>
+            <p className="text-muted-foreground">Manage your account and application settings.</p>
+        </div>
+        <div className="mt-8 rounded-lg border-border border bg-card p-6">
+            <div className="flex items-center gap-2">
+                <User className="size-5" />
+                <h2 className="text-lg font-medium">Account Settings</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">Update your profile picture. Recommended size: 400x400 pixels.</p>
+        </div>
     </div>
   )
 }
