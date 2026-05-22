@@ -1,4 +1,5 @@
 import { prisma } from '../../../config/db';
+import { Prisma } from '../../../generated/prisma/client';
 import { globalEventBus, APP_EVENTS } from '../../../config/events';
 
 export class StockMonitorService {
@@ -21,18 +22,19 @@ export class StockMonitorService {
                 }
             });
 
-            const currentStockLevel = Number(aggregateResult._sum.quantity_remaining) || 0;
-            const configuredThreshold = Number(ingredient.low_stock_threshold);
+            const currentStockLevel = new Prisma.Decimal(aggregateResult._sum.quantity_remaining ?? 0);
+            const configuredThreshold = new Prisma.Decimal(ingredient.low_stock_threshold);
 
-            if (currentStockLevel < configuredThreshold) {
-                
-                globalEventBus.emit(APP_EVENTS.LOW_STOCK_DETECTED, {
+            if (currentStockLevel.lessThan(configuredThreshold)) {
+                setImmediate(() => {
+                    globalEventBus.emit(APP_EVENTS.LOW_STOCK_DETECTED, {
                 ingredientId,
                 name: ingredient.name,
-                remaining: currentStockLevel,
+                remaining: currentStockLevel.toNumber(),
                 unit: ingredient.unit,
-                threshold: configuredThreshold,
+                threshold: configuredThreshold.toNumber(),
                 message: `⚠️ RUNTIME LOW STOCK ALERT: [${ingredient.name}] has fallen below its custom safety margin of ${configuredThreshold} ${ingredient.unit}. Current balance: ${currentStockLevel} ${ingredient.unit}.`
+                    });
                 });
             }
         } catch (error) {

@@ -1,30 +1,52 @@
 import { prisma } from '../../../config/db';
-import { LogCategory, LogType } from '../../../generated/prisma/client';
+import { LogCategory, LogType, Prisma } from '../../../generated/prisma/client';
 import { AuditService } from '../../audit/audit.service';
 import { z } from 'zod';
 import { CreateIngredientSchema, UpdateIngredientSchema } from './ingredients.validation';
 import { globalEventBus, APP_EVENTS } from '../../../config/events';
 
+const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
+
+const isKnownPrismaError = (error: unknown, code: string) =>
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === code;
+
+type AuditEntry = {
+    message: string;
+    category: LogCategory;
+    type: LogType;
+    userId: string;
+};
+
 export class IngredientsService {
     static async createIngredient(input: z.infer<typeof CreateIngredientSchema>, userId: string) {
-        const ingredients = await prisma.ingredients.create({
-            data: {
-                ...input,
-                created_by: userId,
-                updated_by: userId,
+        try {
+            const ingredients = await prisma.ingredients.create({
+                data: {
+                    ...input,
+                    created_by: userId,
+                    updated_by: userId,
+                }
+            });
+
+            await AuditService.log({
+                message: `CATALOG: Ingredient [${ingredients.name}] created with dynamic alert threshold set to ${ingredients.low_stock_threshold} ${ingredients.unit}.`,
+                category: LogCategory.ingredient,
+                type: LogType.success,
+                userId
+            });
+
+            setImmediate(() => {
+                globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
+            });
+
+            return ingredients;
+        } catch (error) {
+            if (isKnownPrismaError(error, 'P2002')) {
+                throw createHttpError('Validation Failure: Ingredient already exists.', 409);
             }
-        });
 
-        await AuditService.log({
-            message: `CATALOG: Ingredient [${ingredients.name}] created with dynamic alert threshold set to ${ingredients.low_stock_threshold} ${ingredients.unit}.`,
-            category: LogCategory.ingredient,
-            type: LogType.success,
-            userId
-        });
-
-        globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
-
-        return ingredients;
+            throw createHttpError('Validation Failure: Unable to create ingredient.', 500);
+        }
     }
 
     static async getIngredient(id: string, userId: string) {
@@ -34,7 +56,7 @@ export class IngredientsService {
         });
 
         if (!ingredient) {
-            Object.assign(new Error('Ingredient not found'), { statusCode: 404 });
+            throw createHttpError('Validation Failure: Target resource not found.', 404);
         }
 
         await AuditService.log({
@@ -79,101 +101,136 @@ export class IngredientsService {
                 userId
             });
 
-            globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
+            setImmediate(() => {
+                globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
+            });
 
             return updatedIngredient;
         } catch (error) {
-            throw Object.assign(new Error('Ingredient not found or update validation failed'), { statusCode: 404 });
+            if (isKnownPrismaError(error, 'P2025')) {
+                throw createHttpError('Validation Failure: Target resource not found.', 404);
+            }
+
+            if (isKnownPrismaError(error, 'P2002')) {
+                throw createHttpError('Validation Failure: Ingredient already exists.', 409);
+            }
+
+            if (error && typeof error === 'object' && 'statusCode' in error) {
+                throw error;
+            }
+
+            throw createHttpError('Validation Failure: Ingredient update failed.', 500);
         }
     }
 
     static async deleteIngredient(id: string, userId: string) {
-        return await prisma.$transaction(async (tx) => {
-            const ingredientWithRelations = await tx.ingredients.findUnique({
-                where: { id },
-                include: {
-                    recipes: {
-                        include: { 
-                            product: {
-                                include: {
-                                    recipes: true 
+        const auditTrail: AuditEntry[] = [];
+
+        try {
+            const deletedIngredient = await prisma.$transaction(async (tx) => {
+                const ingredientWithRelations = await tx.ingredients.findUnique({
+                    where: { id },
+                    include: {
+                        recipes: {
+                            include: {
+                                product: {
+                                    include: {
+                                        recipes: true
+                                    }
                                 }
-                            } 
-                        }
-                    },
-                    batches: true
+                            }
+                        },
+                        batches: true
+                    }
+                });
+
+                if (!ingredientWithRelations) {
+                    throw createHttpError('Validation Failure: Target resource not found.', 404);
                 }
-            });
 
-            if (!ingredientWithRelations) {
-                throw Object.assign(new Error('Ingredient not found'), { statusCode: 404 });
-            }
+                const productIdsToDelete: string[] = [];
 
-            const productIdsToDelete: string[] = [];
+                for (const recipeLink of ingredientWithRelations.recipes) {
+                    const linkedProduct = recipeLink.product;
 
-            for (const recipeLink of ingredientWithRelations.recipes) {
-                const linkedProduct = recipeLink.product;
+                    if (linkedProduct.recipes.length === 1) {
+                        productIdsToDelete.push(linkedProduct.id);
+                        auditTrail.push({
+                            message: `CATALOG: Product [${linkedProduct.name}] identified as a 1:1 mirror match. Marked for permanent deletion via Ingredient Cascade.`,
+                            category: LogCategory.product,
+                            type: LogType.warn,
+                            userId
+                        });
+                    } else {
+                        auditTrail.push({
+                            message: `INVENTORY: Recipe link for mixed product [${linkedProduct.name}] utilizing Ingredient [${ingredientWithRelations.name}] dropped via Cascade.`,
+                            category: LogCategory.inventory,
+                            type: LogType.warn,
+                            userId
+                        });
+                    }
+                }
 
-                if (linkedProduct.recipes.length === 1) {
-                    productIdsToDelete.push(linkedProduct.id);
-                    
-                    await AuditService.log({
-                        message: `CATALOG: Product [${linkedProduct.name}] identified as a 1:1 mirror match. Marked for permanent deletion via Ingredient Cascade.`,
-                        category: LogCategory.product,
-                        type: LogType.warn,
-                        userId
-                    });
-                } else {
-                    await AuditService.log({
-                        message: `INVENTORY: Recipe link for mixed product [${linkedProduct.name}] utilizing Ingredient [${ingredientWithRelations.name}] dropped via Cascade.`,
+                for (const batch of ingredientWithRelations.batches) {
+                    auditTrail.push({
+                        message: `INVENTORY: Stock Batch [ID: ${batch.id}] for Ingredient [${ingredientWithRelations.name}] (Remaining: ${batch.quantity_remaining}) permanently dropped via Cascade deletion.`,
                         category: LogCategory.inventory,
                         type: LogType.warn,
                         userId
                     });
                 }
-            }
 
-            for (const batch of ingredientWithRelations.batches) {
-                await AuditService.log({
-                    message: `INVENTORY: Stock Batch [ID: ${batch.id}] for Ingredient [${ingredientWithRelations.name}] (Remaining: ${batch.quantity_remaining}) permanently dropped via Cascade deletion.`,
-                    category: LogCategory.inventory,
+                await tx.recipes.deleteMany({
+                    where: { ingredient_id: id }
+                });
+
+                if (productIdsToDelete.length > 0) {
+                    await tx.recipes.deleteMany({
+                        where: { product_id: { in: productIdsToDelete } }
+                    });
+
+                    await tx.product.deleteMany({
+                        where: { id: { in: productIdsToDelete } }
+                    });
+                }
+
+                await tx.ingredientBatches.deleteMany({
+                    where: { ingredient_id: id }
+                });
+
+                const deleted = await tx.ingredients.delete({
+                    where: { id }
+                });
+
+                auditTrail.push({
+                    message: `CATALOG: Ingredient [${ingredientWithRelations.name}] deleted permanently. Cleared out ${productIdsToDelete.length} mirror products, and ${ingredientWithRelations.batches.length} storage batches.`,
+                    category: LogCategory.ingredient,
                     type: LogType.warn,
                     userId
                 });
+
+                return deleted;
+            });
+
+            for (const entry of auditTrail) {
+                void AuditService.log(entry);
             }
 
-            await tx.recipes.deleteMany({
-                where: { ingredient_id: id }
+            setImmediate(() => {
+                globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
             });
-
-            if (productIdsToDelete.length > 0) {
-                await tx.recipes.deleteMany({
-                    where: { product_id: { in: productIdsToDelete } }
-                });
-
-                await tx.product.deleteMany({
-                    where: { id: { in: productIdsToDelete } }
-                });
-            }
-
-            await tx.ingredientBatches.deleteMany({
-                where: { ingredient_id: id }
-            });
-
-            const deletedIngredient = await tx.ingredients.delete({
-                where: { id }
-            });
-
-            await AuditService.log({
-                message: `CATALOG: Ingredient [${ingredientWithRelations.name}] deleted permanently. Cleared out ${productIdsToDelete.length} mirror products, and ${ingredientWithRelations.batches.length} storage batches.`,
-                category: LogCategory.ingredient,
-                type: LogType.warn,
-                userId
-            });
-
-            globalEventBus.emit(APP_EVENTS.INGREDIENTS_CHANGED);
 
             return deletedIngredient;
-        });
+        } catch (error) {
+            if (error && typeof error === 'object' && 'statusCode' in error) {
+                throw error;
+            }
+
+            if (isKnownPrismaError(error, 'P2025')) {
+                throw createHttpError('Validation Failure: Target resource not found.', 404);
+            }
+
+            throw createHttpError('Validation Failure: Ingredient deletion failed.', 500);
+        }
     } 
 }

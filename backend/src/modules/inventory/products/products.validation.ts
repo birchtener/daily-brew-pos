@@ -21,7 +21,7 @@ export const UpdateProductSchema = z.object({
   name: z.string().min(1).max(50).optional(),
   price: z.number().positive().optional(),
   category_id: z.string().uuid().optional(),
-  img_path: z.string().url().nullable().optional(),
+  img_path: z.string().max(255).nullable().optional(),
   
   ingredients: z.array(
     z.object({

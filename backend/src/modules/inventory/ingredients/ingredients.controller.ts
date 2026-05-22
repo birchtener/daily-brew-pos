@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { IngredientsService } from './ingredients.service';
-import { CreateIngredientSchema } from './ingredients.validation'; 
+import { CreateIngredientSchema, UpdateIngredientSchema } from './ingredients.validation'; 
+
+const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
 
 export class IngredientsController {
     static async addIngredient(req: Request, res: Response) {
@@ -30,13 +32,9 @@ export class IngredientsController {
     static async updateIngredient(req: Request, res: Response) {
         const id = req.params.id as string;
         if (typeof id !== 'string') {
-            res.status(400).json({
-                success: false,
-                error: { message: "Invalid Request: Ingredient target parameter must be a singular string UUID." }
-            });
-            return;
+            throw createHttpError('Invalid Request: Ingredient target parameter must be a singular string UUID.', 400);
         }
-        const cleanData = CreateIngredientSchema.parse(req.body);
+        const cleanData = UpdateIngredientSchema.parse(req.body);
         const data = await IngredientsService.updateIngredient(id, cleanData, req.user!.id);
         res.status(200).json({ success: true, data });
     }

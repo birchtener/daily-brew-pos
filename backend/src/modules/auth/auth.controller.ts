@@ -6,6 +6,8 @@ import { prisma } from '../../config/db';
 import { LogCategory, LogType } from '../../generated/prisma/client';
 import { AuditService } from '../audit/audit.service';
 
+const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
+
 export class AuthController {
   static async register(req: Request, res: Response) {
     const data = RegisterSchema.parse(req.body);
@@ -22,35 +24,43 @@ export class AuthController {
 
   static async updateAvatar(req: Request, res: Response) {
     if (!req.file) {
-      throw Object.assign(new Error('Bad Request: No avatar image file provided.'), { statusCode: 400 });
+      throw createHttpError('Bad Request: No avatar image file provided.', 400);
     }
 
-    const secureUrl = await streamUpload(req.file.buffer, 'avatars');
+    try {
+      const secureUrl = await streamUpload(req.file.buffer, 'avatars');
 
-    const updatedUser = await prisma.user.update({
-      where: { id: req.user!.id },
-      data: { avatar_url: secureUrl },
-      select: {
-        id: true,
-        username: true,
-        first_name: true,
-        last_name: true,
-        avatar_url: true,
-        role: true
+      const updatedUser = await prisma.user.update({
+        where: { id: req.user!.id },
+        data: { avatar_url: secureUrl },
+        select: {
+          id: true,
+          username: true,
+          first_name: true,
+          last_name: true,
+          avatar_url: true,
+          role: true
+        }
+      });
+
+      void AuditService.log({
+        message: `PROFILE UPDATE: User [${updatedUser.username}] updated their profile avatar image.`,
+        category: LogCategory.authentication,
+        type: LogType.info,
+        userId: req.user!.id
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Avatar image updated successfully.',
+        data: updatedUser
+      });
+    } catch (error) {
+      if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'P2025') {
+        throw createHttpError('Validation Failure: Target resource not found.', 404);
       }
-    });
 
-    await AuditService.log({
-      message: `PROFILE UPDATE: User [${updatedUser.username}] updated their profile avatar image.`,
-      category: LogCategory.authentication,
-      type: LogType.info,
-      userId: req.user!.id
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Avatar image updated successfully.',
-      data: updatedUser
-    });
+      throw createHttpError('Validation Failure: Avatar upload failed.', 500);
+    }
   }
 }

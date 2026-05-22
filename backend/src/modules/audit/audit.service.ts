@@ -24,7 +24,13 @@ export class AuditService {
         },
       });
 
-      globalEventBus.emit(APP_EVENTS.AUDIT_LOG_CREATED, newLogRecord);
+      setImmediate(() => {
+        try {
+          globalEventBus.emit(APP_EVENTS.AUDIT_LOG_CREATED, newLogRecord);
+        } catch (dispatchError) {
+          console.error('WARNING: Audit log event dispatch failed:', dispatchError);
+        }
+      });
 
     } catch (error) {
       console.error('CRITICAL: Failed to write database log trace:', error);

@@ -1,27 +1,47 @@
 import { prisma } from '../../../config/db';
-import { LogCategory, LogType } from '../../../generated/prisma/client';
+import { LogCategory, LogType, Prisma } from '../../../generated/prisma/client';
 import { AuditService } from '../../audit/audit.service';
 import { z } from 'zod';
 import { CreateSupplierSchema, UpdateSupplierSchema } from './suppliers.validation';
 
+const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
+
+const isKnownPrismaError = (error: unknown, code: string) =>
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === code;
+
+type AuditEntry = {
+    message: string;
+    category: LogCategory;
+    type: LogType;
+    userId: string;
+};
+
 export class SuppliersService {
     static async createSupplier(input: z.infer<typeof CreateSupplierSchema>, userId: string) {
-        const supplier = await prisma.suppliers.create({
-            data: {
-                ...input,
-                created_by: userId,
-                updated_by: userId,
+        try {
+            const supplier = await prisma.suppliers.create({
+                data: {
+                    ...input,
+                    created_by: userId,
+                    updated_by: userId,
+                }
+            });
+
+            void AuditService.log({
+                message: `SUPPLIERS: Supplier [${supplier.name}] added to the system.`,
+                category: LogCategory.supplier,
+                type: LogType.success,
+                userId
+            });
+
+            return supplier;
+        } catch (error) {
+            if (isKnownPrismaError(error, 'P2002')) {
+                throw createHttpError('Validation Failure: Supplier already exists.', 409);
             }
-        });
 
-        await AuditService.log({
-            message: `SUPPLIERS: Supplier [${supplier.name}] added to the system.`,
-            category: LogCategory.supplier,
-            type: LogType.success,
-            userId
-        });
-
-        return supplier;
+            throw createHttpError('Validation Failure: Supplier creation failed.', 500);
+        }
     }
 
     static async getSuppliers(userId: string) {
@@ -45,7 +65,7 @@ export class SuppliersService {
         });
 
         if (!supplier) {
-            throw new Error('Supplier not found');
+            throw createHttpError('Validation Failure: Target resource not found.', 404);
         }
 
         await AuditService.log({
@@ -68,7 +88,7 @@ export class SuppliersService {
                 },
             });
             
-            await AuditService.log({
+            void AuditService.log({
                 message: `SUPPLIERS: Updated supplier [${updatedSupplier.name}].`,
                 category: LogCategory.supplier,
                 type: LogType.success,
@@ -77,42 +97,71 @@ export class SuppliersService {
 
             return updatedSupplier;
         } catch (error) {
-            throw new Error('Supplier not found or update validation failed');
+            if (isKnownPrismaError(error, 'P2025')) {
+                throw createHttpError('Validation Failure: Target resource not found.', 404);
+            }
+
+            if (isKnownPrismaError(error, 'P2002')) {
+                throw createHttpError('Validation Failure: Supplier already exists.', 409);
+            }
+
+            throw createHttpError('Validation Failure: Supplier update failed.', 500);
         }
     }
 
     static async deleteSupplier(id: string, userId: string) {
-        return await prisma.$transaction(async (tx) => {
-            const supplier = await tx.suppliers.findUnique({
-                where: { id }
+        const auditTrail: AuditEntry[] = [];
+
+        try {
+            const deletedSupplier = await prisma.$transaction(async (tx) => {
+                const supplier = await tx.suppliers.findUnique({
+                    where: { id }
+                });
+
+                if (!supplier) {
+                    throw createHttpError('Validation Failure: Target resource not found.', 404);
+                }
+
+                const linkedOrdersCount = await tx.supplierOrders.count({
+                    where: { supplier_id: id }
+                });
+
+                if (linkedOrdersCount > 0) {
+                    throw createHttpError(
+                        `Validation Failure: Cannot delete supplier because ${linkedOrdersCount} linked purchase order records exist.`,
+                        409
+                    );
+                }
+
+                const deleted = await tx.suppliers.delete({
+                    where: { id }
+                });
+
+                auditTrail.push({
+                    message: `SUPPLIERS: Supplier [${supplier.name}] permanently removed from vendor records.`,
+                    category: LogCategory.supplier,
+                    type: LogType.warn,
+                    userId
+                });
+
+                return deleted;
             });
 
-            if (!supplier) {
-                throw new Error('Supplier not found');
+            for (const entry of auditTrail) {
+                void AuditService.log(entry);
             }
-
-            const linkedOrdersCount = await tx.supplierOrders.count({
-                where: { supplier_id: id }
-            });
-
-            if (linkedOrdersCount > 0) {
-                throw new Error(
-                    `Cannot delete supplier: This vendor has ${linkedOrdersCount} active purchase order logs in the system. Archive or flag them as inactive instead to protect your accounting trail!`
-                );
-            }
-
-            const deletedSupplier = await tx.suppliers.delete({
-                where: { id }
-            });
-
-            await AuditService.log({
-                message: `SUPPLIERS: Supplier [${supplier.name}] permanently removed from vendor records.`,
-                category: LogCategory.supplier,
-                type: LogType.warn,
-                userId
-            });
 
             return deletedSupplier;
-        });
+        } catch (error) {
+            if (error && typeof error === 'object' && 'statusCode' in error) {
+                throw error;
+            }
+
+            if (isKnownPrismaError(error, 'P2025')) {
+                throw createHttpError('Validation Failure: Target resource not found.', 404);
+            }
+
+            throw createHttpError('Validation Failure: Supplier deletion failed.', 500);
+        }
     }
 }

@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Role } from '../generated/prisma/client';
 
+const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
+
 export interface AuthenticatedUser {
   id: string;
   username: string;
@@ -24,7 +26,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
   }
 
   if (!token) {
-    res.status(401).json({ success: false, error: { message: 'Not authorized, token missing.' } });
+    next(createHttpError('Not authorized, token missing.', 401));
     return;
   }
 
@@ -34,6 +36,6 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ success: false, error: { message: 'Not authorized, invalid token compilation.' } });
+    next(createHttpError('Not authorized, invalid token compilation.', 401));
   }
 };

@@ -88,11 +88,14 @@ export class AnalyticsService {
       })
     );
 
+    populatedReport.sort((left, right) => right.units_sold - left.units_sold);
+
     return populatedReport;
   }
 
   static async getInventoryHealth() {
     const ingredients = await prisma.ingredients.findMany({
+      orderBy: { name: 'asc' },
       include: {
         batches: {
           where: { quantity_remaining: { gt: 0 } }

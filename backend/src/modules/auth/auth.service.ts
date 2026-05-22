@@ -2,9 +2,14 @@ import { prisma } from '../../config/db';
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { AuditService } from '../audit/audit.service';
-import { LogCategory, LogType } from '../../generated/prisma/client';
+import { LogCategory, LogType, Prisma } from '../../generated/prisma/client';
 import { z } from 'zod';
 import { RegisterSchema, LoginSchema } from './auth.validation';
+
+const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
+
+const isKnownPrismaError = (error: unknown, code: string) =>
+  error instanceof Prisma.PrismaClientKnownRequestError && error.code === code;
 
 export class AuthService {
   private static generateToken(id: string, username: string, role: string): string {
@@ -20,43 +25,46 @@ export class AuthService {
   }
 
   static async register(input: z.infer<typeof RegisterSchema>, currentActorId?: string) {
-    const existingUser = await prisma.user.findUnique({ where: { username: input.username } });
-    if (existingUser) {
-      throw Object.assign(new Error('Username already assigned to an employee.'), { statusCode: 400 });
+    try {
+      const hashedPassword = await bcrypt.hash(input.password, 12);
+
+      const newUser = await prisma.user.create({
+        data: {
+          first_name: input.first_name,
+          last_name: input.last_name,
+          username: input.username,
+          password: hashedPassword,
+          role: input.role || 'staff',
+        },
+      });
+
+      void AuditService.log({
+        message: `ACCOUNT CREATION: User [${newUser.username}] registered as Role [${newUser.role}].`,
+        category: LogCategory.authentication,
+        type: LogType.success,
+        userId: currentActorId || newUser.id,
+      });
+
+      const token = this.generateToken(newUser.id, newUser.username, newUser.role);
+      return { token, user: { id: newUser.id, username: newUser.username, role: newUser.role } };
+    } catch (error) {
+      if (isKnownPrismaError(error, 'P2002')) {
+        throw createHttpError('Validation Failure: Username already assigned to an employee.', 409);
+      }
+
+      throw createHttpError('Validation Failure: Registration failed.', 500);
     }
-
-    const hashedPassword = await bcrypt.hash(input.password, 12);
-
-    const newUser = await prisma.user.create({
-      data: {
-        first_name: input.first_name,
-        last_name: input.last_name,
-        username: input.username,
-        password: hashedPassword,
-        role: input.role || 'staff',
-      },
-    });
-
-    await AuditService.log({
-      message: `ACCOUNT CREATION: User [${newUser.username}] registered as Role [${newUser.role}].`,
-      category: LogCategory.authentication,
-      type: LogType.success,
-      userId: currentActorId || newUser.id,
-    });
-
-    const token = this.generateToken(newUser.id, newUser.username, newUser.role);
-    return { token, user: { id: newUser.id, username: newUser.username, role: newUser.role } };
   }
 
   static async login(input: z.infer<typeof LoginSchema>) {
     const user = await prisma.user.findUnique({ where: { username: input.username } });
     if (!user || !(await bcrypt.compare(input.password, user.password))) {
-      throw Object.assign(new Error('Invalid application credentials specified.'), { statusCode: 401 });
+      throw createHttpError('Invalid application credentials specified.', 401);
     }
 
     const token = this.generateToken(user.id, user.username, user.role);
 
-    await AuditService.log({
+    void AuditService.log({
       message: `SESSION INITIALIZED: User [${user.username}] successfully authorized terminal session access.`,
       category: LogCategory.authentication,
       type: LogType.info,

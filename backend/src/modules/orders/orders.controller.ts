@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { OrdersService } from './orders.service';
 import { CreateOrderSchema, FinalizeParkedOrderSchema } from './orders.validation';
 
+const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
+
 export class OrdersController {
   static async checkout(req: Request, res: Response) {
     const cleanData = CreateOrderSchema.parse(req.body);
@@ -16,9 +18,8 @@ export class OrdersController {
 
   static async finalizeParked(req: Request, res: Response) {
     const { id } = req.params;
-    
     if (typeof id !== 'string') {
-      throw Object.assign(new Error('Bad Request: Invalid URL route execution parameter format.'), { statusCode: 400 });
+      throw createHttpError('Bad Request: Invalid URL route execution parameter format.', 400);
     }
 
     const cleanData = FinalizeParkedOrderSchema.parse(req.body);
