@@ -20,7 +20,6 @@ import { getAuditLogs, type AuditLog, type LogCategory, type LogType } from '@/a
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useStore } from '@/store/useStore';
 
 const CATEGORIES: { value: LogCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All Categories' },
@@ -48,7 +47,6 @@ interface DisplayLog extends AuditLog {
 }
 
 export default function LogsPage() {
-  const { dark } = useStore();
   const [logs, setLogs] = useState<DisplayLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -211,7 +209,7 @@ export default function LogsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-[1600px] mx-auto">
+    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-400 mx-auto">
       {/* Header and Live Status */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -288,7 +286,7 @@ export default function LogsPage() {
         </div>
 
         {/* Categories Dropdown */}
-        <div className="relative min-w-[180px]">
+        <div className="relative min-w-45">
           <select
             value={categoryFilter}
             onChange={(e) => {
@@ -305,7 +303,7 @@ export default function LogsPage() {
         </div>
 
         {/* Severities Dropdown */}
-        <div className="relative min-w-[180px]">
+        <div className="relative min-w-45">
           <select
             value={typeFilter}
             onChange={(e) => {
@@ -328,13 +326,13 @@ export default function LogsPage() {
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40 font-medium text-muted-foreground select-none">
-                <th className="p-4 w-[165px] md:w-[180px]">
+                <th className="p-4 w-41.25 md:w-45">
                   <span className="md:hidden">Log Info</span>
                   <span className="hidden md:inline">Timestamp</span>
                 </th>
-                <th className="p-4 w-[100px] hidden md:table-cell">Severity</th>
-                <th className="p-4 w-[140px] hidden md:table-cell">Category</th>
-                <th className="p-4 w-[200px] hidden md:table-cell">Actor</th>
+                <th className="p-4 w-25 hidden md:table-cell">Severity</th>
+                <th className="p-4 w-35 hidden md:table-cell">Category</th>
+                <th className="p-4 w-50 hidden md:table-cell">Actor</th>
                 <th className="p-4">Log Entry Details</th>
               </tr>
             </thead>
@@ -417,7 +415,7 @@ export default function LogsPage() {
                         </div>
 
                         {/* Mobile: Stacked multi-field metadata context */}
-                        <div className="md:hidden flex flex-col gap-2 min-w-[125px]">
+                        <div className="md:hidden flex flex-col gap-2 min-w-31.25">
                           {/* Timestamp */}
                           <span className="font-mono font-medium text-muted-foreground whitespace-nowrap">
                             {createdAt.toLocaleDateString()}<br/>
@@ -449,7 +447,7 @@ export default function LogsPage() {
                                     {log.logger.first_name[0]}{log.logger.last_name[0]}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium text-[11px] text-foreground truncate max-w-[85px]">
+                                <span className="font-medium text-[11px] text-foreground truncate max-w-21.25">
                                   {log.logger.first_name} {log.logger.last_name[0]}.
                                 </span>
                               </div>
@@ -506,7 +504,7 @@ export default function LogsPage() {
                       </td>
 
                       {/* Message details */}
-                      <td className="p-4 font-normal text-card-foreground break-all max-w-[170px] sm:max-w-none align-top">
+                      <td className="p-4 font-normal text-card-foreground break-all max-w-42.5 sm:max-w-none align-top">
                         {log.log}
                       </td>
                     </tr>

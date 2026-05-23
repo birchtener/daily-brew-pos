@@ -215,7 +215,7 @@ function AvatarSection({
               <Button onClick={handleCancel} variant="outline" size="sm" disabled={uploading}>
                 Cancel
               </Button>
-              <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+              <span className="text-xs text-muted-foreground truncate max-w-50">
                 {selectedFile.name}
               </span>
             </div>

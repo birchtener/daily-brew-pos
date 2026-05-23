@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { 
   Building2, 
   Search, 
@@ -216,7 +216,7 @@ export default function SuppliersPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-[1600px] mx-auto">
+    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-400 mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -259,11 +259,11 @@ export default function SuppliersPage() {
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40 font-medium text-muted-foreground select-none">
-                <th className="p-4 w-[250px] md:w-[320px]">Vendor Name</th>
-                <th className="p-4 w-[200px] md:w-[260px]">Contact Person</th>
-                <th className="p-4 w-[180px] md:w-[220px]">Phone Number</th>
-                <th className="p-4 w-[150px] hidden lg:table-cell">Last Updated</th>
-                <th className="p-4 w-[60px] text-center">Actions</th>
+                <th className="p-4 w-62.5 md:w-80">Vendor Name</th>
+                <th className="p-4 w-50 md:w-65">Contact Person</th>
+                <th className="p-4 w-45 md:w-55">Phone Number</th>
+                <th className="p-4 w-37.5 hidden lg:table-cell">Last Updated</th>
+                <th className="p-4 w-15 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
