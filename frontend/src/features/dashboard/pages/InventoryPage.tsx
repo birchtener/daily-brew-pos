@@ -495,8 +495,8 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          {/* Ingredients Table */}
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden select-text">
+          {/* Ingredients Table (Desktop) */}
+          <div className="hidden md:block rounded-xl border border-border bg-card shadow-sm overflow-hidden select-text">
             <div className="w-full overflow-x-auto">
               <table className="w-full border-collapse text-left text-sm">
                 <thead>
@@ -650,6 +650,120 @@ export default function InventoryPage() {
               </table>
             </div>
           </div>
+
+          {/* Ingredients Mobile Stacked View */}
+          <div className="md:hidden flex flex-col gap-3">
+            {ingredientsLoading && ingredients.length === 0 ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 rounded-lg bg-muted shrink-0" />
+                    <div className="flex flex-col gap-2">
+                      <div className="h-3.5 bg-muted rounded w-24" />
+                      <div className="h-2.5 bg-muted rounded w-12" />
+                    </div>
+                  </div>
+                  <div className="h-4 bg-muted rounded w-16" />
+                </div>
+              ))
+            ) : ingredientsError ? (
+              <div className="p-6 text-center text-rose-500 border border-border bg-card rounded-xl">
+                {ingredientsError}
+              </div>
+            ) : filteredIngredients.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground border border-border bg-card rounded-xl">
+                No ingredients found.
+              </div>
+            ) : (
+              filteredIngredients.map((ing) => (
+                <div
+                  key={ing.id}
+                  className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors cursor-context-menu"
+                  onContextMenu={(e) => {
+                    if (!isAdmin) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const btn = e.currentTarget.querySelector('.action-btn-trigger');
+                    if (btn) {
+                      const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
+                      btn.dispatchEvent(event);
+                    }
+                  }}
+                >
+                  {/* Column 1: Image, Name, Unit, and Badge */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    {ing.img_path ? (
+                      <img
+                        src={ing.img_path}
+                        alt={ing.name}
+                        className="size-10 rounded-lg object-cover border border-border shrink-0"
+                      />
+                    ) : (
+                      <div className="size-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 select-none">
+                        <Package className="size-5" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex flex-col gap-1">
+                      <span className="font-semibold text-card-foreground truncate text-sm">{ing.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-mono font-medium text-muted-foreground uppercase">
+                          {ing.unit}
+                        </span>
+                        <StockBadge currentStock={ing.current_stock} threshold={Number(ing.low_stock_threshold)} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Current Stock, Threshold and Inline Actions */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-right">
+                      <p className="text-xs font-mono font-bold text-foreground">
+                        {ing.current_stock.toFixed(1)} {ing.unit}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Min: {Number(ing.low_stock_threshold).toFixed(1)}
+                      </p>
+                    </div>
+                    {isAdmin && (
+                      <ContextMenu>
+                        <ContextMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 hover:bg-muted/85 action-btn-trigger shrink-0"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
+                              e.currentTarget.dispatchEvent(event);
+                            }}
+                          >
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
+                          <ContextMenuItem
+                            onSelect={() => handleOpenEditIngredient(ing)}
+                            className="flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-muted transition cursor-pointer"
+                          >
+                            <Edit3 className="size-3.5 text-muted-foreground" />
+                            Edit Ingredient
+                          </ContextMenuItem>
+                          <ContextMenuItem
+                            onSelect={() => { setDeletingIngredient(ing); setIngModalFeedback(null); }}
+                            className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
+                          >
+                            <Trash2 className="size-3.5" />
+                            Delete Ingredient
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </TabsContent>
 
         {/* ═══════════════ STOCK BATCHES TAB ═══════════════ */}
@@ -710,8 +824,8 @@ export default function InventoryPage() {
             </div>
           </div>
 
-          {/* Batches Table */}
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden select-text">
+          {/* Batches Table (Desktop) */}
+          <div className="hidden md:block rounded-xl border border-border bg-card shadow-sm overflow-hidden select-text">
             <div className="w-full overflow-x-auto">
               <table className="w-full border-collapse text-left text-sm">
                 <thead>
@@ -877,6 +991,113 @@ export default function InventoryPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Batches Mobile Stacked View */}
+          <div className="md:hidden flex flex-col gap-3">
+            {batchesLoading && batches.length === 0 ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4 flex flex-col gap-2">
+                  <div className="h-4 bg-muted rounded w-28" />
+                  <div className="h-3.5 bg-muted rounded w-20" />
+                </div>
+              ))
+            ) : batchesError ? (
+              <div className="p-6 text-center text-rose-500 border border-border bg-card rounded-xl">
+                {batchesError}
+              </div>
+            ) : filteredBatches.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground border border-border bg-card rounded-xl">
+                No stock batches found.
+              </div>
+            ) : (
+              filteredBatches.map((batch) => {
+                const expiryDate = new Date(batch.expiry);
+                const isDepleted = Number(batch.quantity_remaining) === 0;
+
+                return (
+                  <div
+                    key={batch.id}
+                    className={`rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors cursor-context-menu ${getBatchRowClass(batch)}`}
+                    onContextMenu={(e) => {
+                      if (!isAdmin || !isBatchUnused(batch)) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const btn = e.currentTarget.querySelector('.action-btn-trigger');
+                      if (btn) {
+                        const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
+                        btn.dispatchEvent(event);
+                      }
+                    }}
+                  >
+                    {/* Column 1: Name, Supplier, and Expiry Highlight */}
+                    <div className="min-w-0 flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-semibold text-card-foreground text-sm truncate ${isDepleted ? 'line-through opacity-60' : ''}`}>
+                          {batch.ingredient.name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground uppercase font-mono font-medium bg-muted px-1.5 py-0.5 rounded">
+                          {batch.ingredient.unit}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        From: <span className="font-semibold text-foreground">{batch.supplier_order.supplier.name}</span>
+                      </p>
+                      <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground">
+                        {(() => {
+                          const exp = new Date(batch.expiry);
+                          exp.setHours(0, 0, 0, 0);
+                          if (exp < today) return <AlertTriangle className="size-3 text-rose-500 shrink-0" />;
+                          if (exp <= in7Days) return <AlertTriangle className="size-3 text-amber-500 shrink-0" />;
+                          return <CalendarIcon className="size-3 text-muted-foreground shrink-0" />;
+                        })()}
+                        Exp: {expiryDate.toLocaleDateString()}
+                      </div>
+                    </div>
+
+                    {/* Column 2: Quantities, Cost, and Inline Delete */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs font-mono font-bold text-foreground">
+                          {Number(batch.quantity_remaining).toFixed(1)} remaining
+                        </p>
+                        <p className="text-[10px] text-muted-foreground font-mono">
+                          Recv: {Number(batch.quantity_received).toFixed(1)} · ₱{Number(batch.cost_per_unit).toFixed(2)}/u
+                        </p>
+                      </div>
+                      {isAdmin && isBatchUnused(batch) && (
+                        <ContextMenu>
+                          <ContextMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 hover:bg-muted/85 action-btn-trigger shrink-0"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
+                                e.currentTarget.dispatchEvent(event);
+                              }}
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </ContextMenuTrigger>
+                          <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
+                            <ContextMenuItem
+                              onSelect={() => { setDeletingBatch(batch); setBatchDeleteFeedback(null); }}
+                              className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
+                            >
+                              <Trash2 className="size-3.5" />
+                              Delete Batch
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </TabsContent>
       </Tabs>

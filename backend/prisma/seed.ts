@@ -17,7 +17,7 @@ async function main() {
   const adminUsername = "master";
   const rawPassword = "123456";
 
-  const existingUser = await prisma.user.findUnique({
+  const existingUser = await prisma.user.findFirst({
     where: { username: adminUsername },
   });
 
