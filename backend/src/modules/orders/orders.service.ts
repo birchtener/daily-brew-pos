@@ -71,6 +71,16 @@ export class OrdersService {
           }
         }
 
+        if (!input.park && input.payment_method) {
+          await tx.payments.create({
+            data: {
+              order_id: createdOrder.id,
+              amount: calculatedTotal,
+              method: input.payment_method
+            }
+          });
+        }
+
         return {
           order: createdOrder,
           total: calculatedTotal,
@@ -244,6 +254,17 @@ export class OrdersService {
     return await prisma.orders.findMany({
       where: { order_status: 'parked' },
       include: { items: { include: { product: true } } },
+      orderBy: { created_at: 'desc' }
+    });
+  }
+
+  static async getCompletedOrders() {
+    return await prisma.orders.findMany({
+      where: { order_status: 'completed' },
+      include: { 
+        items: { include: { product: true } },
+        payment: true
+      },
       orderBy: { created_at: 'desc' }
     });
   }

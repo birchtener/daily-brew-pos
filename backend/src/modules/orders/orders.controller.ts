@@ -16,6 +16,11 @@ export class OrdersController {
     res.status(200).json({ success: true, data });
   }
 
+  static async listCompleted(req: Request, res: Response) {
+    const data = await OrdersService.getCompletedOrders();
+    res.status(200).json({ success: true, data });
+  }
+
   static async finalizeParked(req: Request, res: Response) {
     const { id } = req.params;
     if (typeof id !== 'string') {
