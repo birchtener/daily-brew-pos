@@ -14,9 +14,10 @@ import SuppliersPage from './features/dashboard/pages/SuppliersPage';
 import SettingsPage from './features/dashboard/pages/SettingsPage';
 import UsersPage from './features/dashboard/pages/UsersPage.tsx';
 import LogsPage from './features/dashboard/pages/LogsPage';
-import NotificationsAdminPage from './features/dashboard/pages/NotificationsAdminPage.tsx';
+import NotificationsPage from './features/dashboard/pages/NotificationsPage';
 import { useStore } from '@/store/useStore';
 import { RoleGuard } from './features/auth/components/RoleGuard';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function App() {
   const { dark } = useStore();
@@ -48,7 +49,8 @@ export default function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="logs" element={<LogsPage />} />
               <Route element={<RoleGuard allowedRoles={['admin']} />}>
-                <Route path="notifications-admin" element={<NotificationsAdminPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="notifications-admin" element={<NotificationsPage />} />
                 <Route path="users" element={<UsersPage />} />
               </Route>
             </Route>
@@ -56,6 +58,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      <Toaster/>
     </div>
   )
 }
