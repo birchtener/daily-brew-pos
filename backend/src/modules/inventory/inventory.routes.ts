@@ -4,6 +4,7 @@ import { IngredientsController } from './ingredients/ingredients.controller';
 import { ProductsController } from './products/products.controller';
 import { SuppliersController } from './suppliers/suppliers.controller';
 import { BatchesController } from './batches/batches.controller';
+import { DiscountsController } from './discounts/discounts.controller';
 import { protect } from '../../middlewares/auth.middleware';
 import { restrictTo } from '../../middlewares/rbac.middleware';
 import { Role } from '../../generated/prisma/client';
@@ -40,6 +41,13 @@ router.get('/suppliers', restrictTo(Role.admin, Role.staff), SuppliersController
 router.get('/suppliers/:id', restrictTo(Role.admin, Role.staff), SuppliersController.getSupplier);
 router.put('/suppliers/:id', restrictTo(Role.admin), SuppliersController.updateSupplier);
 router.delete('/suppliers/:id', restrictTo(Role.admin), SuppliersController.deleteSupplier);
+
+// Discount Routes
+router.post('/discounts', restrictTo(Role.admin), DiscountsController.addDiscount);
+router.get('/discounts', restrictTo(Role.admin, Role.staff), DiscountsController.getDiscounts);
+router.get('/discounts/:id', restrictTo(Role.admin, Role.staff), DiscountsController.getDiscount);
+router.put('/discounts/:id', restrictTo(Role.admin), DiscountsController.updateDiscount);
+router.delete('/discounts/:id', restrictTo(Role.admin), DiscountsController.deleteDiscount);
 
 // Batch Routes
 router.get('/batches', restrictTo(Role.admin, Role.staff), BatchesController.getBatches);
