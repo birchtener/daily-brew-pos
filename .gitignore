@@ -55,5 +55,6 @@ coverage/
 *.node
 
 guide.md
-
+EXECUTION.md
+deploy/
 generated/

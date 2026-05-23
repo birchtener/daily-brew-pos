@@ -106,9 +106,8 @@ export function NavUser({
                 <ScrollText />
                 Logs
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon
-                />
+              <DropdownMenuItem onSelect={() => { setOpenMobile(false); /* open notifications in a page? */ }}>
+                <BellIcon />
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>

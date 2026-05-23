@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { UsersService } from './users.service';
-import { RegisterSchema, UpdateProfileSchema, UpdatePasswordSchema } from './users.validation';
+import { RegisterSchema, UpdateProfileSchema, UpdatePasswordSchema, UsersListQuerySchema, AdminUpdateUserSchema } from './users.validation';
 
 export class UsersController {
   static async register(req: Request, res: Response) {
@@ -69,5 +69,60 @@ export class UsersController {
       message: 'User deleted successfully.',
       data: outcome,
     });
+  }
+
+  static async listUsers(req: Request, res: Response) {
+    const data = UsersListQuerySchema.parse(req.query);
+    const result = await UsersService.list({ page: data.page, perPage: data.perPage, q: data.q, role: data.role });
+    res.status(200).json({ success: true, data: result });
+  }
+
+  static async updateUser(req: Request, res: Response) {
+    const targetUserId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+    if (!targetUserId) {
+      throw Object.assign(new Error('Bad Request: No user id provided.'), { statusCode: 400 });
+    }
+
+    const data = AdminUpdateUserSchema.parse(req.body);
+    const updated = await UsersService.adminUpdateProfile(targetUserId, data, req.user!.id);
+
+    res.status(200).json({ success: true, data: updated });
+  }
+
+  static async resetPassword(req: Request, res: Response) {
+    const targetUserId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+    if (!targetUserId) {
+      throw Object.assign(new Error('Bad Request: No user id provided.'), { statusCode: 400 });
+    }
+
+    const outcome = await UsersService.adminResetPassword(targetUserId, req.user!.id);
+
+    res.status(200).json({ success: true, data: outcome });
+  }
+
+  static async updateUserAvatar(req: Request, res: Response) {
+    if (!req.file) {
+      throw Object.assign(new Error('Bad Request: No avatar image file provided.'), { statusCode: 400 });
+    }
+
+    const targetUserId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+    if (!targetUserId) {
+      throw Object.assign(new Error('Bad Request: No user id provided.'), { statusCode: 400 });
+    }
+
+    const updatedUser = await UsersService.adminUpdateAvatar(req.file.buffer, targetUserId, req.user!.id);
+
+    res.status(200).json({ success: true, message: 'Avatar updated successfully.', data: updatedUser });
+  }
+
+  static async deleteUserAvatar(req: Request, res: Response) {
+    const targetUserId = Array.isArray(req.params.userId) ? req.params.userId[0] : req.params.userId;
+    if (!targetUserId) {
+      throw Object.assign(new Error('Bad Request: No user id provided.'), { statusCode: 400 });
+    }
+
+    const updatedUser = await UsersService.adminDeleteAvatar(targetUserId, req.user!.id);
+
+    res.status(200).json({ success: true, message: 'Avatar deleted successfully.', data: updatedUser });
   }
 }

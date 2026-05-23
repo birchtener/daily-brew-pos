@@ -12,7 +12,9 @@ import DiscountsPage from './features/dashboard/pages/DiscountsPage';
 import InventoryPage from './features/dashboard/pages/InventoryPage';
 import SuppliersPage from './features/dashboard/pages/SuppliersPage';
 import SettingsPage from './features/dashboard/pages/SettingsPage';
+import UsersPage from './features/dashboard/pages/UsersPage.tsx';
 import LogsPage from './features/dashboard/pages/LogsPage';
+import NotificationsAdminPage from './features/dashboard/pages/NotificationsAdminPage.tsx';
 import { useStore } from '@/store/useStore';
 
 export default function App() {
@@ -42,6 +44,8 @@ export default function App() {
               <Route path="discounts" element={<DiscountsPage />} />
               <Route path="inventory" element={<InventoryPage />} />
               <Route path="suppliers" element={<SuppliersPage />} />
+              <Route path="notifications-admin" element={<NotificationsAdminPage />} />
+              <Route path="users" element={<UsersPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="logs" element={<LogsPage />} />
             </Route>

@@ -4,6 +4,12 @@
     "moduleResolution": "bundler",
     "target": "ES2023",
     "strict": true,
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "allowJs": false,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "noEmitOnError": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "node_modules"]
 }

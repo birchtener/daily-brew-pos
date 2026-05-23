@@ -9,6 +9,7 @@ import usersRoutes from './modules/users/users.routes';
 import ordersRoutes from './modules/orders/orders.routes';
 import analyticsRoutes from './modules/analytics/analytics.routes';
 import auditRoutes from './modules/audit/audit.routes';
+import notificationsRoutes from './modules/notifications/notifications.routes';
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/api/v1/users', usersRoutes);
 app.use('/api/v1/orders', ordersRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/audit', auditRoutes);
+app.use('/api/v1/notifications', notificationsRoutes);
 
 app.use(errorHandler);
 

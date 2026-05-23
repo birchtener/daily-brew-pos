@@ -21,6 +21,7 @@ import {
   Ticket,
   Boxes,
   Truck,
+  Bell,
   Settings2,
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
@@ -68,6 +69,16 @@ const data = {
       title: "Suppliers",
       url: "/suppliers",
       icon: Truck,
+    },
+    {
+      title: "Notifications",
+      url: "/notifications-admin",
+      icon: Bell,
+    },
+    {
+      title: "Users",
+      url: "/users",
+      icon: MonitorPlay,
     },
     {
       title: "Settings",

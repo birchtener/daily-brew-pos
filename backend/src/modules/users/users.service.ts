@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { AuditService } from '../audit/audit.service';
 import { LogCategory, LogType, Prisma } from '../../generated/prisma/client';
 import { z } from 'zod';
-import { RegisterSchema, UpdateProfileSchema } from './users.validation';
+import { RegisterSchema, UpdateProfileSchema, AdminUpdateUserSchema } from './users.validation';
 import { streamUpload } from '../../config/cloudinary';
 
 const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
@@ -242,6 +242,159 @@ export class UsersService {
         throw createHttpError('Validation Failure: Target user not found.', 404);
       }
       throw createHttpError('Validation Failure: Admin password reset failed.', 500);
+    }
+  }
+
+  static async list(opts?: { page?: number; perPage?: number; q?: string; role?: 'admin' | 'staff' }) {
+    const page = opts?.page && opts.page > 0 ? Math.floor(opts.page) : 1;
+    const perPage = opts?.perPage && opts.perPage > 0 ? Math.min(100, Math.floor(opts.perPage)) : 20;
+    const skip = (page - 1) * perPage;
+
+    const where: any = { deleted_at: null };
+    if (opts?.role) where.role = opts.role;
+    if (opts?.q) {
+      const q = opts.q;
+      where.OR = [
+        { username: { contains: q, mode: 'insensitive' } },
+        { first_name: { contains: q, mode: 'insensitive' } },
+        { last_name: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    const [items, total] = await prisma.$transaction([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          username: true,
+          first_name: true,
+          last_name: true,
+          avatar_url: true,
+          role: true,
+          is_password_temp: true,
+        },
+        orderBy: { created_at: 'asc' },
+        skip,
+        take: perPage,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return { items, total, page, perPage };
+  }
+
+  static async adminUpdateProfile(targetUserId: string, input: z.infer<typeof AdminUpdateUserSchema>, adminActorId: string) {
+    const userExists = await prisma.user.findFirst({ where: { id: targetUserId, deleted_at: null } });
+    if (!userExists) {
+      throw createHttpError('Validation Failure: Target resource not found.', 404);
+    }
+
+    try {
+      const dataToUpdate: any = {
+        first_name: input.first_name,
+        last_name: input.last_name,
+      };
+      if ((input as any).role) dataToUpdate.role = (input as any).role;
+
+      const updated = await prisma.user.update({
+        where: { id: targetUserId },
+        data: {
+          ...dataToUpdate,
+        },
+        select: {
+          id: true,
+          username: true,
+          first_name: true,
+          last_name: true,
+          avatar_url: true,
+          role: true,
+          is_password_temp: true,
+        },
+      });
+
+      void AuditService.log({
+        message: `ADMIN PROFILE UPDATE: Administrator [${adminActorId}] updated profile for User [${updated.username}].`,
+        category: LogCategory.authentication,
+        type: LogType.info,
+        userId: adminActorId,
+      });
+
+      return updated;
+    } catch (error) {
+      if (isKnownPrismaError(error, 'P2025')) {
+        throw createHttpError('Validation Failure: Target resource not found.', 404);
+      }
+      throw createHttpError('Validation Failure: Admin profile update failed.', 500);
+    }
+  }
+
+  static async adminUpdateAvatar(fileBuffer: Buffer, targetUserId: string, adminActorId: string) {
+    const userExists = await prisma.user.findFirst({ where: { id: targetUserId, deleted_at: null } });
+    if (!userExists) {
+      throw createHttpError('Validation Failure: Target resource not found.', 404);
+    }
+
+    try {
+      const secureUrl = await streamUpload(fileBuffer, 'avatars');
+
+      const updatedUser = await prisma.user.update({
+        where: { id: targetUserId },
+        data: { avatar_url: secureUrl },
+        select: {
+          id: true,
+          username: true,
+          first_name: true,
+          last_name: true,
+          avatar_url: true,
+          role: true,
+          is_password_temp: true,
+        },
+      });
+
+      void AuditService.log({
+        message: `ADMIN PROFILE UPDATE: Administrator [${adminActorId}] updated avatar for User [${updatedUser.username}].`,
+        category: LogCategory.authentication,
+        type: LogType.info,
+        userId: adminActorId,
+      });
+
+      return updatedUser;
+    } catch (error) {
+      throw createHttpError('Validation Failure: Avatar upload failed.', 500);
+    }
+  }
+
+  static async adminDeleteAvatar(targetUserId: string, adminActorId: string) {
+    const userExists = await prisma.user.findFirst({ where: { id: targetUserId, deleted_at: null } });
+    if (!userExists) {
+      throw createHttpError('Validation Failure: Target resource not found.', 404);
+    }
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: targetUserId },
+        data: { avatar_url: null },
+        select: {
+          id: true,
+          username: true,
+          first_name: true,
+          last_name: true,
+          avatar_url: true,
+          role: true,
+          is_password_temp: true,
+        },
+      });
+
+      void AuditService.log({
+        message: `ADMIN PROFILE UPDATE: Administrator [${adminActorId}] deleted avatar for User [${updatedUser.username}].`,
+        category: LogCategory.authentication,
+        type: LogType.info,
+        userId: adminActorId,
+      });
+
+      return updatedUser;
+    } catch (error) {
+      throw createHttpError('Validation Failure: Avatar deletion failed.', 500);
     }
   }
 

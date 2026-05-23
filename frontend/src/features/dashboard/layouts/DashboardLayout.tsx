@@ -1,4 +1,5 @@
-import { Bell, BellDot, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
+import NotificationsDropdown from '@/components/shared/NotificationsDropdown.tsx';
 import { 
   Outlet, 
   //useLocation 
@@ -44,13 +45,7 @@ function DashboardShell() {
     year: 'numeric',
   });
 
-  const notifications = [
-    { id: 1, type: 'alert', title: 'Low Stocks Alert', message: 'Inventory low for Espresso Beans', read: false },
-    { id: 2, type: 'info', title: 'New Supplier', message: 'A new supplier has been added', read: true },
-    { id: 3, type: 'success', title: 'Order Received', message: 'A new order has been received', read: false },
-  ];
-
-  const readNotifications = notifications.filter((notification) => !notification.read).length === 0;
+  
 
   return (
     <>
@@ -59,7 +54,7 @@ function DashboardShell() {
           <div className="flex items-center gap-3">
             <SidebarTrigger />
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-muted-foreground">POS and Inventory System</p>
+              <p className="text-sm font-semibold uppercase text-muted-foreground">POS and Inventory System</p>
               <p className="text-sm text-muted-foreground/50">{currentDate}</p>
             </div>
           </div>
@@ -73,12 +68,9 @@ function DashboardShell() {
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </button>
 
-            <button
-              type="button"
-              className="aspect-square inline-flex items-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-muted"
-            >
-              {readNotifications ? <Bell className="size-4 " /> : <BellDot className="size-4 " />}
-            </button>
+            <div>
+              <NotificationsDropdown />
+            </div>
           </div>
         </div>
       </header>
