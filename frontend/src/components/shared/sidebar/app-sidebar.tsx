@@ -17,6 +17,8 @@ import {
   LayoutDashboard,
   MonitorPlay,
   Package,
+  Tag,
+  Ticket,
   Boxes,
   Truck,
   Settings2,
@@ -44,6 +46,16 @@ const data = {
       title: "Products",
       url: "/products",
       icon: Package,
+    },
+    {
+      title: "Categories",
+      url: "/categories",
+      icon: Tag,
+    },
+    {
+      title: "Discounts",
+      url: "/discounts",
+      icon: Ticket,
     },
   ],
   systemMenu: [

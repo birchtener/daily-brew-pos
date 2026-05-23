@@ -118,6 +118,9 @@ export default function ProductsPage() {
   const [modalFeedback, setModalFeedback] = useState<FeedbackState>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+
+  // Category management has been separated to a dedicated categories catalog page.
+
   // Debouncing search
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -397,12 +400,14 @@ export default function ProductsPage() {
         </div>
 
         {isAdmin && (
-          <Button
-            onClick={handleOpenAddModal}
-            className="h-9 px-4 text-xs font-semibold shrink-0 inline-flex items-center gap-1.5 self-start sm:self-center"
-          >
-            <Plus className="size-4" /> Add Product
-          </Button>
+          <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+            <Button
+              onClick={handleOpenAddModal}
+              className="h-9 px-4 text-xs font-semibold inline-flex items-center gap-1.5"
+            >
+              <Plus className="size-4" /> Add Product
+            </Button>
+          </div>
         )}
       </div>
 
@@ -1207,6 +1212,8 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+
+      {/* Categories modal and drop cascade deleted, now handled in standalone categories catalog page */}
     </div>
   );
 }

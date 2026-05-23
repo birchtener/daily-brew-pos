@@ -17,8 +17,6 @@ import {
   AlertCircle,
   Check,
   X,
-  ChevronRight,
-  Package,
 } from 'lucide-react';
 import {
   checkout,
@@ -26,13 +24,11 @@ import {
   getCompletedOrders,
   finalizeParkedOrder,
   type Order,
-  type OrderItem,
 } from '@/api/orders';
 import { getProducts, type Product } from '@/api/products';
 import { getCategories, type Category } from '@/api/categories';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useStore } from '@/store/useStore';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
 
 type CartItem = {
@@ -60,8 +56,6 @@ function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
 }
 
 export default function PosTerminalPage() {
-  const currentUser = useStore((s) => s.user);
-
   // ── POS TABS ──
   const [activeTab, setActiveTab] = useState<'terminal' | 'parked' | 'completed'>('terminal');
 
@@ -639,7 +633,7 @@ export default function PosTerminalPage() {
                 <Button
                   onClick={() => handleCheckoutSubmit(false)}
                   disabled={submitting}
-                  className="w-full h-10 text-xs font-bold shrink-0 bg-primary hover:bg-primary/95 text-white shadow"
+                  className="w-full h-10 text-xs font-bold shrink-0 bg-primary hover:bg-primary/95 text-primary-foreground shadow"
                 >
                   {submitting ? (
                     <span className="inline-flex items-center gap-1.5">
@@ -648,7 +642,7 @@ export default function PosTerminalPage() {
                   ) : editingParkedOrder ? (
                     'Finalize Settlement'
                   ) : (
-                    'Checkout & Settle'
+                    'Checkout'
                   )}
                 </Button>
 
@@ -691,7 +685,6 @@ export default function PosTerminalPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {parkedOrders.map((order) => {
                 const date = new Date(order.created_at);
-                const itemsCount = order.items?.reduce((acc, c) => acc + c.quantity, 0) || 0;
 
                 return (
                   <div

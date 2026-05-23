@@ -7,6 +7,8 @@ import DashboardLayout from './features/dashboard/layouts/DashboardLayout';
 import DashboardPage from './features/dashboard/pages/DashboardPage';
 import PosTerminalPage from './features/dashboard/pages/PosTerminalPage';
 import ProductsPage from './features/dashboard/pages/ProductsPage';
+import CategoriesPage from './features/dashboard/pages/CategoriesPage';
+import DiscountsPage from './features/dashboard/pages/DiscountsPage';
 import InventoryPage from './features/dashboard/pages/InventoryPage';
 import SuppliersPage from './features/dashboard/pages/SuppliersPage';
 import SettingsPage from './features/dashboard/pages/SettingsPage';
@@ -36,6 +38,8 @@ export default function App() {
               <Route index element={<DashboardPage />} />
               <Route path="pos-terminal" element={<PosTerminalPage />} />
               <Route path="products" element={<ProductsPage />} />
+              <Route path="categories" element={<CategoriesPage />} />
+              <Route path="discounts" element={<DiscountsPage />} />
               <Route path="inventory" element={<InventoryPage />} />
               <Route path="suppliers" element={<SuppliersPage />} />
               <Route path="settings" element={<SettingsPage />} />

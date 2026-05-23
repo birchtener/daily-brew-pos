@@ -19,3 +19,18 @@ export async function getCategories() {
   const { data } = await apiClient.get<ApiResponse<Category[]>>('/inventory/categories');
   return data.data;
 }
+
+export async function createCategory(payload: { name: string }) {
+  const { data } = await apiClient.post<ApiResponse<Category>>('/inventory/categories', payload);
+  return data.data;
+}
+
+export async function updateCategory(id: string, payload: { name: string }) {
+  const { data } = await apiClient.put<ApiResponse<Category>>(`/inventory/categories/${id}`, payload);
+  return data.data;
+}
+
+export async function deleteCategory(id: string) {
+  const { data } = await apiClient.delete<ApiResponse<Category>>(`/inventory/categories/${id}`);
+  return data.data;
+}
