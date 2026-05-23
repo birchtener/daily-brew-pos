@@ -18,6 +18,7 @@ import {
   deleteDiscount,
   type Discount,
 } from '@/api/discounts';
+import { fetchUsers, type UpdatedUser } from '@/api/users';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store/useStore';
@@ -48,6 +49,7 @@ export default function DiscountsPage() {
 
   // ── STATE ──
   const [discounts, setDiscounts] = useState<Discount[]>([]);
+  const [users, setUsers] = useState<UpdatedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,6 +58,7 @@ export default function DiscountsPage() {
   const [formCode, setFormCode] = useState('');
   const [formName, setFormName] = useState('');
   const [formPercentage, setFormPercentage] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Modals / Editing States
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
@@ -69,8 +72,15 @@ export default function DiscountsPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getDiscounts();
-      setDiscounts(data);
+      const discountData = await getDiscounts();
+      setDiscounts(discountData);
+
+      try {
+        const userData = await fetchUsers({ page: 1, perPage: 100 });
+        setUsers(userData.items);
+      } catch {
+        setUsers([]);
+      }
     } catch (err: any) {
       setError(extractErrorMessage(err, 'Failed to fetch active discounts.'));
     } finally {
@@ -103,6 +113,7 @@ export default function DiscountsPage() {
       setFormCode('');
       setFormName('');
       setFormPercentage('');
+      setIsCreateModalOpen(false);
       setFeedback({ type: 'success', message: 'Promo discount code registered successfully!' });
       await fetchData();
     } catch (err: any) {
@@ -180,6 +191,12 @@ export default function DiscountsPage() {
       d.name.toLowerCase().includes(searchVal.toLowerCase())
   );
 
+  const getCreatorLabel = (creatorId: string) => {
+    if (!creatorId || creatorId === 'system') return 'System';
+    const match = users.find((user) => user.id === creatorId);
+    return match ? `${match.first_name} ${match.last_name} (@${match.username})` : creatorId;
+  };
+
   return (
     <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       {/* Header section */}
@@ -195,80 +212,9 @@ export default function DiscountsPage() {
 
       {feedback && <FeedbackBanner feedback={feedback} />}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Area: Add Discount Code Form */}
-        {isAdmin && (
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-sm flex flex-col gap-4">
-            <div>
-              <h2 className="text-sm font-bold text-foreground mb-1">Establish Discount Code</h2>
-              <p className="text-[11px] text-muted-foreground">
-                Create a promo code with a custom percentage deductions structure.
-              </p>
-            </div>
-
-            <form onSubmit={handleAddDiscount} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-card-foreground uppercase">Promo Code</label>
-                <Input
-                  value={formCode}
-                  onChange={(e) => setFormCode(e.target.value)}
-                  placeholder="e.g., DAILYBREW20"
-                  className="h-10 text-sm font-mono uppercase"
-                  maxLength={50}
-                  disabled={submitting}
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-card-foreground uppercase">Campaign Name</label>
-                <Input
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g., Anniversary Promo"
-                  className="h-10 text-sm"
-                  maxLength={50}
-                  disabled={submitting}
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-card-foreground uppercase">Deduction Percentage (%)</label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={formPercentage}
-                  onChange={(e) => setFormPercentage(e.target.value)}
-                  placeholder="e.g., 20"
-                  className="h-10 text-sm font-mono"
-                  disabled={submitting}
-                  required
-                />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={submitting || !formCode.trim() || !formName.trim() || !formPercentage}
-                className="w-full h-9.5 text-xs font-semibold inline-flex items-center justify-center gap-1.5"
-              >
-                {submitting ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <>
-                    <Plus className="size-4" /> Add Discount
-                  </>
-                )}
-              </Button>
-            </form>
-          </div>
-        )}
-
-        {/* Right Area: Discounts list and search */}
-        <div className={`flex flex-col gap-4 ${isAdmin ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
-          {/* Toolbar */}
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="flex flex-col gap-4">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
@@ -278,10 +224,20 @@ export default function DiscountsPage() {
                 className="pl-9 w-full h-9 text-sm"
               />
             </div>
-            <div className="text-xs text-muted-foreground shrink-0 select-none">
-              Showing <span className="font-semibold text-card-foreground">{filteredDiscounts.length}</span> of {discounts.length} promo codes
-            </div>
+
+            {isAdmin && (
+              <Button type="button" onClick={() => setIsCreateModalOpen(true)} className="h-9 gap-1.5 px-4 text-xs font-semibold">
+                <Plus className="size-4" /> Create Discount
+              </Button>
+            )}
           </div>
+          <div className="text-xs text-muted-foreground shrink-0 select-none">
+            Showing <span className="font-semibold text-card-foreground">{filteredDiscounts.length}</span> of {discounts.length} promo codes
+          </div>
+        </div>
+
+        {/* Right Area: Discounts list and search */}
+        <div className="flex flex-col gap-4">
 
           {/* Grid Layout of Discounts */}
           {loading && discounts.length === 0 ? (
@@ -359,7 +315,8 @@ export default function DiscountsPage() {
                       )}
                     </div>
 
-                    <div className="text-[10px] text-muted-foreground flex justify-between items-center border-t border-border/40 pt-2 font-mono">
+                    <div className="text-[10px] text-muted-foreground flex flex-col gap-1 border-t border-border/40 pt-2 font-mono sm:flex-row sm:justify-between sm:items-center">
+                      <span>Created by: {getCreatorLabel(d.created_by)}</span>
                       <span>Updated: {new Date(d.updated_at).toLocaleDateString()}</span>
                     </div>
                   </div>
@@ -369,6 +326,86 @@ export default function DiscountsPage() {
           )}
         </div>
       </div>
+
+      {isCreateModalOpen && isAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-border pb-3.5 mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Plus className="size-5 text-primary" /> Create Discount
+              </h2>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="size-7 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground transition"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddDiscount} className="flex flex-col gap-4 text-left">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-card-foreground uppercase">Promo Code</label>
+                <Input
+                  value={formCode}
+                  onChange={(e) => setFormCode(e.target.value)}
+                  placeholder="e.g., DAILYBREW20"
+                  className="h-10 text-sm font-mono uppercase"
+                  maxLength={50}
+                  disabled={submitting}
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-card-foreground uppercase">Campaign Name</label>
+                <Input
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="e.g., Anniversary Promo"
+                  className="h-10 text-sm"
+                  maxLength={50}
+                  disabled={submitting}
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-card-foreground uppercase">Deduction Percentage (%)</label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={formPercentage}
+                  onChange={(e) => setFormPercentage(e.target.value)}
+                  placeholder="e.g., 20"
+                  className="h-10 text-sm font-mono"
+                  disabled={submitting}
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  disabled={submitting}
+                  className="h-9 px-4 text-xs font-medium"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitting || !formCode.trim() || !formName.trim() || !formPercentage}
+                  className="h-9 px-4 text-xs font-semibold"
+                >
+                  {submitting ? 'Saving…' : 'Add Discount'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── EDIT DISCOUNT MODAL ────────────────────────────────────── */}
       {editingDiscount && (

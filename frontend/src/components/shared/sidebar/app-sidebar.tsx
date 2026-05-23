@@ -91,7 +91,7 @@ const data: {
     },
     {
       title: "Notifications",
-      url: "/notifications-admin",
+      url: "/notifications",
       icon: Bell,
       roles: ['admin'] as const,
     },

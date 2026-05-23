@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Eye, EyeOff, LoaderCircle } from "lucide-react"
 import { extractErrorMessage } from "@/lib/extractErrorMessage"
 import { useStore } from "@/store/useStore"
+import { toast } from 'sonner'
 import * as z from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -35,7 +36,6 @@ export function LoginForm({
   const navigate = useNavigate()
   const { dark, toggleDark } = useStore()
   const [showPassword, setShowPassword] = React.useState(false)
-  const [submitError, setSubmitError] = React.useState<string | null>(null)
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFields>({
     resolver: zodResolver(loginSchema),
@@ -46,16 +46,13 @@ export function LoginForm({
   });
 
   const onSubmit = async (values: LoginFields) => {
-    setSubmitError(null)
-
     try {
         const result = await loginRequest(values)
         localStorage.setItem('daily_brew_user', JSON.stringify(result))
         useStore.getState().loadUser()
       navigate('/', { replace: true })
     } catch (error) {
-        const message = extractErrorMessage(error, 'Login failed. Please try again.')
-        setSubmitError(message)
+        toast.error(extractErrorMessage(error, 'Login failed. Please try again.'))
     }
   }
 
@@ -110,12 +107,6 @@ export function LoginForm({
               </div>
               <FieldError errors={[errors.password]} />
             </Field>
-
-            {submitError ? (
-              <div className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {submitError}
-              </div>
-            ) : null}
 
             <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (

@@ -10,6 +10,7 @@ import {
 } from '@/api/users';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useStore } from '@/store/useStore';
 import {
   DropdownMenu,
@@ -434,11 +435,19 @@ export default function UsersPage() {
             {items.map((user) => (
               <div key={user.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">
-                      {user.first_name} {user.last_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar className="size-10 shrink-0 rounded-lg">
+                      <AvatarImage src={user.avatar_url || undefined} alt={`${user.first_name} ${user.last_name}`} />
+                      <AvatarFallback className="rounded-lg text-xs">
+                        {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">
+                        {user.first_name} {user.last_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -505,7 +514,18 @@ export default function UsersPage() {
               {items.map((user) => (
                 <tr key={user.id} className="border-t border-border">
                   <td className="px-3 py-2">
-                    {user.first_name} {user.last_name}
+                    <div className="flex items-center gap-3">
+                      <Avatar className="size-8 rounded-lg">
+                        <AvatarImage src={user.avatar_url || undefined} alt={`${user.first_name} ${user.last_name}`} />
+                        <AvatarFallback className="rounded-lg text-[10px]">
+                          {user.first_name?.charAt(0)}{user.last_name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="font-medium leading-tight">{user.first_name} {user.last_name}</p>
+                        <p className="text-xs text-muted-foreground">@{user.username}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-3 py-2">@{user.username}</td>
                   <td className="px-3 py-2 uppercase">{user.role}</td>

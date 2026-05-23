@@ -111,7 +111,7 @@ export function NavUser({
               {isAdmin && (
                 <DropdownMenuItem onSelect={() => {
                   setOpenMobile(false);
-                  navigate('/notifications-admin');
+                  navigate('/notifications');
                 }}>
                   <BellIcon />
                   Notifications

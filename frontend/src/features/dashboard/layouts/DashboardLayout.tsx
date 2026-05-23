@@ -55,7 +55,7 @@ function DashboardShell() {
           <div className="flex items-center gap-3">
             <SidebarTrigger />
             <div>
-              <p className="text-sm font-semibold uppercase text-muted-foreground">POS and Inventory System</p>
+              <p className="text-sm font-semibold uppercase text-primary">POS and Inventory System</p>
               <p className="text-sm text-muted-foreground/50">{currentDate}</p>
             </div>
           </div>
@@ -65,9 +65,7 @@ function DashboardShell() {
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </Button>
 
-            <div>
-              <NotificationsDropdown />
-            </div>
+            <NotificationsDropdown />
           </div>
         </div>
       </header>

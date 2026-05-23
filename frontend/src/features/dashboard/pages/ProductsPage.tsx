@@ -778,9 +778,9 @@ export default function ProductsPage() {
                 ) : (
                   <div className="flex flex-col gap-2 max-h-45 overflow-y-auto pr-1">
                     {formRecipeLines.map((line) => (
-                      <div key={line._key} className="flex items-center gap-2 animate-in fade-in duration-200">
+                      <div key={line._key} className="flex flex-col gap-2 animate-in fade-in duration-200 sm:flex-row sm:items-center">
                         {/* Ingredient Dropdown */}
-                        <div className="flex-1 min-w-0">
+                          <div className="min-w-0 flex-1">
                           <Select
                             value={line.ingredient_id}
                             onValueChange={(val) => updateRecipeLine(line._key, 'ingredient_id', val)}
@@ -799,7 +799,7 @@ export default function ProductsPage() {
                         </div>
 
                         {/* Qty Input */}
-                        <div className="w-24.5 shrink-0">
+                        <div className="w-full shrink-0 sm:w-24.5">
                           <Input
                             value={line.quantity}
                             onChange={(e) => updateRecipeLine(line._key, 'quantity', e.target.value)}
@@ -813,7 +813,7 @@ export default function ProductsPage() {
                         </div>
 
                         {/* Unit changer select block */}
-                        <div className="w-20 shrink-0">
+                        <div className="w-full shrink-0 sm:w-20">
                           {(() => {
                             const foundIng = ingredients.find((i) => i.id === line.ingredient_id);
                             const baseUnit = foundIng ? foundIng.unit : line.unit;
@@ -849,7 +849,7 @@ export default function ProductsPage() {
                           variant="ghost"
                           size="icon"
                           onClick={() => removeRecipeLine(line._key)}
-                          className="size-8.5 text-rose-500 hover:bg-rose-500/10 rounded-lg shrink-0"
+                          className="size-8.5 shrink-0 self-end rounded-lg text-rose-500 hover:bg-rose-500/10 sm:self-auto"
                         >
                           <Trash2 className="size-3.5" />
                         </Button>
