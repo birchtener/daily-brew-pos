@@ -1,5 +1,5 @@
 import { Moon, Sun } from 'lucide-react';
-import NotificationsDropdown from '@/components/shared/NotificationsDropdown.tsx';
+//import NotificationsDropdown from '@/components/shared/NotificationsDropdown.tsx';
 import { 
   Outlet, 
   //useLocation 
@@ -65,7 +65,7 @@ function DashboardShell() {
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </Button>
 
-            <NotificationsDropdown />
+            {/* <NotificationsDropdown /> */}
           </div>
         </div>
       </header>
