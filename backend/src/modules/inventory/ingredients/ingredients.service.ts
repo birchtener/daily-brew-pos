@@ -72,7 +72,20 @@ export class IngredientsService {
     static async getIngredients(userId: string) {
         const ingredients = await prisma.ingredients.findMany({
             orderBy: { name: 'asc' },
+            include: {
+                batches: {
+                    where: { quantity_remaining: { gt: 0 } },
+                    select: { quantity_remaining: true },
+                },
+            },
         });
+
+        const withStock = ingredients.map(({ batches, ...ing }) => ({
+            ...ing,
+            current_stock: batches.reduce(
+                (sum, b) => sum + Number(b.quantity_remaining), 0
+            ),
+        }));
 
         await AuditService.log({
             message: `CATALOG: All ingredients retrieved. Total item count: ${ingredients.length}.`,
@@ -81,7 +94,7 @@ export class IngredientsService {
             userId
         });
 
-        return ingredients;
+        return withStock;
     }
 
     static async updateIngredient(id: string, input: z.infer<typeof UpdateIngredientSchema>, userId: string) {
