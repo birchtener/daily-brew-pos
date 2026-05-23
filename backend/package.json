@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "prestart": "node scripts/fix-dist-imports.cjs",
+    "postbuild": "node scripts/fix-dist-imports.cjs",
+    "start": "node --experimental-specifier-resolution=node dist/server.js",
     "seed": "prisma db seed"
   },
   "prisma": {
