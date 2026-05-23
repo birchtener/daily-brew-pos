@@ -96,6 +96,11 @@ export class ProductsService {
             orderBy: { name: 'asc' },
             include: {
                 category: true,
+                recipes: {
+                    include: {
+                        ingredient: true
+                    }
+                }
             }
         });
 

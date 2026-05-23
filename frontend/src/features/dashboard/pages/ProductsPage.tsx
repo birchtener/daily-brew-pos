@@ -49,6 +49,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+const WEIGHT_UNITS = ['kg', 'g', 'mg'] as const;
+const VOLUME_UNITS = ['l', 'ml', 'oz'] as const;
+
+function getAllowedUnits(baseUnit: Unit): Unit[] {
+  if (WEIGHT_UNITS.includes(baseUnit as any)) {
+    return WEIGHT_UNITS as unknown as Unit[];
+  }
+  if (VOLUME_UNITS.includes(baseUnit as any)) {
+    return VOLUME_UNITS as unknown as Unit[];
+  }
+  return [baseUnit];
+}
+
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
 function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
@@ -735,10 +748,10 @@ export default function ProductsPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <label className="text-xs font-semibold text-card-foreground flex items-center gap-1">
-                      Recipe Recipe-Formula Builder
+                      Recipe
                     </label>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      List the precise ingredients quantities consumed per standard cup.
+                      List the precise ingredients quantities consumed per serving.
                     </p>
                   </div>
                   <Button
@@ -794,9 +807,35 @@ export default function ProductsPage() {
                           />
                         </div>
 
-                        {/* Unit string block */}
-                        <div className="w-15 text-left shrink-0 text-[10px] font-mono font-bold text-muted-foreground select-none uppercase">
-                          {line.unit}
+                        {/* Unit changer select block */}
+                        <div className="w-20 shrink-0">
+                          {(() => {
+                            const foundIng = ingredients.find((i) => i.id === line.ingredient_id);
+                            const baseUnit = foundIng ? foundIng.unit : line.unit;
+                            const allowed = getAllowedUnits(baseUnit);
+                            
+                            return allowed.length > 1 ? (
+                              <Select
+                                value={line.unit}
+                                onValueChange={(val) => updateRecipeLine(line._key, 'unit', val as Unit)}
+                              >
+                                <SelectTrigger className="h-8.5 text-[11px] bg-background border border-border">
+                                  <SelectValue placeholder="Unit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {allowed.map((u) => (
+                                    <SelectItem key={u} value={u} className="text-[11px] uppercase">
+                                      {u}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span className="inline-block text-[10px] font-mono font-bold text-muted-foreground select-none uppercase px-2 py-1 bg-muted rounded border border-border/40">
+                                {line.unit}
+                              </span>
+                            );
+                          })()}
                         </div>
 
                         {/* Remove Line */}
@@ -969,10 +1008,10 @@ export default function ProductsPage() {
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <label className="text-xs font-semibold text-card-foreground flex items-center gap-1">
-                      Recipe Recipe-Formula Builder
+                      Recipe
                     </label>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                      List the precise ingredients quantities consumed per standard cup.
+                      List the precise ingredients quantities consumed per serving.
                     </p>
                   </div>
                   <Button
@@ -1028,9 +1067,35 @@ export default function ProductsPage() {
                           />
                         </div>
 
-                        {/* Unit string block */}
-                        <div className="w-15 text-left shrink-0 text-[10px] font-mono font-bold text-muted-foreground select-none uppercase">
-                          {line.unit}
+                        {/* Unit changer select block */}
+                        <div className="w-20 shrink-0">
+                          {(() => {
+                            const foundIng = ingredients.find((i) => i.id === line.ingredient_id);
+                            const baseUnit = foundIng ? foundIng.unit : line.unit;
+                            const allowed = getAllowedUnits(baseUnit);
+                            
+                            return allowed.length > 1 ? (
+                              <Select
+                                value={line.unit}
+                                onValueChange={(val) => updateRecipeLine(line._key, 'unit', val as Unit)}
+                              >
+                                <SelectTrigger className="h-8.5 text-[11px] bg-background border border-border">
+                                  <SelectValue placeholder="Unit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {allowed.map((u) => (
+                                    <SelectItem key={u} value={u} className="text-[11px] uppercase">
+                                      {u}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span className="inline-block text-[10px] font-mono font-bold text-muted-foreground select-none uppercase px-2 py-1 bg-muted rounded border border-border/40">
+                                {line.unit}
+                              </span>
+                            );
+                          })()}
                         </div>
 
                         {/* Remove Line */}
