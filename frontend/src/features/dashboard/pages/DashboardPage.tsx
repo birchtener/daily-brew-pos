@@ -408,7 +408,7 @@ export default function DashboardPage() {
             ) : trendData.length === 0 ? (
               <div className="text-center text-xs text-muted-foreground italic">No sales logs processed for this period.</div>
             ) : (
-              <ChartContainer config={trendChartConfig} className="w-full h-full min-h-[250px] aspect-auto">
+              <ChartContainer config={trendChartConfig} className="w-full h-full min-h-62.5 aspect-auto">
                 <AreaChart
                   data={trendData}
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
@@ -467,7 +467,7 @@ export default function DashboardPage() {
             ) : velocity.length === 0 ? (
               <div className="text-center text-xs text-muted-foreground italic">No sales logs processed for this period.</div>
             ) : (
-              <ChartContainer config={velocityChartConfig} className="w-full h-full min-h-[250px] aspect-auto">
+              <ChartContainer config={velocityChartConfig} className="w-full h-full min-h-62.5 aspect-auto">
                 <BarChart
                   data={velocity.slice(0, 5)}
                   layout="vertical"

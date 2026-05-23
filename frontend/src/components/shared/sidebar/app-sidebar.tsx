@@ -31,7 +31,19 @@ import Logo from "../icon/Logo"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { ParsedUser } from "@/types/userTypes"
 
-const data = {
+type SidebarRole = ParsedUser['role'];
+
+type SidebarNavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles: readonly SidebarRole[];
+};
+
+const data: {
+  mainMenu: SidebarNavItem[];
+  systemMenu: SidebarNavItem[];
+} = {
   mainMenu: [
     {
       title: "Dashboard",
@@ -116,6 +128,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const storeUser = useStore((s) => s.user);
   const user = storeUser ?? fallbackUser;
   const role = user.role;
+
+  const canViewItem = (item: SidebarNavItem) => item.roles.includes(role);
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -134,7 +148,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarMenu>
-            {data.mainMenu.filter((item) => item.roles.includes(role)).map((item) => (
+            {data.mainMenu.filter(canViewItem).map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild tooltip={item.title} isActive={item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)}>
                   <NavLink to={item.url} end={item.url === "/"}>
@@ -150,7 +164,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarMenu>
-            {data.systemMenu.filter((item) => item.roles.includes(role)).map((item) => (
+            {data.systemMenu.filter(canViewItem).map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild tooltip={item.title} isActive={pathname.startsWith(item.url)}>
                   <NavLink to={item.url} end>
