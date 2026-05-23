@@ -11,6 +11,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 
 function DashboardShell() {
   // const { pathname } = useLocation();
@@ -60,13 +61,9 @@ function DashboardShell() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={toggleDark}
-              className="aspect-square inline-flex items-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium shadow-sm transition hover:bg-muted"
-            >
+            <Button type="button" variant="outline" className="relative" onClick={toggleDark}>
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            </button>
+            </Button>
 
             <div>
               <NotificationsDropdown />
