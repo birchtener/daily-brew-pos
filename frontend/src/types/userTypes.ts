@@ -5,6 +5,7 @@ export interface User {
     lastName: string;
     avatarUrl: string | null;
     role: 'admin' | 'staff';
+    is_password_temp?: boolean;
 }
 
 export interface ParsedUser {
@@ -14,4 +15,5 @@ export interface ParsedUser {
     last_name: string;
     avatar_url: string | null;
     role: 'admin' | 'staff';
+    is_password_temp?: boolean;
 }

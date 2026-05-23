@@ -21,6 +21,7 @@ const parseUserFromStorage = (): ParsedUser | null => {
       first_name: parsed.firstName ?? parsed.first_name ?? parsed.username,
       last_name: parsed.lastName ?? parsed.last_name ?? '',
       avatar_url: parsed.avatarUrl ?? parsed.avatar_url ?? null,
+      is_password_temp: parsed.is_password_temp ?? false,
     };
   } catch {
     return null;
@@ -48,6 +49,7 @@ export const useStore = create<StoreState>((set) => ({
       firstName: user.first_name,
       lastName: user.last_name,
       avatarUrl: user.avatar_url,
+      is_password_temp: user.is_password_temp ?? false,
     }));
     set({ user });
   },
@@ -55,4 +57,4 @@ export const useStore = create<StoreState>((set) => ({
   loadUser: () => {
     set({ user: parseUserFromStorage() });
   },
-}));
+}));

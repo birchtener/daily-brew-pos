@@ -37,7 +37,7 @@ export async function updateProfile(payload: { first_name: string; last_name: st
   return data.data;
 }
 
-export async function updatePassword(payload: { currentPassword: string; newPassword: string }) {
+export async function updatePassword(payload: { currentPassword?: string; newPassword: string }) {
   const { data } = await apiClient.put<ApiResponse<null>>('/users/password', payload);
   return data;
 }

@@ -19,6 +19,7 @@ function syncStoreFromBackend(updated: UpdatedUser, setUser: (u: ParsedUser) => 
     first_name: updated.first_name,
     last_name: updated.last_name,
     avatar_url: updated.avatar_url,
+    is_password_temp: updated.is_password_temp,
   });
 }
 
@@ -64,7 +65,7 @@ export default function SettingsPage() {
       <ProfileSection user={user} setUser={setUser} />
 
       {/* Password Section */}
-      <PasswordSection />
+      <PasswordSection user={user} setUser={setUser} />
     </div>
   );
 }
@@ -372,7 +373,13 @@ function ProfileSection({
 
 /* ── Password Section ──────────────────────────────────────── */
 
-function PasswordSection() {
+function PasswordSection({
+  user,
+  setUser,
+}: {
+  user: ParsedUser | null;
+  setUser: (u: ParsedUser) => void;
+}) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [showCurrent, setShowCurrent] = useState(false);
@@ -380,10 +387,14 @@ function PasswordSection() {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
 
+  const isTemporaryPassword = !!user?.is_password_temp;
+
   const currentError = currentPassword.length > 0 && currentPassword.length < 6;
   const newError = newPassword.length > 0 && newPassword.length < 6;
   const canSave =
-    currentPassword.length >= 6 && newPassword.length >= 6 && currentPassword !== newPassword;
+    newPassword.length >= 6 &&
+    (isTemporaryPassword || currentPassword.length >= 6) &&
+    (isTemporaryPassword || currentPassword !== newPassword);
 
   const handleChangePassword = async () => {
     if (!canSave) return;
@@ -391,7 +402,13 @@ function PasswordSection() {
     setFeedback(null);
 
     try {
-      await updatePassword({ currentPassword, newPassword });
+      await updatePassword({
+        ...(isTemporaryPassword ? {} : { currentPassword }),
+        newPassword,
+      });
+      if (user) {
+        setUser({ ...user, is_password_temp: false });
+      }
       setCurrentPassword("");
       setNewPassword("");
       setFeedback({ type: "success", message: "Password updated successfully!" });
@@ -412,40 +429,44 @@ function PasswordSection() {
         <h2 className="text-lg font-medium">Change Password</h2>
       </div>
       <p className="text-sm text-muted-foreground mb-6">
-        Update your account password. Minimum 6 characters.
+        {isTemporaryPassword
+          ? "Set your first password. Minimum 6 characters."
+          : "Update your account password. Minimum 6 characters."}
       </p>
 
       <div className="grid gap-4 max-w-lg">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="settings-current-password" className="text-sm font-medium">
-            Current Password
-          </label>
-          <div className="relative">
-            <Input
-              id="settings-current-password"
-              type={showCurrent ? "text" : "password"}
-              value={currentPassword}
-              onChange={(e) => {
-                setCurrentPassword(e.target.value);
-                setFeedback(null);
-              }}
-              placeholder="••••••••"
-              className="pr-11"
-              aria-invalid={currentError}
-            />
-            <button
-              type="button"
-              onClick={() => setShowCurrent((v) => !v)}
-              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition hover:text-foreground"
-              aria-label={showCurrent ? "Hide password" : "Show password"}
-            >
-              {showCurrent ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </button>
+        {!isTemporaryPassword && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="settings-current-password" className="text-sm font-medium">
+              Current Password
+            </label>
+            <div className="relative">
+              <Input
+                id="settings-current-password"
+                type={showCurrent ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  setFeedback(null);
+                }}
+                placeholder="••••••••"
+                className="pr-11"
+                aria-invalid={currentError}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition hover:text-foreground"
+                aria-label={showCurrent ? "Hide password" : "Show password"}
+              >
+                {showCurrent ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            {currentError && (
+              <p className="text-xs text-destructive">Must be at least 6 characters.</p>
+            )}
           </div>
-          {currentError && (
-            <p className="text-xs text-destructive">Must be at least 6 characters.</p>
-          )}
-        </div>
+        )}
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="settings-new-password" className="text-sm font-medium">
@@ -476,7 +497,8 @@ function PasswordSection() {
           {newError && (
             <p className="text-xs text-destructive">Must be at least 6 characters.</p>
           )}
-          {currentPassword.length >= 6 &&
+          {!isTemporaryPassword &&
+            currentPassword.length >= 6 &&
             newPassword.length >= 6 &&
             currentPassword === newPassword && (
               <p className="text-xs text-destructive">

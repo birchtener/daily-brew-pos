@@ -11,24 +11,18 @@ router.post('/register', protect, restrictTo(Role.admin), UsersController.regist
 
 router.get('/', protect, restrictTo(Role.admin), UsersController.listUsers);
 
+router.put('/avatar', protect, restrictTo(Role.admin, Role.staff), upload.single('avatar'), UsersController.updateAvatar);
+router.delete('/avatar', protect, restrictTo(Role.admin, Role.staff), UsersController.deleteAvatar);
+
+router.put('/profile', protect, restrictTo(Role.admin, Role.staff), UsersController.updateProfile);
+router.put('/password', protect, UsersController.updatePassword);
+
 router.put('/:userId', protect, restrictTo(Role.admin), UsersController.updateUser);
 
 router.post('/:userId/reset-password', protect, restrictTo(Role.admin), UsersController.resetPassword);
 
 router.put('/:userId/avatar', protect, restrictTo(Role.admin), upload.single('avatar'), UsersController.updateUserAvatar);
 router.delete('/:userId/avatar', protect, restrictTo(Role.admin), UsersController.deleteUserAvatar);
-
-router.put(
-    '/avatar',
-    protect,
-    restrictTo(Role.admin, Role.staff),
-    upload.single('avatar'),
-    UsersController.updateAvatar
-);
-router.delete('/avatar', protect, restrictTo(Role.admin, Role.staff), UsersController.deleteAvatar);
-
-router.put('/profile', protect, restrictTo(Role.admin, Role.staff), UsersController.updateProfile);
-router.put('/password', protect, restrictTo(Role.admin, Role.staff), UsersController.updatePassword);
 
 router.delete('/:userId', protect, restrictTo(Role.admin), UsersController.deleteUser);
 

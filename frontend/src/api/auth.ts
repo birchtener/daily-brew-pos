@@ -12,6 +12,7 @@ export type AuthUser = {
   firstName?: string;
   lastName?: string;
   avatarUrl?: string | null;
+  is_password_temp?: boolean;
 };
 
 type ApiResponse<T> = {

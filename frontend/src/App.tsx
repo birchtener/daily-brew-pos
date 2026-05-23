@@ -16,6 +16,7 @@ import UsersPage from './features/dashboard/pages/UsersPage.tsx';
 import LogsPage from './features/dashboard/pages/LogsPage';
 import NotificationsAdminPage from './features/dashboard/pages/NotificationsAdminPage.tsx';
 import { useStore } from '@/store/useStore';
+import { RoleGuard } from './features/auth/components/RoleGuard';
 
 export default function App() {
   const { dark } = useStore();
@@ -44,10 +45,12 @@ export default function App() {
               <Route path="discounts" element={<DiscountsPage />} />
               <Route path="inventory" element={<InventoryPage />} />
               <Route path="suppliers" element={<SuppliersPage />} />
-              <Route path="notifications-admin" element={<NotificationsAdminPage />} />
-              <Route path="users" element={<UsersPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="logs" element={<LogsPage />} />
+              <Route element={<RoleGuard allowedRoles={['admin']} />}>
+                <Route path="notifications-admin" element={<NotificationsAdminPage />} />
+                <Route path="users" element={<UsersPage />} />
+              </Route>
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

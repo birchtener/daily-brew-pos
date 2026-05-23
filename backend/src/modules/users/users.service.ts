@@ -169,19 +169,25 @@ export class UsersService {
     }
   }
 
-  static async updatePassword(userId: string, currentPassword: string, newPassword: string) {
+  static async updatePassword(userId: string, currentPassword: string | undefined, newPassword: string) {
     const user = await prisma.user.findFirst({
       where: { id: userId, deleted_at: null },
-      select: { id: true, password: true },
+      select: { id: true, password: true, is_password_temp: true },
     });
 
     if (!user) {
       throw createHttpError('Validation Failure: Target resource not found.', 404);
     }
 
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isPasswordValid) {
-      throw createHttpError('Validation Failure: Incorrect current password.', 400);
+    if (!user.is_password_temp) {
+      if (!currentPassword) {
+        throw createHttpError('Validation Failure: Current password is required.', 400);
+      }
+
+      const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isPasswordValid) {
+        throw createHttpError('Validation Failure: Incorrect current password.', 400);
+      }
     }
 
     try {
@@ -411,6 +417,10 @@ export class UsersService {
 
       if (!user) {
         throw createHttpError('Validation Failure: Target user not found.', 404);
+      }
+
+      if (user.username === 'master') {
+        throw createHttpError('Validation Failure: The master account cannot be deleted.', 400);
       }
 
       const deletedAt = new Date();

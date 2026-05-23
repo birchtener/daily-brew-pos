@@ -13,7 +13,7 @@ export const UpdateProfileSchema = z.object({
 });
 
 export const UpdatePasswordSchema = z.object({
-  currentPassword: z.string().min(6).max(100),
+  currentPassword: z.string().min(6).max(100).optional(),
   newPassword: z.string().min(6).max(100),
 });
 

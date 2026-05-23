@@ -37,26 +37,31 @@ const data = {
       title: "Dashboard",
       url: "/",
       icon: LayoutDashboard,
+      roles: ['admin', 'staff'] as const,
     },
     {
       title: "POS Terminal",
       url: "/pos-terminal",
       icon: MonitorPlay,
+      roles: ['admin', 'staff'] as const,
     },
     {
       title: "Products",
       url: "/products",
       icon: Package,
+      roles: ['admin', 'staff'] as const,
     },
     {
       title: "Categories",
       url: "/categories",
       icon: Tag,
+      roles: ['admin', 'staff'] as const,
     },
     {
       title: "Discounts",
       url: "/discounts",
       icon: Ticket,
+      roles: ['admin', 'staff'] as const,
     },
   ],
   systemMenu: [
@@ -64,26 +69,31 @@ const data = {
       title: "Inventory",
       url: "/inventory",
       icon: Boxes,
+      roles: ['admin', 'staff'] as const,
     },
     {
       title: "Suppliers",
       url: "/suppliers",
       icon: Truck,
+      roles: ['admin', 'staff'] as const,
     },
     {
       title: "Notifications",
       url: "/notifications-admin",
       icon: Bell,
+      roles: ['admin'] as const,
     },
     {
       title: "Users",
       url: "/users",
       icon: MonitorPlay,
+      roles: ['admin'] as const,
     },
     {
       title: "Settings",
       url: "/settings",
       icon: Settings2,
+      roles: ['admin', 'staff'] as const,
     },
   ],
 }
@@ -105,6 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isCollapsed = state === "collapsed" && !isMobile;
   const storeUser = useStore((s) => s.user);
   const user = storeUser ?? fallbackUser;
+  const role = user.role;
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -123,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
           <SidebarMenu>
-            {data.mainMenu.map((item) => (
+            {data.mainMenu.filter((item) => item.roles.includes(role)).map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild tooltip={item.title} isActive={item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)}>
                   <NavLink to={item.url} end={item.url === "/"}>
@@ -139,7 +150,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel>System</SidebarGroupLabel>
           <SidebarMenu>
-            {data.systemMenu.map((item) => (
+            {data.systemMenu.filter((item) => item.roles.includes(role)).map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild tooltip={item.title} isActive={pathname.startsWith(item.url)}>
                   <NavLink to={item.url} end>

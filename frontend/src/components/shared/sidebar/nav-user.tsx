@@ -21,6 +21,7 @@ import {
 import { ChevronsUpDownIcon, BellIcon, LogOutIcon, ScrollText, Settings } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { logoutRequest } from "@/api/auth";
+import { useStore } from "@/store/useStore"
 import type { ParsedUser } from "@/types/userTypes"
 
 export function NavUser({
@@ -30,6 +31,7 @@ export function NavUser({
 }) {
   const navigate = useNavigate();
   const { setOpenMobile } = useSidebar()
+  const isAdmin = useStore((state) => state.user?.role === 'admin');
 
   const handleLogout = async () => {
     setOpenMobile(false);
@@ -106,10 +108,15 @@ export function NavUser({
                 <ScrollText />
                 Logs
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => { setOpenMobile(false); /* open notifications in a page? */ }}>
-                <BellIcon />
-                Notifications
-              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem onSelect={() => {
+                  setOpenMobile(false);
+                  navigate('/notifications-admin');
+                }}>
+                  <BellIcon />
+                  Notifications
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout}>
