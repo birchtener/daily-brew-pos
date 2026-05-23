@@ -38,6 +38,10 @@ model Log {
 
   // Relations
   logger User @relation(fields: [user_id], references: [id])
+
+  @@index([category, created_at])
+  @@index([log_type, created_at])
+  @@index([created_at])
 }
 
 model User {
