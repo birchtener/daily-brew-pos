@@ -10,6 +10,7 @@ import ProductsPage from './features/dashboard/pages/ProductsPage';
 import InventoryPage from './features/dashboard/pages/InventoryPage';
 import SuppliersPage from './features/dashboard/pages/SuppliersPage';
 import SettingsPage from './features/dashboard/pages/SettingsPage';
+import LogsPage from './features/dashboard/pages/LogsPage';
 import { useStore } from '@/store/useStore';
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="inventory" element={<InventoryPage />} />
               <Route path="suppliers" element={<SuppliersPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="logs" element={<LogsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

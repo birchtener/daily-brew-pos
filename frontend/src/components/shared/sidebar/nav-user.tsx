@@ -92,15 +92,19 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Settings
-                />
+              <DropdownMenuItem onSelect={() => {
+                setOpenMobile(false);
+                navigate('/settings');
+              }}>
+                <Settings />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <ScrollText
-                />
-              Logs
+              <DropdownMenuItem onSelect={() => {
+                setOpenMobile(false);
+                navigate('/logs');
+              }}>
+                <ScrollText />
+                Logs
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <BellIcon

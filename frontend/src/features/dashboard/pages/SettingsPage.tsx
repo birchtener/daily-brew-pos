@@ -48,7 +48,7 @@ export default function SettingsPage() {
   const setUser = useStore((s) => s.setUser);
 
   return (
-    <div className="flex flex-col gap-8 px-4 sm:px-12 lg:px-36 pb-12">
+    <div className="flex flex-col gap-8 px-0 sm:px-6 lg:px-16 pb-12">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">Settings</h1>
@@ -202,7 +202,7 @@ function AvatarSection({
           </div>
 
           {selectedFile ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button onClick={handleUpload} disabled={uploading} size="sm">
                 {uploading ? (
                   <span className="inline-flex items-center gap-1.5">
@@ -220,13 +220,13 @@ function AvatarSection({
               </span>
             </div>
           ) : (
-            <div>
+            <div className="flex flex-wrap items-center gap-2">
               <Button onClick={() => fileRef.current?.click()} variant="outline" size="sm">
                 <Camera className="size-3.5 mr-1.5" />
                 Change Photo
               </Button>
               {user?.avatar_url && (
-                <Button onClick={handleDelete} variant="destructive" size="sm" className="ml-2">
+                <Button onClick={handleDelete} variant="destructive" size="sm">
                   <Trash2 className="size-3.5 mr-1.5" />
                   Remove Photo
                 </Button>
