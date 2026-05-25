@@ -256,7 +256,7 @@ export class UsersService {
     const perPage = opts?.perPage && opts.perPage > 0 ? Math.min(100, Math.floor(opts.perPage)) : 20;
     const skip = (page - 1) * perPage;
 
-    const where: any = { deleted_at: null };
+    const where: any = { deleted_at: null, username: { not: 'system' } };
     if (opts?.role) where.role = opts.role;
     if (opts?.q) {
       const q = opts.q;
