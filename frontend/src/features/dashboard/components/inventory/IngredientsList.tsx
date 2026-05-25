@@ -84,6 +84,20 @@ export default function IngredientsList({
                   <tr
                     key={ing.id}
                     className="hover:bg-muted/40 transition-colors select-none cursor-context-menu"
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const btn = e.currentTarget.querySelector('.action-btn-trigger');
+                      if (btn) {
+                        const event = new MouseEvent('contextmenu', {
+                          bubbles: true,
+                          cancelable: true,
+                          clientX: e.clientX,
+                          clientY: e.clientY,
+                        });
+                        btn.dispatchEvent(event);
+                      }
+                    }}
                   >
                     <td className="p-4 font-semibold text-card-foreground">
                       <div className="flex items-center gap-3 min-w-0">
@@ -119,7 +133,21 @@ export default function IngredientsList({
                       <td className="p-4 text-center select-none">
                         <ContextMenu>
                           <ContextMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="size-8 hover:bg-muted/80 action-btn-trigger">
+                            <Button 
+                              variant="ghost" size="icon" 
+                              className="size-8 hover:bg-muted/80 action-btn-trigger"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const event = new MouseEvent('contextmenu', {
+                                  bubbles: true,
+                                  cancelable: true,
+                                  clientX: e.clientX,
+                                  clientY: e.clientY,
+                                });
+                                e.currentTarget.dispatchEvent(event);
+                              }}
+                            >
                               <MoreHorizontal className="size-4.5" />
                             </Button>
                           </ContextMenuTrigger>
@@ -163,7 +191,24 @@ export default function IngredientsList({
           <div className="p-8 text-center text-muted-foreground border border-border bg-card rounded-xl">No ingredients found.</div>
         ) : (
           filteredIngredients.map((ing) => (
-            <div key={ing.id} className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors cursor-context-menu">
+            <div
+              key={ing.id}
+              className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors cursor-context-menu"
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const btn = e.currentTarget.querySelector('.action-btn-trigger');
+                if (btn) {
+                  const event = new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                  });
+                  btn.dispatchEvent(event);
+                }
+              }}
+            >
               <div className="flex items-center gap-3 min-w-0">
                 {ing.img_path ? (
                   <img src={ing.img_path} alt={ing.name} className="size-10 rounded-lg object-cover border border-border shrink-0" />
@@ -189,7 +234,22 @@ export default function IngredientsList({
                 {isAdmin && (
                   <ContextMenu>
                     <ContextMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8 hover:bg-muted/85 action-btn-trigger shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 hover:bg-muted/85 action-btn-trigger shrink-0"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const event = new MouseEvent('contextmenu', {
+                            bubbles: true,
+                            cancelable: true,
+                            clientX: e.clientX,
+                            clientY: e.clientY,
+                          });
+                          e.currentTarget.dispatchEvent(event);
+                        }}
+                      >
                         <MoreHorizontal className="size-4" />
                       </Button>
                     </ContextMenuTrigger>

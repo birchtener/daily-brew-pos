@@ -1,7 +1,5 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import {
-  AlertTriangle,
-} from 'lucide-react';
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { AlertTriangle } from "lucide-react";
 import {
   getFinancials,
   getProductVelocity,
@@ -9,31 +7,31 @@ import {
   type FinancialMetrics,
   type ProductVelocity,
   type StockHealth,
-} from '@/api/analytics';
-import { getCompletedOrders, type Order } from '@/api/orders';
-import { useStore } from '@/store/useStore';
-import { toast } from 'sonner';
+} from "@/api/analytics";
+import { getCompletedOrders, type Order } from "@/api/orders";
+import { useStore } from "@/store/useStore";
+import { toast } from "sonner";
 
-import DashboardHeader from '../components/dashboard/DashboardHeader';
-import StaffWelcomeView from '../components/dashboard/StaffWelcomeView';
-import MetricSummaryCards from '../components/dashboard/MetricSummaryCards';
-import SalesTrendChart from '../components/dashboard/SalesTrendChart';
-import ProductVelocityChart from '../components/dashboard/ProductVelocityChart';
-import InventoryAlerts from '../components/dashboard/InventoryAlerts';
+import DashboardHeader from "../components/dashboard/DashboardHeader";
+import StaffWelcomeView from "../components/dashboard/StaffWelcomeView";
+import MetricSummaryCards from "../components/dashboard/MetricSummaryCards";
+import SalesTrendChart from "../components/dashboard/SalesTrendChart";
+import ProductVelocityChart from "../components/dashboard/ProductVelocityChart";
+import InventoryAlerts from "../components/dashboard/InventoryAlerts";
 
-type PresetKey = '7d' | '30d' | 'mtd' | 'ytd';
+type PresetKey = "7d" | "30d" | "mtd" | "ytd";
 
 export default function DashboardPage() {
   const currentUser = useStore((s) => s.user);
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === "admin";
 
   // ── STATE ──
-  const [preset, setPreset] = useState<PresetKey>('30d');
+  const [preset, setPreset] = useState<PresetKey>("30d");
   const [financials, setFinancials] = useState<FinancialMetrics | null>(null);
   const [velocity, setVelocity] = useState<ProductVelocity[]>([]);
   const [health, setHealth] = useState<StockHealth[]>([]);
   const [completedOrders, setCompletedOrders] = useState<Order[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,18 +41,18 @@ export default function DashboardPage() {
     const start = new Date();
 
     switch (preset) {
-      case '7d':
+      case "7d":
         start.setDate(end.getDate() - 7);
         break;
-      case '30d':
+      case "30d":
         start.setDate(end.getDate() - 30);
         break;
-      case 'mtd':
+      case "mtd":
         // Start of current month
         start.setDate(1);
         start.setHours(0, 0, 0, 0);
         break;
-      case 'ytd':
+      case "ytd":
         // Start of current year
         start.setMonth(0, 1);
         start.setHours(0, 0, 0, 0);
@@ -88,7 +86,8 @@ export default function DashboardPage() {
       setCompletedOrders(completedData);
     } catch (err: any) {
       console.error(err);
-      const message = 'We could not load the dashboard analytics right now. Please try again in a moment.';
+      const message =
+        "We could not load the dashboard analytics right now. Please try again in a moment.";
       setError(message);
       toast.error(message);
     } finally {
@@ -115,18 +114,24 @@ export default function DashboardPage() {
 
     // Group by Date
     const dailyMap: Record<string, number> = {};
-    
+
     // Prefill days in the range to avoid gaps
     const temp = new Date(dateRange.start);
     while (temp.getTime() <= endTime) {
-      const dateStr = temp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dateStr = temp.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
       dailyMap[dateStr] = 0;
       temp.setDate(temp.getDate() + 1);
     }
 
     // Accumulate sales
     windowOrders.forEach((order) => {
-      const dateStr = new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dateStr = new Date(order.created_at).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
       dailyMap[dateStr] = (dailyMap[dateStr] || 0) + Number(order.total);
     });
 
@@ -139,7 +144,9 @@ export default function DashboardPage() {
 
   // Filter stock alerts
   const stockAlerts = useMemo(() => {
-    return health.filter((h) => h.status === 'OUT_OF_STOCK' || h.status === 'LOW_STOCK_ALERT');
+    return health.filter(
+      (h) => h.status === "OUT_OF_STOCK" || h.status === "LOW_STOCK_ALERT",
+    );
   }, [health]);
 
   // ── STAFF WELCOME VIEW (FALLBACK VIEW) ──
