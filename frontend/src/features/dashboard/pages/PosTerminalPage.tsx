@@ -352,16 +352,18 @@ export default function PosTerminalPage() {
       />
 
       {/* Mobile Floating Cart FAB (Floating bottom left) */}
-      {cartItems.length > 0 && activeTab === 'terminal' && (
+      {activeTab === 'terminal' && (
         <button
           onClick={() => setIsMobileCartOpen(true)}
           className="lg:hidden fixed bottom-6 left-6 z-40 bg-primary text-background shadow-lg hover:shadow-xl rounded-full p-4 flex items-center justify-center border border-primary/20 cursor-pointer animate-in zoom-in-95 hover:scale-105 transition-all duration-300"
         >
           <div className="relative">
             <ShoppingCart className="size-6 stroke-2" />
-            <span className="absolute -top-3.5 -right-3.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-sm border-2 border-background animate-bounce">
-              {cartItems.reduce((acc, c) => acc + c.quantity, 0)}
-            </span>
+            {cartItems.length > 0 && (
+              <span className="absolute -top-3.5 -right-3.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-sm border-2 border-background animate-bounce">
+                {cartItems.reduce((acc, c) => acc + c.quantity, 0)}
+              </span>
+            )}
           </div>
         </button>
       )}
