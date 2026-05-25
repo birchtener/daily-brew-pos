@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ShoppingCart, X } from 'lucide-react';
 import {
   checkout,
   getParkedOrders,
@@ -47,6 +47,7 @@ export default function PosTerminalPage() {
   const [editingParkedOrder, setEditingParkedOrder] = useState<Order | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [isVoidCartOpen, setIsVoidCartOpen] = useState(false);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -119,6 +120,7 @@ export default function PosTerminalPage() {
     setDiscountCode('');
     setSelectedPayment('cash');
     setEditingParkedOrder(null);
+    setIsMobileCartOpen(false);
   };
 
   const subTotal = cartItems.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
@@ -249,6 +251,7 @@ export default function PosTerminalPage() {
           </div>
 
           <CartPanel
+            className="hidden lg:flex lg:col-span-5 xl:col-span-4"
             cartItems={cartItems}
             clearCart={() => setIsVoidCartOpen(true)}
             editingParkedOrder={editingParkedOrder}
@@ -297,6 +300,64 @@ export default function PosTerminalPage() {
         description="Are you sure you want to clear your current checkout session? This will remove all items from the cart and reset any discount coupon code entered."
         confirmText="Void Cart"
       />
+
+      {/* Mobile Floating Cart FAB (Floating bottom left) */}
+      {cartItems.length > 0 && activeTab === 'terminal' && (
+        <button
+          onClick={() => setIsMobileCartOpen(true)}
+          className="lg:hidden fixed bottom-6 left-6 z-40 bg-primary text-background shadow-lg hover:shadow-xl rounded-full p-4 flex items-center justify-center border border-primary/20 cursor-pointer animate-in zoom-in-95 hover:scale-105 transition-all duration-300"
+        >
+          <div className="relative">
+            <ShoppingCart className="size-6 stroke-[2]" />
+            <span className="absolute -top-3.5 -right-3.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-sm border-2 border-background animate-bounce">
+              {cartItems.reduce((acc, c) => acc + c.quantity, 0)}
+            </span>
+          </div>
+        </button>
+      )}
+
+      {/* Mobile Drawer Cart Sheet */}
+      {isMobileCartOpen && activeTab === 'terminal' && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 lg:hidden">
+          <div className="w-full rounded-t-3xl border-t border-border bg-card p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto relative flex flex-col gap-4">
+            {/* Close Swipe Handle Bar */}
+            <div className="w-12 h-1 bg-border/80 rounded-full mx-auto -mt-2 mb-2 shrink-0 cursor-pointer" onClick={() => setIsMobileCartOpen(false)} />
+
+            <div className="flex items-center justify-between border-b border-border pb-3.5 shrink-0 select-none">
+              <h2 className="text-base font-bold flex items-center gap-2">
+                <ShoppingCart className="size-4.5 text-primary" /> Mobile Shopping Cart
+              </h2>
+              <button
+                onClick={() => setIsMobileCartOpen(false)}
+                className="size-7 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground transition"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col flex-1 overflow-y-auto">
+              <CartPanel
+                className="flex w-full border-none shadow-none p-0 sticky-none relative bg-transparent"
+                cartItems={cartItems}
+                clearCart={() => setIsVoidCartOpen(true)}
+                editingParkedOrder={editingParkedOrder}
+                removeFromCart={removeFromCart}
+                updateQuantity={updateQuantity}
+                discountCode={discountCode}
+                setDiscountCode={setDiscountCode}
+                estimatedDiscount={estimatedDiscount}
+                selectedPayment={selectedPayment}
+                setSelectedPayment={setSelectedPayment}
+                subTotal={subTotal}
+                discountAmount={discountAmount}
+                total={total}
+                handleCheckoutSubmit={handleCheckoutSubmit}
+                submitting={submitting}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

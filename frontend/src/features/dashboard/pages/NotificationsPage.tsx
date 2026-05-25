@@ -21,7 +21,7 @@ function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
 }
 
 function getCreatorLabel(notification: NotificationItem, users: UpdatedUser[]) {
-  if (!notification.created_by || notification.created_by === 'system') {
+  if (!notification.created_by || notification.created_by === (import.meta.env.VITE_SYSTEM_USER || "00000000-0000-0000-0000-000000000000")) {
     return 'System';
   }
 

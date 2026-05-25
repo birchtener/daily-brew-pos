@@ -1,7 +1,7 @@
- 
 import { ShoppingCart, Trash2, Minus, Plus, Ticket, CreditCard, Wallet, Banknote, LoaderCircle, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type { Product } from '@/api/products';
 
 type CartItem = { product: Product; quantity: number };
@@ -22,6 +22,7 @@ interface Props {
   total: number;
   handleCheckoutSubmit: (park?: boolean) => Promise<void> | void;
   submitting: boolean;
+  className?: string;
 }
 
 export default function CartPanel({
@@ -40,9 +41,10 @@ export default function CartPanel({
   total,
   handleCheckoutSubmit,
   submitting,
+  className,
 }: Props) {
   return (
-    <div className="lg:col-span-5 xl:col-span-4 rounded-2xl border border-border bg-card shadow-sm p-4 flex flex-col gap-4 sticky top-6">
+    <div className={cn("rounded-2xl border border-border bg-card shadow-sm p-4 flex flex-col gap-4 sticky top-6", className)}>
       <div className="flex items-center justify-between border-b border-border pb-3 mb-1">
         <div className="flex items-center gap-1.5">
           <ShoppingCart className="size-4 text-primary" />

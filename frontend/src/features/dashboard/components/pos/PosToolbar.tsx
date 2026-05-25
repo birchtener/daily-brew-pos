@@ -35,12 +35,12 @@ export default function PosToolbar({
           </p>
         </div>
 
-        <div className="flex bg-card p-1 rounded-xl border border-border shadow-sm w-fit shrink-0">
+        <div className="flex bg-card p-1 rounded-xl border border-border shadow-sm w-full sm:w-fit overflow-x-auto shrink-0 flex-nowrap scrollbar-none select-none">
           <button
             onClick={() => {
               setActiveTab("terminal");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
               activeTab === "terminal"
                 ? "bg-primary text-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -52,7 +52,7 @@ export default function PosToolbar({
             onClick={() => {
               setActiveTab("parked");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all relative ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all relative shrink-0 ${
               activeTab === "parked"
                 ? "bg-primary text-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -69,7 +69,7 @@ export default function PosToolbar({
             onClick={() => {
               setActiveTab("completed");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
               activeTab === "completed"
                 ? "bg-primary text-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -81,7 +81,7 @@ export default function PosToolbar({
             onClick={() => {
               setActiveTab("cancelled");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
               activeTab === "cancelled"
                 ? "bg-primary text-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
