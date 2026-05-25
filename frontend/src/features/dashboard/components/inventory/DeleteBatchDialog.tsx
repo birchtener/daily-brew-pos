@@ -1,8 +1,7 @@
-import React from 'react';
 import { X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
-import { Batch } from '@/api/batches';
+import type { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
+import type { Batch } from '@/api/batches';
 
 type Props = {
   item: Batch | null;

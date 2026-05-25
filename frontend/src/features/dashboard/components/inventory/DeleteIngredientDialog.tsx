@@ -1,8 +1,7 @@
-import React from 'react';
 import { X, Trash2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
-import { Ingredient } from '@/api/ingredients';
+import type { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
+import type { Ingredient } from '@/api/ingredients';
 
 type Props = {
   item: Ingredient | null;

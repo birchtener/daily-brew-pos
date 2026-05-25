@@ -10,7 +10,6 @@ import {
   Trash2, 
   LoaderCircle, 
   AlertCircle, 
-  Check, 
   X,
   Calendar
 } from 'lucide-react';
@@ -25,31 +24,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store/useStore';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
+import { toast } from 'sonner';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-
-type FeedbackState = { type: "success" | "error"; message: string } | null;
-
-function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
-  if (!feedback) return null;
-  const isError = feedback.type === "error";
-  return (
-    <div
-      className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm transition-all animate-in fade-in slide-in-from-top-1 ${
-        isError
-          ? "border border-destructive/20 bg-destructive/10 text-destructive"
-          : "border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-      }`}
-    >
-      {isError ? <AlertCircle className="size-4 shrink-0" /> : <Check className="size-4 shrink-0" />}
-      {feedback.message}
-    </div>
-  );
-}
 
 export default function SuppliersPage() {
   const currentUser = useStore((s) => s.user);
@@ -73,7 +54,6 @@ export default function SuppliersPage() {
   const [formContactName, setFormContactName] = useState('');
   const [formContactNumber, setFormContactNumber] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [modalFeedback, setModalFeedback] = useState<FeedbackState>(null);
 
   // Debouncing search
   useEffect(() => {
@@ -106,7 +86,6 @@ export default function SuppliersPage() {
     setFormName('');
     setFormContactName('');
     setFormContactNumber('');
-    setModalFeedback(null);
     setSubmitting(false);
   };
 
@@ -122,7 +101,6 @@ export default function SuppliersPage() {
     setFormName(supplier.name);
     setFormContactName(supplier.contact_name || '');
     setFormContactNumber(supplier.contact_number || '');
-    setModalFeedback(null);
     setSubmitting(false);
   };
 
@@ -130,12 +108,11 @@ export default function SuppliersPage() {
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) {
-      setModalFeedback({ type: 'error', message: 'Supplier/Company name is required.' });
+      toast.error('Supplier/Company name is required.');
       return;
     }
 
     setSubmitting(true);
-    setModalFeedback(null);
 
     try {
       await createSupplier({
@@ -145,11 +122,9 @@ export default function SuppliersPage() {
       });
       setIsAddModalOpen(false);
       fetchSuppliers();
+      toast.success('Supplier added successfully!');
     } catch (err: any) {
-      setModalFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to add supplier.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to add supplier.'));
     } finally {
       setSubmitting(false);
     }
@@ -160,12 +135,11 @@ export default function SuppliersPage() {
     e.preventDefault();
     if (!editingSupplier) return;
     if (!formName.trim()) {
-      setModalFeedback({ type: 'error', message: 'Supplier/Company name is required.' });
+      toast.error('Supplier/Company name is required.');
       return;
     }
 
     setSubmitting(true);
-    setModalFeedback(null);
 
     try {
       await updateSupplier(editingSupplier.id, {
@@ -175,11 +149,9 @@ export default function SuppliersPage() {
       });
       setEditingSupplier(null);
       fetchSuppliers();
+      toast.success('Supplier updated successfully!');
     } catch (err: any) {
-      setModalFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to update supplier details.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to update supplier details.'));
     } finally {
       setSubmitting(false);
     }
@@ -189,17 +161,14 @@ export default function SuppliersPage() {
   const handleDeleteSubmit = async () => {
     if (!deletingSupplier) return;
     setSubmitting(true);
-    setModalFeedback(null);
 
     try {
       await deleteSupplier(deletingSupplier.id);
       setDeletingSupplier(null);
       fetchSuppliers();
+      toast.success('Supplier deleted successfully!');
     } catch (err: any) {
-      setModalFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to delete supplier.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to delete supplier.'));
     } finally {
       setSubmitting(false);
     }
@@ -417,7 +386,6 @@ export default function SuppliersPage() {
                               <ContextMenuItem 
                                 onSelect={() => {
                                   setDeletingSupplier(supplier);
-                                  setModalFeedback(null);
                                 }}
                                 className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
                               >
@@ -549,7 +517,6 @@ export default function SuppliersPage() {
                         <ContextMenuItem
                           onSelect={() => {
                             setDeletingSupplier(supplier);
-                            setModalFeedback(null);
                           }}
                           className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
                         >
@@ -622,8 +589,6 @@ export default function SuppliersPage() {
                   maxLength={15}
                 />
               </div>
-
-              {modalFeedback && <FeedbackBanner feedback={modalFeedback} />}
 
               <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
                 <Button 
@@ -711,8 +676,6 @@ export default function SuppliersPage() {
                 />
               </div>
 
-              {modalFeedback && <FeedbackBanner feedback={modalFeedback} />}
-
               <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
                 <Button 
                   type="button" 
@@ -769,12 +732,6 @@ export default function SuppliersPage() {
                 </span>
               </div>
             </div>
-
-            {modalFeedback && (
-              <div className="mt-4">
-                <FeedbackBanner feedback={modalFeedback} />
-              </div>
-            )}
 
             <div className="flex justify-end gap-2 border-t border-border pt-4 mt-5">
               <Button 

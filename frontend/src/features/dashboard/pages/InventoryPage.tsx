@@ -1,22 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import {
-  ImagePlus,
-  Boxes,
-  Search,
-  Plus,
-  MoreHorizontal,
-  Edit3,
-  Trash2,
-  LoaderCircle,
-  AlertCircle,
-  Check,
-  X,
-  Package,
-  TrendingDown,
-  AlertTriangle,
-  PackagePlus,
-  Calendar as CalendarIcon,
-} from 'lucide-react';
+import { Boxes, AlertCircle, Package, AlertTriangle, Calendar as CalendarIcon, MoreHorizontal, Trash2 } from 'lucide-react';
 import {
   getIngredients,
   createIngredient,
@@ -37,36 +20,26 @@ import {
   type Supplier,
 } from '@/api/suppliers';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useStore } from '@/store/useStore';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { extractErrorMessage } from '@/lib/extractErrorMessage';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import { useStore } from '@/store/useStore';
+import { extractErrorMessage } from '@/lib/extractErrorMessage';
 import InventoryToolbar from '@/features/dashboard/components/inventory/InventoryToolbar';
 import BatchToolbar from '@/features/dashboard/components/inventory/BatchToolbar';
 import AddEditIngredientModal from '@/features/dashboard/components/inventory/AddEditIngredientModal';
 import ReceiveStockModal from '@/features/dashboard/components/inventory/ReceiveStockModal';
 import DeleteIngredientDialog from '@/features/dashboard/components/inventory/DeleteIngredientDialog';
 import DeleteBatchDialog from '@/features/dashboard/components/inventory/DeleteBatchDialog';
+import IngredientsList from '@/features/dashboard/components/inventory/IngredientsList';
+import BatchesList from '@/features/dashboard/components/inventory/BatchesList';
 
 // ── Constants ──────────────────────────────────────────────────
-const UNIT_OPTIONS: { value: Unit; label: string }[] = [
+export const UNIT_OPTIONS: { value: Unit; label: string }[] = [
   { value: 'kg', label: 'Kilogram (kg)' },
   { value: 'g', label: 'Gram (g)' },
   { value: 'mg', label: 'Milligram (mg)' },
@@ -78,26 +51,9 @@ const UNIT_OPTIONS: { value: Unit; label: string }[] = [
   { value: 'can', label: 'Can' },
 ];
 
-type FeedbackState = { type: 'success' | 'error'; message: string } | null;
+export type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
-function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
-  if (!feedback) return null;
-  const isError = feedback.type === 'error';
-  return (
-    <div
-      className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm transition-all animate-in fade-in slide-in-from-top-1 ${
-        isError
-          ? 'border border-destructive/20 bg-destructive/10 text-destructive'
-          : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-      }`}
-    >
-      {isError ? <AlertCircle className="size-4 shrink-0" /> : <Check className="size-4 shrink-0" />}
-      {feedback.message}
-    </div>
-  );
-}
-
-function StockBadge({ currentStock, threshold }: { currentStock: number; threshold: number }) {
+export function StockBadge({ currentStock, threshold }: { currentStock: number; threshold: number }) {
   if (currentStock === 0) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2 py-0.5 text-[11px] font-semibold text-rose-600 dark:text-rose-400 border border-rose-500/20">
@@ -695,27 +651,94 @@ export default function InventoryPage() {
 
           {/* Batches Mobile Stacked View */}
           <div className="md:hidden flex flex-col gap-3">
-            {batchesLoading && batches.length === 0 ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4 flex flex-col gap-2">
-                  <div className="h-4 bg-muted rounded w-28" />
-                  <div className="h-3.5 bg-muted rounded w-20" />
-                </div>
-              ))
-            ) : batchesError ? (
-              <div className="p-6 text-center text-rose-500 border border-border bg-card rounded-xl">
-                {batchesError}
-              </div>
-            ) : filteredBatches.length === 0 ? (
-              <BatchesList
-                batchesLoading={batchesLoading}
-                batches={batches}
-                filteredBatches={filteredBatches}
-                batchesError={batchesError}
-                isAdmin={isAdmin}
-                onFetch={fetchBatches}
-                getBatchRowClass={getBatchRowClass}
-                isBatchUnused={isBatchUnused}
-                onDelete={(b) => { setDeletingBatch(b); setBatchDeleteFeedback(null); }}
-              />
-                    className={`rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors cursor-context-menu ${getBatchRowClass(batch)}`}
+            <BatchesList
+              batchesLoading={batchesLoading}
+              batches={batches}
+              filteredBatches={filteredBatches}
+              batchesError={batchesError}
+              isAdmin={isAdmin}
+              onFetch={fetchBatches}
+              getBatchRowClass={getBatchRowClass}
+              isBatchUnused={isBatchUnused}
+              onDelete={(b) => { setDeletingBatch(b); setBatchDeleteFeedback(null); }}
+            />
+
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Modals & dialogs */}
+      <AddEditIngredientModal
+        mode="add"
+        isOpen={isAddIngredientOpen}
+        onClose={() => setIsAddIngredientOpen(false)}
+        name={ingFormName}
+        setName={setIngFormName}
+        unit={ingFormUnit}
+        setUnit={setIngFormUnit}
+        threshold={ingFormThreshold}
+        setThreshold={setIngFormThreshold}
+        imagePreview={ingFormImagePreview}
+        onImageClick={() => ingFileInputRef.current?.click()}
+        onImageChange={handleIngImageChange}
+        onClearImage={clearIngImage}
+        fileInputRef={ingFileInputRef}
+        onSubmit={handleAddIngredientSubmit}
+        submitting={ingSubmitting}
+        feedback={ingModalFeedback}
+      />
+
+      <AddEditIngredientModal
+        mode="edit"
+        isOpen={!!editingIngredient}
+        onClose={() => setEditingIngredient(null)}
+        name={ingFormName}
+        setName={setIngFormName}
+        unit={ingFormUnit}
+        setUnit={setIngFormUnit}
+        threshold={ingFormThreshold}
+        setThreshold={setIngFormThreshold}
+        imagePreview={ingFormImagePreview}
+        onImageClick={() => ingFileInputRef.current?.click()}
+        onImageChange={handleIngImageChange}
+        onClearImage={clearIngImage}
+        fileInputRef={ingFileInputRef}
+        onSubmit={handleEditIngredientSubmit}
+        submitting={ingSubmitting}
+        feedback={ingModalFeedback}
+      />
+
+      <ReceiveStockModal
+        isOpen={isReceiveStockOpen}
+        onClose={() => setIsReceiveStockOpen(false)}
+        suppliers={suppliers}
+        ingredients={ingredients}
+        receiveSupplier={receiveSupplier}
+        setReceiveSupplier={setReceiveSupplier}
+        receiveItems={receiveItems}
+        addReceiveItem={addReceiveItem}
+        removeReceiveItem={removeReceiveItem}
+        updateReceiveItem={updateReceiveItem}
+        onSubmit={handleReceiveStockSubmit}
+        submitting={receiveSubmitting}
+        feedback={receiveModalFeedback}
+      />
+
+      <DeleteIngredientDialog
+        item={deletingIngredient}
+        onClose={() => setDeletingIngredient(null)}
+        onConfirm={handleDeleteIngredientSubmit}
+        submitting={ingSubmitting}
+        feedback={ingModalFeedback}
+      />
+
+      <DeleteBatchDialog
+        item={deletingBatch}
+        onClose={() => setDeletingBatch(null)}
+        onConfirm={handleDeleteBatchSubmit}
+        submitting={batchDeleteSubmitting}
+        feedback={batchDeleteFeedback}
+      />
+    </div>
+  );
+}

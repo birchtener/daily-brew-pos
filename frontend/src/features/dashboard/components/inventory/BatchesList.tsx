@@ -1,6 +1,5 @@
-import React from 'react';
 import { Boxes, AlertCircle, AlertTriangle, Calendar as CalendarIcon, Package, MoreHorizontal, Trash2 } from 'lucide-react';
-import { Batch } from '@/api/batches';
+import type { Batch } from '@/api/batches';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
 

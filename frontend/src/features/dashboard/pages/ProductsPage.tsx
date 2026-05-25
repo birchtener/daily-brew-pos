@@ -8,7 +8,6 @@ import {
   Trash2,
   LoaderCircle,
   AlertCircle,
-  Check,
   X,
   Package,
   Coffee,
@@ -35,6 +34,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useStore } from '@/store/useStore';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
+import { toast } from 'sonner';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -60,25 +60,6 @@ function getAllowedUnits(baseUnit: Unit): Unit[] {
     return VOLUME_UNITS as unknown as Unit[];
   }
   return [baseUnit];
-}
-
-type FeedbackState = { type: 'success' | 'error'; message: string } | null;
-
-function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
-  if (!feedback) return null;
-  const isError = feedback.type === 'error';
-  return (
-    <div
-      className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm transition-all animate-in fade-in slide-in-from-top-1 ${
-        isError
-          ? 'border border-destructive/20 bg-destructive/10 text-destructive'
-          : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-      }`}
-    >
-      {isError ? <AlertCircle className="size-4 shrink-0" /> : <Check className="size-4 shrink-0" />}
-      {feedback.message}
-    </div>
-  );
 }
 
 export default function ProductsPage() {
@@ -115,7 +96,6 @@ export default function ProductsPage() {
   const [formRecipeLines, setFormRecipeLines] = useState<{ _key: number; ingredient_id: string; quantity: string; unit: Unit }[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
-  const [modalFeedback, setModalFeedback] = useState<FeedbackState>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
 
@@ -161,7 +141,6 @@ export default function ProductsPage() {
     setFormImage(null);
     setFormImagePreview(null);
     setFormRecipeLines([]);
-    setModalFeedback(null);
     setSubmitting(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -194,7 +173,6 @@ export default function ProductsPage() {
         }))
       );
     }
-    setModalFeedback(null);
     setSubmitting(false);
   };
 
@@ -256,16 +234,16 @@ export default function ProductsPage() {
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) {
-      setModalFeedback({ type: 'error', message: 'Product name is required.' });
+      toast.error('Product name is required.');
       return;
     }
     const priceNum = parseFloat(formPrice);
     if (isNaN(priceNum) || priceNum <= 0) {
-      setModalFeedback({ type: 'error', message: 'Please specify a positive price.' });
+      toast.error('Please specify a positive price.');
       return;
     }
     if (!formCategoryId) {
-      setModalFeedback({ type: 'error', message: 'Category selection is required.' });
+      toast.error('Category selection is required.');
       return;
     }
 
@@ -279,7 +257,6 @@ export default function ProductsPage() {
       }));
 
     setSubmitting(true);
-    setModalFeedback(null);
 
     try {
       await createProduct({
@@ -291,11 +268,9 @@ export default function ProductsPage() {
       });
       setIsAddModalOpen(false);
       fetchData();
+      toast.success('Product created successfully!');
     } catch (err: any) {
-      setModalFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to register product.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to register product.'));
     } finally {
       setSubmitting(false);
     }
@@ -305,16 +280,16 @@ export default function ProductsPage() {
     e.preventDefault();
     if (!editingProduct) return;
     if (!formName.trim()) {
-      setModalFeedback({ type: 'error', message: 'Product name is required.' });
+      toast.error('Product name is required.');
       return;
     }
     const priceNum = parseFloat(formPrice);
     if (isNaN(priceNum) || priceNum <= 0) {
-      setModalFeedback({ type: 'error', message: 'Please specify a positive price.' });
+      toast.error('Please specify a positive price.');
       return;
     }
     if (!formCategoryId) {
-      setModalFeedback({ type: 'error', message: 'Category selection is required.' });
+      toast.error('Category selection is required.');
       return;
     }
 
@@ -327,7 +302,6 @@ export default function ProductsPage() {
       }));
 
     setSubmitting(true);
-    setModalFeedback(null);
     const isImageCleared = formImagePreview === null && editingProduct.img_path !== null;
 
     try {
@@ -341,11 +315,9 @@ export default function ProductsPage() {
       });
       setEditingProduct(null);
       fetchData();
+      toast.success('Product updated successfully!');
     } catch (err: any) {
-      setModalFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to update product details.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to update product details.'));
     } finally {
       setSubmitting(false);
     }
@@ -354,16 +326,13 @@ export default function ProductsPage() {
   const handleDeleteSubmit = async () => {
     if (!deletingProduct) return;
     setSubmitting(true);
-    setModalFeedback(null);
     try {
       await deleteProduct(deletingProduct.id);
       setDeletingProduct(null);
       fetchData();
+      toast.success('Product deleted successfully!');
     } catch (err: any) {
-      setModalFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to delete product.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to delete product.'));
     } finally {
       setSubmitting(false);
     }
@@ -612,7 +581,6 @@ export default function ProductsPage() {
                   <ContextMenuItem
                     onSelect={() => {
                       setDeletingProduct(product);
-                      setModalFeedback(null);
                     }}
                     className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
                   >
@@ -858,8 +826,6 @@ export default function ProductsPage() {
                   </div>
                 )}
               </div>
-
-              {modalFeedback && <FeedbackBanner feedback={modalFeedback} />}
 
               <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
                 <Button
@@ -1119,8 +1085,6 @@ export default function ProductsPage() {
                 )}
               </div>
 
-              {modalFeedback && <FeedbackBanner feedback={modalFeedback} />}
-
               <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
                 <Button
                   type="button"
@@ -1177,12 +1141,6 @@ export default function ProductsPage() {
                 </span>
               </div>
             </div>
-
-            {modalFeedback && (
-              <div className="mt-4">
-                <FeedbackBanner feedback={modalFeedback} />
-              </div>
-            )}
 
             <div className="flex justify-end gap-2 border-t border-border pt-4 mt-5">
               <Button

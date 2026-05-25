@@ -1,25 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { 
-  ScrollText, 
-  Search, 
-  AlertCircle, 
-  CheckCircle2, 
-  Info, 
-  AlertTriangle, 
-  Pause, 
-  Play, 
-  RefreshCw, 
-  ChevronLeft, 
-  ChevronRight,
-  User as UserIcon,
-  Wifi,
-  WifiOff
-} from 'lucide-react';
+import { AlertCircle, CheckCircle2, Info, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAuditLogs, type AuditLog, type LogCategory, type LogType } from '@/api/audit';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import LogsToolbar from '@/features/dashboard/components/logs/LogsToolbar';
+import LogsList from '@/features/dashboard/components/logs/LogsList';
 
 const CATEGORIES: { value: LogCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All Categories' },
@@ -32,14 +17,6 @@ const CATEGORIES: { value: LogCategory | 'all'; label: string }[] = [
   { value: 'discount', label: 'Discount' },
   { value: 'order', label: 'Order' },
   { value: 'inventory', label: 'Inventory' },
-];
-
-const TYPES: { value: LogType | 'all'; label: string }[] = [
-  { value: 'all', label: 'All Severities' },
-  { value: 'info', label: 'Info' },
-  { value: 'success', label: 'Success' },
-  { value: 'warn', label: 'Warning' },
-  { value: 'error', label: 'Error' },
 ];
 
 interface DisplayLog extends AuditLog {
@@ -210,310 +187,29 @@ export default function LogsPage() {
 
   return (
     <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-400 mx-auto">
-      {/* Header and Live Status */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <ScrollText className="size-6 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">Audit Logs</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Monitor and trace system-wide operations, order entries, inventory audits, and security actions in real time.
-          </p>
-        </div>
+      <LogsToolbar
+        searchVal={searchVal}
+        setSearchVal={setSearchVal}
+        categoryFilter={categoryFilter}
+        setCategoryFilter={setCategoryFilter}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+        isSocketConnected={isSocketConnected}
+        isLivePaused={isLivePaused}
+        setIsLivePaused={setIsLivePaused}
+        onRefresh={fetchLogs}
+        loading={loading}
+      />
 
-        {/* Live / WebSocket status indicator */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold border transition-all ${
-            isSocketConnected 
-              ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' 
-              : 'border-muted-foreground/20 bg-muted text-muted-foreground'
-          }`}>
-            {isSocketConnected ? (
-              <>
-                <Wifi className="size-3.5 animate-pulse" />
-                Live Stream Active
-              </>
-            ) : (
-              <>
-                <WifiOff className="size-3.5" />
-                Offline Feed
-              </>
-            )}
-          </div>
-
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setIsLivePaused((v) => !v)}
-            className="h-8 text-xs font-medium"
-          >
-            {isLivePaused ? (
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                <Play className="size-3.5 fill-current" /> Resume Live
-              </span>
-            ) : (
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <Pause className="size-3.5 fill-current" /> Pause Live
-              </span>
-            )}
-          </Button>
-
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={fetchLogs} 
-            className="size-8"
-            disabled={loading}
-            aria-label="Refresh logs"
-          >
-            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-      </div>
-
-      {/* Filter and Query Dashboard */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col md:flex-row gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            value={searchVal}
-            onChange={(e) => setSearchVal(e.target.value)}
-            placeholder="Search log messages or actor names..."
-            className="pl-9 w-full"
-          />
-        </div>
-
-        {/* Categories Dropdown */}
-        <div className="relative min-w-45">
-          <select
-            value={categoryFilter}
-            onChange={(e) => {
-              setCategoryFilter(e.target.value as LogCategory | 'all');
-            }}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-card-foreground cursor-pointer dark:bg-card"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value} className="bg-background text-foreground">
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Severities Dropdown */}
-        <div className="relative min-w-45">
-          <select
-            value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value as LogType | 'all');
-            }}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-card-foreground cursor-pointer dark:bg-card"
-          >
-            {TYPES.map((t) => (
-              <option key={t.value} value={t.value} className="bg-background text-foreground">
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Main Table Panel */}
-      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="w-full overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/40 font-medium text-muted-foreground select-none">
-                <th className="p-4 w-41.25 md:w-45">
-                  <span className="md:hidden">Log Info</span>
-                  <span className="hidden md:inline">Timestamp</span>
-                </th>
-                <th className="p-4 w-25 hidden md:table-cell">Severity</th>
-                <th className="p-4 w-35 hidden md:table-cell">Category</th>
-                <th className="p-4 w-50 hidden md:table-cell">Actor</th>
-                <th className="p-4">Log Entry Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {loading && logs.length === 0 ? (
-                // Skeleton UI Loader
-                Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="p-4">
-                      {/* Desktop skeleton */}
-                      <div className="hidden md:block h-4 bg-muted rounded w-24" />
-                      {/* Mobile loader stack */}
-                      <div className="md:hidden flex flex-col gap-2">
-                        <div className="h-3 bg-muted rounded w-20" />
-                        <div className="h-5 bg-muted rounded-full w-14" />
-                        <div className="h-4 bg-muted rounded w-16" />
-                        <div className="h-3 bg-muted rounded w-16" />
-                      </div>
-                    </td>
-                    <td className="p-4 hidden md:table-cell"><div className="h-6 bg-muted rounded-full w-16" /></td>
-                    <td className="p-4 hidden md:table-cell"><div className="h-4 bg-muted rounded w-20" /></td>
-                    <td className="p-4 hidden md:table-cell">
-                      <div className="flex items-center gap-2">
-                        <div className="size-7 rounded-full bg-muted" />
-                        <div className="h-4 bg-muted rounded w-24" />
-                      </div>
-                    </td>
-                    <td className="p-4"><div className="h-4 bg-muted rounded w-[80%]" /></td>
-                  </tr>
-                ))
-              ) : error ? (
-                // Error Alert State
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-rose-500">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <AlertCircle className="size-8" />
-                      <p className="font-semibold">Failed to load logs</p>
-                      <p className="text-xs text-muted-foreground max-w-md">{error}</p>
-                      <Button variant="outline" size="sm" onClick={fetchLogs} className="mt-2">
-                        Try Again
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ) : logs.length === 0 ? (
-                // Clean Empty State
-                <tr>
-                  <td colSpan={5} className="p-12 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <ScrollText className="size-10 text-muted-foreground/40" />
-                      <div>
-                        <p className="font-medium text-foreground">No matching logs found</p>
-                        <p className="text-xs text-muted-foreground max-w-sm mx-auto mt-1">
-                          Try adjusting search terms or category filters to locate specific system traces.
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                // Data mapping
-                logs.map((log) => {
-                  const createdAt = new Date(log.created_at);
-                  const isHighlighted = log.isNew;
-
-                  return (
-                    <tr
-                      key={log.id}
-                      className={`hover:bg-muted/40 transition-colors duration-1000 ${
-                        isHighlighted 
-                          ? 'bg-amber-500/10 dark:bg-amber-500/5 font-medium' 
-                          : ''
-                      }`}
-                    >
-                      {/* Responsive Metadata Stack / Timestamp */}
-                      <td className="p-4 text-xs align-top">
-                        {/* Desktop: standard single line timestamp */}
-                        <div className="hidden md:block font-mono text-muted-foreground whitespace-nowrap">
-                          {createdAt.toLocaleDateString()} {createdAt.toLocaleTimeString()}
-                        </div>
-
-                        {/* Mobile: Stacked multi-field metadata context */}
-                        <div className="md:hidden flex flex-col gap-2 min-w-31.25">
-                          {/* Timestamp */}
-                          <span className="font-mono font-medium text-muted-foreground whitespace-nowrap">
-                            {createdAt.toLocaleDateString()}<br/>
-                            {createdAt.toLocaleTimeString()}
-                          </span>
-
-                          {/* Severity badge */}
-                          <div>
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${getTypeBadgeStyles(log.log_type)}`}>
-                              {getTypeIcon(log.log_type)}
-                              <span className="capitalize">{log.log_type}</span>
-                            </span>
-                          </div>
-
-                          {/* Category pill */}
-                          <div className="text-[10px] font-semibold text-muted-foreground capitalize">
-                            <span className="bg-muted px-1.5 py-0.5 rounded">
-                              {getCategoryLabel(log.category)}
-                            </span>
-                          </div>
-
-                          {/* Actor stack */}
-                          <div>
-                            {log.logger ? (
-                              <div className="flex items-center gap-1.5">
-                                <Avatar className="size-5 border border-border">
-                                  <AvatarImage src={log.logger.avatar_url || undefined} />
-                                  <AvatarFallback className="text-[8px] font-bold bg-muted">
-                                    {log.logger.first_name[0]}{log.logger.last_name[0]}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="font-medium text-[11px] text-foreground truncate max-w-21.25">
-                                  {log.logger.first_name} {log.logger.last_name[0]}.
-                                </span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1 text-muted-foreground text-[10px]">
-                                <UserIcon className="size-3" />
-                                <span>System Task</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Severity (desktop only) */}
-                      <td className="p-4 whitespace-nowrap hidden md:table-cell">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold border ${getTypeBadgeStyles(log.log_type)}`}>
-                          {getTypeIcon(log.log_type)}
-                          <span className="capitalize">{log.log_type}</span>
-                        </span>
-                      </td>
-
-                      {/* Category (desktop only) */}
-                      <td className="p-4 hidden md:table-cell text-xs font-semibold text-muted-foreground capitalize">
-                        <span className="bg-muted px-2 py-1 rounded">
-                          {getCategoryLabel(log.category)}
-                        </span>
-                      </td>
-
-                      {/* Actor (desktop only) */}
-                      <td className="p-4 hidden md:table-cell">
-                        {log.logger ? (
-                          <div className="flex items-center gap-2">
-                            <Avatar className="size-7 border border-border">
-                              <AvatarImage src={log.logger.avatar_url || undefined} />
-                              <AvatarFallback className="text-[10px] font-bold bg-muted">
-                                {log.logger.first_name[0]}{log.logger.last_name[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                              <p className="font-medium truncate leading-tight text-xs sm:text-sm">
-                                {log.logger.first_name} {log.logger.last_name}
-                              </p>
-                              <p className="text-[10px] text-muted-foreground truncate uppercase">
-                                {log.logger.role}
-                              </p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <UserIcon className="size-4" />
-                            <span className="text-xs">System Task</span>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Message details */}
-                      <td className="p-4 font-normal text-card-foreground break-all max-w-42.5 sm:max-w-none align-top">
-                        {log.log}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+      <LogsList
+        logs={logs}
+        loading={loading}
+        error={error}
+        getTypeBadgeStyles={getTypeBadgeStyles}
+        getTypeIcon={getTypeIcon}
+        getCategoryLabel={getCategoryLabel}
+        onFetch={fetchLogs}
+      />
 
         {/* Pagination Footer */}
         {(cursorStack.length > 0 || hasNextPage) && (
@@ -564,6 +260,5 @@ export default function LogsPage() {
           </div>
         )}
       </div>
-    </div>
   );
 }

@@ -1,12 +1,11 @@
-import React from 'react';
 import { X, ImagePlus, Package, LoaderCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Select as _Select } from '@/components/ui/select';
-import { Unit } from '@/api/ingredients';
+import type { Unit } from '@/api/ingredients';
 import { UNIT_OPTIONS } from '@/features/dashboard/pages/InventoryPage';
-import { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
+import type { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
 
 type Props = {
   mode: 'add' | 'edit';
@@ -22,7 +21,7 @@ type Props = {
   onImageClick: () => void;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClearImage: () => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
   feedback: FeedbackState | null;

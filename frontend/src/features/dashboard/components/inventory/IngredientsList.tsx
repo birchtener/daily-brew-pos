@@ -1,9 +1,8 @@
-import React from 'react';
 import { Package, AlertCircle, TrendingDown, MoreHorizontal, Edit3, Trash2 } from 'lucide-react';
-import { Ingredient } from '@/api/ingredients';
+import type { Ingredient } from '@/api/ingredients';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
-import { Input } from '@/components/ui/input';
+
 import { StockBadge } from '@/features/dashboard/pages/InventoryPage';
 
 type Props = {

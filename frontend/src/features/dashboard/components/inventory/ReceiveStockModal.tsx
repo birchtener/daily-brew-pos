@@ -7,9 +7,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Ingredient } from '@/api/ingredients';
-import { Supplier } from '@/api/suppliers';
-import { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
+import type { Ingredient } from '@/api/ingredients';
+import type { Supplier } from '@/api/suppliers';
+import type { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
 
 type LineItem = {
   _key: number;

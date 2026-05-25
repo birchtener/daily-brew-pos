@@ -1,9 +1,8 @@
-import React from 'react';
 import { Search, PackagePlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Ingredient } from '@/api/ingredients';
+import type { Ingredient } from '@/api/ingredients';
 
 type Props = {
   batchSearch: string;

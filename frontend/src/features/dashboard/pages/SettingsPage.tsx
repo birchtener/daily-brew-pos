@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback } from "react";
-import { User, Camera, Lock, LoaderCircle, Check, AlertCircle, Eye, EyeOff, Trash2 } from "lucide-react";
+import { User, Camera, Lock, LoaderCircle, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +8,7 @@ import { uploadAvatar, updateProfile, updatePassword, deleteAvatar } from "@/api
 import { extractErrorMessage } from "@/lib/extractErrorMessage";
 import type { ParsedUser } from "@/types/userTypes";
 import type { UpdatedUser } from "@/api/users";
+import { toast } from 'sonner';
 
 /* ── helpers ───────────────────────────────────────────────── */
 
@@ -21,25 +22,6 @@ function syncStoreFromBackend(updated: UpdatedUser, setUser: (u: ParsedUser) => 
     avatar_url: updated.avatar_url,
     is_password_temp: updated.is_password_temp,
   });
-}
-
-type FeedbackState = { type: "success" | "error"; message: string } | null;
-
-function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
-  if (!feedback) return null;
-  const isError = feedback.type === "error";
-  return (
-    <div
-      className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm transition-all animate-in fade-in slide-in-from-top-1 ${
-        isError
-          ? "border border-destructive/20 bg-destructive/10 text-destructive"
-          : "border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-      }`}
-    >
-      {isError ? <AlertCircle className="size-4 shrink-0" /> : <Check className="size-4 shrink-0" />}
-      {feedback.message}
-    </div>
-  );
 }
 
 /* ── SettingsPage ──────────────────────────────────────────── */
@@ -83,26 +65,21 @@ function AvatarSection({
   const [preview, setPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFeedback(null);
       const file = e.target.files?.[0];
       if (!file) return;
 
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
-        setFeedback({ type: "error", message: "File size must be under 5 MB." });
+        toast.error("File size must be under 5 MB.");
         return;
       }
 
       const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
       if (!allowed.includes(file.type)) {
-        setFeedback({
-          type: "error",
-          message: "Only JPG, PNG, WebP, and GIF images are allowed.",
-        });
+        toast.error("Only JPG, PNG, WebP, and GIF images are allowed.");
         return;
       }
 
@@ -115,7 +92,6 @@ function AvatarSection({
   const handleUpload = async () => {
     if (!selectedFile) return;
     setUploading(true);
-    setFeedback(null);
 
     try {
       const updated = await uploadAvatar(selectedFile);
@@ -123,12 +99,9 @@ function AvatarSection({
       setPreview(null);
       setSelectedFile(null);
       if (fileRef.current) fileRef.current.value = "";
-      setFeedback({ type: "success", message: "Avatar updated successfully!" });
+      toast.success("Avatar updated successfully!");
     } catch (error) {
-      setFeedback({
-        type: "error",
-        message: extractErrorMessage(error, "Avatar upload failed."),
-      });
+      toast.error(extractErrorMessage(error, "Avatar upload failed."));
     } finally {
       setUploading(false);
     }
@@ -138,13 +111,11 @@ function AvatarSection({
     if (preview) URL.revokeObjectURL(preview);
     setPreview(null);
     setSelectedFile(null);
-    setFeedback(null);
     if (fileRef.current) fileRef.current.value = "";
   };
 
   const handleDelete = async () => {
     setUploading(true);
-    setFeedback(null);
 
     try {
       const updated = await deleteAvatar();
@@ -152,12 +123,9 @@ function AvatarSection({
       setPreview(null);
       setSelectedFile(null);
       if (fileRef.current) fileRef.current.value = "";
-      setFeedback({ type: "success", message: "Avatar deleted successfully!" });
+      toast.success("Avatar deleted successfully!");
     } catch (error) {
-      setFeedback({
-        type: "error",
-        message: extractErrorMessage(error, "Avatar deletion failed."),
-      });
+      toast.error(extractErrorMessage(error, "Avatar deletion failed."));
     } finally {
       setUploading(false);
     }
@@ -246,11 +214,6 @@ function AvatarSection({
         id="avatar-upload-input"
       />
 
-      {feedback && (
-        <div className="mt-4">
-          <FeedbackBanner feedback={feedback} />
-        </div>
-      )}
     </div>
   );
 }
@@ -267,7 +230,6 @@ function ProfileSection({
   const [firstName, setFirstName] = useState(user?.first_name ?? "");
   const [lastName, setLastName] = useState(user?.last_name ?? "");
   const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const isDirty = firstName !== (user?.first_name ?? "") || lastName !== (user?.last_name ?? "");
 
@@ -278,7 +240,6 @@ function ProfileSection({
   const handleSave = async () => {
     if (!canSave) return;
     setSaving(true);
-    setFeedback(null);
 
     try {
       const updated = await updateProfile({
@@ -286,12 +247,9 @@ function ProfileSection({
         last_name: lastName,
       });
       syncStoreFromBackend(updated, setUser);
-      setFeedback({ type: "success", message: "Profile updated successfully!" });
+      toast.success("Profile updated successfully!");
     } catch (error) {
-      setFeedback({
-        type: "error",
-        message: extractErrorMessage(error, "Profile update failed."),
-      });
+      toast.error(extractErrorMessage(error, "Profile update failed."));
     } finally {
       setSaving(false);
     }
@@ -317,7 +275,6 @@ function ProfileSection({
             value={firstName}
             onChange={(e) => {
               setFirstName(e.target.value);
-              setFeedback(null);
             }}
             placeholder="First name"
             aria-invalid={firstNameError}
@@ -336,7 +293,6 @@ function ProfileSection({
             value={lastName}
             onChange={(e) => {
               setLastName(e.target.value);
-              setFeedback(null);
             }}
             placeholder="Last name"
             aria-invalid={lastNameError}
@@ -362,11 +318,6 @@ function ProfileSection({
         )}
       </div>
 
-      {feedback && (
-        <div className="mt-4">
-          <FeedbackBanner feedback={feedback} />
-        </div>
-      )}
     </div>
   );
 }
@@ -385,7 +336,6 @@ function PasswordSection({
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const isTemporaryPassword = !!user?.is_password_temp;
 
@@ -399,7 +349,6 @@ function PasswordSection({
   const handleChangePassword = async () => {
     if (!canSave) return;
     setSaving(true);
-    setFeedback(null);
 
     try {
       await updatePassword({
@@ -411,12 +360,9 @@ function PasswordSection({
       }
       setCurrentPassword("");
       setNewPassword("");
-      setFeedback({ type: "success", message: "Password updated successfully!" });
+      toast.success("Password updated successfully!");
     } catch (error) {
-      setFeedback({
-        type: "error",
-        message: extractErrorMessage(error, "Password update failed."),
-      });
+      toast.error(extractErrorMessage(error, "Password update failed."));
     } finally {
       setSaving(false);
     }
@@ -447,7 +393,6 @@ function PasswordSection({
                 value={currentPassword}
                 onChange={(e) => {
                   setCurrentPassword(e.target.value);
-                  setFeedback(null);
                 }}
                 placeholder="••••••••"
                 className="pr-11"
@@ -479,7 +424,6 @@ function PasswordSection({
               value={newPassword}
               onChange={(e) => {
                 setNewPassword(e.target.value);
-                setFeedback(null);
               }}
               placeholder="••••••••"
               className="pr-11"
@@ -520,11 +464,6 @@ function PasswordSection({
         </Button>
       </div>
 
-      {feedback && (
-        <div className="mt-4">
-          <FeedbackBanner feedback={feedback} />
-        </div>
-      )}
     </div>
   );
 }
