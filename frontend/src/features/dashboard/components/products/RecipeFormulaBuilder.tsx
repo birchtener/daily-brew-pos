@@ -127,7 +127,7 @@ export default function RecipeFormulaBuilder({
                 variant="ghost"
                 size="icon"
                 onClick={() => onRemoveLine(line._key)}
-                className="size-8.5 shrink-0 self-end rounded-lg text-rose-500 hover:bg-rose-500/10 sm:self-auto"
+                className="size-8.5 shrink-0 self-end rounded-lg text-destructive hover:bg-destructive/10 sm:self-auto"
               >
                 <Trash2 className="size-3.5" />
               </Button>

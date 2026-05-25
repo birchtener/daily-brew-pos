@@ -36,7 +36,7 @@ export default function SuppliersMobileList({
           </div>
         ))
       ) : error ? (
-        <div className="p-6 text-center text-rose-500 border border-border bg-card rounded-xl">
+        <div className="p-6 text-center text-destructive border border-border bg-card rounded-xl">
           {error}
         </div>
       ) : suppliers.length === 0 ? (

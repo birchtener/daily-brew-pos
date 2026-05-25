@@ -23,7 +23,7 @@ export default function DeleteSupplierDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 select-none">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between border-b border-border pb-3.5 mb-4">
-          <h2 className="text-lg font-bold flex items-center gap-2 text-rose-500">
+          <h2 className="text-lg font-bold flex items-center gap-2 text-destructive">
             <Trash2 className="size-5 shrink-0" /> Confirm Permanent Deletion
           </h2>
           <button 

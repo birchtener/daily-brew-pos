@@ -93,7 +93,7 @@ export default function CategoryCard({
                   </button>
                   <button
                     onClick={() => onDeleteStart(category)}
-                    className="flex size-7 items-center justify-center rounded-lg text-rose-500 transition hover:bg-rose-500/10"
+                    className="flex size-7 items-center justify-center rounded-lg text-destructive transition hover:bg-destructive/10"
                     title="Delete category"
                   >
                     <Trash2 className="size-3.5" />

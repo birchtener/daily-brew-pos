@@ -50,7 +50,7 @@ export default function DiscountsGrid({
 
   if (error) {
     return (
-      <div className="rounded-xl border border-border bg-card p-8 text-center text-rose-500">
+      <div className="rounded-xl border border-border bg-card p-8 text-center text-destructive">
         <div className="flex flex-col items-center justify-center gap-2">
           <AlertCircle className="size-8 animate-bounce" />
           <p className="font-semibold">Failed to load discounts catalog</p>

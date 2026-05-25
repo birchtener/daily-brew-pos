@@ -157,7 +157,7 @@ export default function LogsPage() {
       case 'warn':
         return 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400';
       case 'error':
-        return 'border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400';
+        return 'border-destructive/20 bg-destructive/10 text-destructive';
       case 'info':
       default:
         return 'border-sky-500/20 bg-sky-500/10 text-sky-600 dark:text-sky-400';
@@ -173,7 +173,7 @@ export default function LogsPage() {
       case 'warn':
         return <AlertTriangle className={`${sizeClass} text-amber-500`} />;
       case 'error':
-        return <AlertCircle className={`${sizeClass} text-rose-500`} />;
+        return <AlertCircle className={`${sizeClass} text-destructive`} />;
       case 'info':
       default:
         return <Info className={`${sizeClass} text-sky-500`} />;

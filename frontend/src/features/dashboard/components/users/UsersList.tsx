@@ -43,7 +43,7 @@ export default function UsersList({
               </div>
             ))
           ) : error ? (
-            <div className="col-span-full rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-rose-500">
+            <div className="col-span-full rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-destructive">
               <div className="flex flex-col items-center justify-center gap-2">
                 <AlertCircle className="size-8 animate-bounce" />
                 <p className="font-semibold">Failed to load users list</p>
@@ -110,7 +110,7 @@ export default function UsersList({
               ))
             ) : error ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-rose-500">
+                <td colSpan={5} className="px-3 py-8 text-center text-destructive">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <AlertCircle className="size-8 animate-bounce" />
                     <p className="font-semibold">Failed to load users list</p>

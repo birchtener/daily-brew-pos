@@ -56,7 +56,7 @@ export default function LogsList({ logs, loading, error, getTypeBadgeStyles, get
               ))
             ) : error ? (
               <tr>
-                <td colSpan={5} className="p-8 text-center text-rose-500">
+                <td colSpan={5} className="p-8 text-center text-destructive">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <AlertCircle className="size-8" />
                     <p className="font-semibold">Failed to load logs</p>

@@ -133,7 +133,7 @@ export default function EditProductDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-card-foreground">
-                Product Title <span className="text-rose-500">*</span>
+                Product Title <span className="text-destructive">*</span>
               </label>
               <Input
                 value={formName}
@@ -147,7 +147,7 @@ export default function EditProductDialog({
 
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-card-foreground">
-                Retail Price (₱) <span className="text-rose-500">*</span>
+                Retail Price (₱) <span className="text-destructive">*</span>
               </label>
               <Input
                 value={formPrice}
@@ -164,7 +164,7 @@ export default function EditProductDialog({
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-card-foreground">
-              Category Tag <span className="text-rose-500">*</span>
+              Category Tag <span className="text-destructive">*</span>
             </label>
             <Select value={formCategoryId} onValueChange={onFormCategoryIdChange}>
               <SelectTrigger className="h-10 text-sm bg-background border border-border">

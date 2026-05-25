@@ -129,7 +129,7 @@ export default function SupplierTableRow({
             {isAdmin && (
               <ContextMenuItem 
                 onSelect={() => onDelete(supplier)}
-                className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
+                className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"
               >
                 <Trash2 className="size-3.5" />
                 Delete Supplier

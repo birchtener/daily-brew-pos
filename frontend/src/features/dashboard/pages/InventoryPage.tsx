@@ -56,8 +56,8 @@ export type FeedbackState = { type: 'success' | 'error'; message: string } | nul
 export function StockBadge({ currentStock, threshold }: { currentStock: number; threshold: number }) {
   if (currentStock === 0) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2 py-0.5 text-[11px] font-semibold text-rose-600 dark:text-rose-400 border border-rose-500/20">
-        <span className="size-1.5 rounded-full bg-rose-500 animate-pulse" />
+      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive border border-destructive/20">
+        <span className="size-1.5 rounded-full bg-destructive animate-pulse" />
         Out
       </span>
     );
@@ -396,7 +396,7 @@ export default function InventoryPage() {
     const isDepleted = Number(batch.quantity_remaining) === 0;
 
     if (isDepleted) return 'opacity-50';
-    if (expiry < today) return 'bg-rose-500/8 dark:bg-rose-500/10';
+    if (expiry < today) return 'bg-destructive/8 dark:bg-destructive/10';
     if (expiry <= in7Days) return 'bg-amber-500/8 dark:bg-amber-500/10';
     return '';
   };
@@ -470,7 +470,7 @@ export default function InventoryPage() {
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground select-none px-1">
             <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm bg-rose-500/30 border border-rose-500/40" /> Expired
+              <span className="size-2.5 rounded-sm bg-destructive/30 border border-destructive/40" /> Expired
             </div>
             <div className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-sm bg-amber-500/30 border border-amber-500/40" /> Expires within 7 days
@@ -512,7 +512,7 @@ export default function InventoryPage() {
                     ))
                   ) : batchesError ? (
                     <tr>
-                      <td colSpan={isAdmin ? 8 : 7} className="p-8 text-center text-rose-500">
+                      <td colSpan={isAdmin ? 8 : 7} className="p-8 text-center text-destructive">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <AlertCircle className="size-8 animate-bounce" />
                           <p className="font-semibold">Failed to load stock batches</p>
@@ -592,7 +592,7 @@ export default function InventoryPage() {
                               {(() => {
                                 const exp = new Date(batch.expiry);
                                 exp.setHours(0, 0, 0, 0);
-                                if (exp < today) return <AlertTriangle className="size-3.5 text-rose-500" />;
+                                if (exp < today) return <AlertTriangle className="size-3.5 text-destructive" />;
                                 if (exp <= in7Days) return <AlertTriangle className="size-3.5 text-amber-500" />;
                                 return <CalendarIcon className="size-3.5 text-foreground" />;
                               })()}
@@ -628,7 +628,7 @@ export default function InventoryPage() {
                                   <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
                                     <ContextMenuItem
                                       onSelect={() => { setDeletingBatch(batch); setBatchDeleteFeedback(null); }}
-                                      className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
+                                      className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"
                                     >
                                       <Trash2 className="size-3.5" />
                                       Delete Batch

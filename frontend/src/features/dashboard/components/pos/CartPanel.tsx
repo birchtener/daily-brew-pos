@@ -55,7 +55,7 @@ export default function CartPanel({
         </div>
 
         {cartItems.length > 0 && (
-          <button onClick={clearCart} className="text-[10px] font-semibold text-rose-500 hover:text-rose-600 transition flex items-center gap-1">
+          <button onClick={clearCart} className="text-[10px] font-semibold text-destructive hover:text-destructive/80 transition flex items-center gap-1">
             <Trash2 className="size-3" /> Clear
           </button>
         )}
@@ -92,7 +92,7 @@ export default function CartPanel({
                 <button onClick={() => updateQuantity(item.product.id, -1)} className="size-6.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground flex items-center justify-center transition"><Minus className="size-3" /></button>
                 <span className="font-mono text-xs font-bold text-foreground w-6 text-center select-none">{item.quantity}</span>
                 <button onClick={() => updateQuantity(item.product.id, 1)} className="size-6.5 rounded-lg border border-border bg-background hover:bg-muted text-foreground flex items-center justify-center transition"><Plus className="size-3" /></button>
-                <button onClick={() => removeFromCart(item.product.id)} className="size-6.5 rounded-lg text-rose-500 hover:bg-rose-500/10 flex items-center justify-center transition ml-1"><Trash2 className="size-3.5" /></button>
+                <button onClick={() => removeFromCart(item.product.id)} className="size-6.5 rounded-lg text-destructive hover:bg-destructive/10 flex items-center justify-center transition ml-1"><Trash2 className="size-3.5" /></button>
               </div>
             </div>
           ))}

@@ -50,7 +50,7 @@ export default function EditSupplierDialog({
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-card-foreground">
-              Supplier / Company Name <span className="text-rose-500">*</span>
+              Supplier / Company Name <span className="text-destructive">*</span>
             </label>
             <Input
               value={formName}

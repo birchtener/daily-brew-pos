@@ -51,11 +51,11 @@ export default function MetricSummaryCards({ loading, financials }: MetricSummar
               </h2>
             )}
           </div>
-          <div className="size-9 rounded-xl bg-linear-to-tr from-rose-500/10 to-rose-500/5 text-rose-600 dark:text-rose-400 border border-rose-500/10 flex items-center justify-center">
+          <div className="size-9 rounded-xl bg-linear-to-tr from-destructive/10 to-destructive/5 text-destructive border border-destructive/10 flex items-center justify-center">
             <Package className="size-4.5" />
           </div>
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-rose-600 dark:text-rose-400 font-bold border-t border-border/40 pt-3 mt-3">
+        <div className="flex items-center gap-1 text-[10px] text-destructive font-bold border-t border-border/40 pt-3 mt-3">
           <TrendingDown className="size-3.5" /> Raw batch deductions from sales
         </div>
       </div>

@@ -26,7 +26,7 @@ export default function DeleteCategoryDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg animate-in zoom-in-95 duration-200">
         <div className="mb-4 flex items-center justify-between border-b border-border pb-3.5">
-          <h2 className="flex items-center gap-2 text-lg font-bold text-rose-500">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-destructive">
             <Trash2 className="size-5 shrink-0" /> Confirm Permanent Deletion
           </h2>
           <button

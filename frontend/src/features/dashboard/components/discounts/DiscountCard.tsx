@@ -50,7 +50,7 @@ export default function DiscountCard({
             </button>
             <button
               onClick={() => onDeleteStart(discount)}
-              className="flex size-7 items-center justify-center rounded-lg text-rose-500 transition hover:bg-rose-500/10"
+              className="flex size-7 items-center justify-center rounded-lg text-destructive transition hover:bg-destructive/10"
               title="Remove promo code"
             >
               <Trash2 className="size-3.5" />

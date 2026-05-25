@@ -111,7 +111,7 @@ export default function ProductCard({
                   {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                 </button>
               ) : (
-                <div className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-500/5 border border-rose-500/10 text-[10px] text-rose-500 font-semibold select-none">
+                <div className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-destructive/5 border border-destructive/10 text-[10px] text-destructive font-semibold select-none">
                   <AlertCircle className="size-3.5" /> No ingredients linked to recipe
                 </div>
               )}
@@ -159,7 +159,7 @@ export default function ProductCard({
         </ContextMenuItem>
         <ContextMenuItem
           onSelect={onDelete}
-          className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
+          className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"
         >
           <Trash2 className="size-3.5" />
           Delete Product

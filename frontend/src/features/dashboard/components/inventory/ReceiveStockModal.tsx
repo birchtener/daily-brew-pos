@@ -65,7 +65,7 @@ export default function ReceiveStockModal({
 
         <form onSubmit={onSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-card-foreground">Supplier <span className="text-rose-500">*</span></label>
+            <label className="text-xs font-semibold text-card-foreground">Supplier <span className="text-destructive">*</span></label>
             <Select value={receiveSupplier} onValueChange={setReceiveSupplier}>
               <SelectTrigger className="h-10 w-full bg-background border border-border shadow-none text-sm font-medium text-foreground">
                 <SelectValue placeholder="Select a supplier…" />
@@ -94,7 +94,7 @@ export default function ReceiveStockModal({
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Item #{index + 1}</span>
                     {receiveItems.length > 1 && (
-                      <button type="button" onClick={() => removeReceiveItem(item._key)} className="size-6 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-rose-500 transition">
+                      <button type="button" onClick={() => removeReceiveItem(item._key)} className="size-6 rounded hover:bg-destructive/10 flex items-center justify-center text-muted-foreground hover:text-destructive transition">
                         <X className="size-3.5" />
                       </button>
                     )}
@@ -102,7 +102,7 @@ export default function ReceiveStockModal({
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1 sm:col-span-2">
-                      <label className="text-[11px] font-medium text-muted-foreground">Ingredient <span className="text-rose-500">*</span></label>
+                      <label className="text-[11px] font-medium text-muted-foreground">Ingredient <span className="text-destructive">*</span></label>
                       <Select value={item.ingredient_id} onValueChange={(val) => updateReceiveItem(item._key, 'ingredient_id', val)}>
                         <SelectTrigger className="h-9 w-full bg-background border border-border shadow-none text-xs">
                           <SelectValue placeholder="Select ingredient…" />
@@ -118,7 +118,7 @@ export default function ReceiveStockModal({
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[11px] font-medium text-muted-foreground">Quantity <span className="text-rose-500">*</span></label>
+                      <label className="text-[11px] font-medium text-muted-foreground">Quantity <span className="text-destructive">*</span></label>
                       <Input type="number" step="0.001" min="0.001" value={item.quantity_received || ''} onChange={(e) => updateReceiveItem(item._key, 'quantity_received', parseFloat(e.target.value) || 0)} placeholder="0.000" className="h-9 text-xs font-mono" required />
                     </div>
 
@@ -128,7 +128,7 @@ export default function ReceiveStockModal({
                     </div>
 
                     <div className="flex flex-col gap-1 sm:col-span-2">
-                      <label className="text-[11px] font-medium text-muted-foreground">Expiry Date <span className="text-rose-500">*</span></label>
+                      <label className="text-[11px] font-medium text-muted-foreground">Expiry Date <span className="text-destructive">*</span></label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button variant="outline" className={cn("h-9 w-full justify-start text-left text-xs font-mono font-normal shadow-none border border-border bg-background hover:bg-muted/40", !item.expiry && "text-muted-foreground")}>

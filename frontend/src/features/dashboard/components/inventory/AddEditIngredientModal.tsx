@@ -78,7 +78,7 @@ export default function AddEditIngredientModal({
                 )}
               </button>
               {imagePreview && (
-                <button type="button" onClick={onClearImage} className="text-[11px] font-medium text-muted-foreground hover:text-rose-500 transition underline">
+                <button type="button" onClick={onClearImage} className="text-[11px] font-medium text-muted-foreground hover:text-destructive transition underline">
                   Remove
                 </button>
               )}
@@ -93,13 +93,13 @@ export default function AddEditIngredientModal({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-card-foreground">Ingredient Name <span className="text-rose-500">*</span></label>
+            <label className="text-xs font-semibold text-card-foreground">Ingredient Name <span className="text-destructive">*</span></label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ingredient Name" className="h-10 text-sm" maxLength={50} required />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-card-foreground">Unit <span className="text-rose-500">*</span></label>
+              <label className="text-xs font-semibold text-card-foreground">Unit <span className="text-destructive">*</span></label>
               <Select value={unit} onValueChange={(val) => setUnit(val as Unit)}>
                 <SelectTrigger className="h-10 w-full bg-background border border-border shadow-none text-sm font-medium text-foreground">
                   <SelectValue placeholder="Select unit…" />

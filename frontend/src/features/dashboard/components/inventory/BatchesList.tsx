@@ -35,7 +35,7 @@ export default function BatchesList({
     <>
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground select-none px-1">
-        <div className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-rose-500/30 border border-rose-500/40" /> Expired</div>
+        <div className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-destructive/30 border border-destructive/40" /> Expired</div>
         <div className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-amber-500/30 border border-amber-500/40" /> Expires within 7 days</div>
         <div className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm bg-muted border border-border opacity-50" /> Fully depleted</div>
       </div>
@@ -72,7 +72,7 @@ export default function BatchesList({
                 ))
               ) : batchesError ? (
                 <tr>
-                  <td colSpan={isAdmin ? 8 : 7} className="p-8 text-center text-rose-500">
+                  <td colSpan={isAdmin ? 8 : 7} className="p-8 text-center text-destructive">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <AlertCircle className="size-8 animate-bounce" />
                       <p className="font-semibold">Failed to load stock batches</p>
@@ -112,7 +112,7 @@ export default function BatchesList({
                       <td className="p-4 font-mono text-xs text-muted-foreground">₱{Number(batch.cost_per_unit).toFixed(2)}</td>
                       <td className="p-4 text-xs font-mono whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          {(() => { const exp = new Date(batch.expiry); exp.setHours(0,0,0,0); if (exp < today) return <AlertTriangle className="size-3.5 text-rose-500" />; if (exp <= in7Days) return <AlertTriangle className="size-3.5 text-amber-500" />; return <CalendarIcon className="size-3.5 text-foreground" /> })()}
+                          {(() => { const exp = new Date(batch.expiry); exp.setHours(0,0,0,0); if (exp < today) return <AlertTriangle className="size-3.5 text-destructive" />; if (exp <= in7Days) return <AlertTriangle className="size-3.5 text-amber-500" />; return <CalendarIcon className="size-3.5 text-foreground" /> })()}
                           {expiryDate.toLocaleDateString()}
                         </div>
                       </td>
@@ -125,7 +125,7 @@ export default function BatchesList({
                                 <Button variant="ghost" size="icon" className="size-8 hover:bg-muted/80 action-btn-trigger"><MoreHorizontal className="size-4.5" /></Button>
                               </ContextMenuTrigger>
                               <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
-                                <ContextMenuItem onSelect={() => onDelete(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer">
+                                <ContextMenuItem onSelect={() => onDelete(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
                                   <Trash2 className="size-3.5" /> Delete Batch
                                 </ContextMenuItem>
                               </ContextMenuContent>
@@ -151,7 +151,7 @@ export default function BatchesList({
             <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4 flex flex-col gap-2"><div className="h-4 bg-muted rounded w-28" /><div className="h-3.5 bg-muted rounded w-20" /></div>
           ))
         ) : batchesError ? (
-          <div className="p-6 text-center text-rose-500 border border-border bg-card rounded-xl">{batchesError}</div>
+          <div className="p-6 text-center text-destructive border border-border bg-card rounded-xl">{batchesError}</div>
         ) : filteredBatches.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground border border-border bg-card rounded-xl">No stock batches found.</div>
         ) : (
@@ -166,7 +166,7 @@ export default function BatchesList({
                     <span className="text-[10px] text-muted-foreground uppercase font-mono font-medium bg-muted px-1.5 py-0.5 rounded">{batch.ingredient.unit}</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground truncate">From: <span className="font-semibold text-foreground">{batch.supplier_order.supplier.name}</span></p>
-                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground">{(() => { const exp = new Date(batch.expiry); exp.setHours(0,0,0,0); if (exp < today) return <AlertTriangle className="size-3 text-rose-500 shrink-0" />; if (exp <= in7Days) return <AlertTriangle className="size-3 text-amber-500 shrink-0" />; return <CalendarIcon className="size-3 text-muted-foreground shrink-0" /> })()} Exp: {expiryDate.toLocaleDateString()}</div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground">{(() => { const exp = new Date(batch.expiry); exp.setHours(0,0,0,0); if (exp < today) return <AlertTriangle className="size-3 text-destructive shrink-0" />; if (exp <= in7Days) return <AlertTriangle className="size-3 text-amber-500 shrink-0" />; return <CalendarIcon className="size-3 text-muted-foreground shrink-0" /> })()} Exp: {expiryDate.toLocaleDateString()}</div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
@@ -177,7 +177,7 @@ export default function BatchesList({
                         <Button variant="ghost" size="icon" className="size-8 hover:bg-muted/85 action-btn-trigger shrink-0"><MoreHorizontal className="size-4" /></Button>
                       </ContextMenuTrigger>
                       <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
-                        <ContextMenuItem onSelect={() => onDelete(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"><Trash2 className="size-3.5" /> Delete Batch</ContextMenuItem>
+                        <ContextMenuItem onSelect={() => onDelete(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"><Trash2 className="size-3.5" /> Delete Batch</ContextMenuItem>
                       </ContextMenuContent>
                     </ContextMenu>
                   )}

@@ -56,7 +56,7 @@ export default function IngredientsList({
                 ))
               ) : ingredientsError ? (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} className="p-8 text-center text-rose-500">
+                  <td colSpan={isAdmin ? 6 : 5} className="p-8 text-center text-destructive">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <AlertCircle className="size-8 animate-bounce" />
                       <p className="font-semibold">Failed to load ingredients</p>
@@ -155,7 +155,7 @@ export default function IngredientsList({
                             <ContextMenuItem onSelect={() => onEdit(ing)} className="flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-muted transition cursor-pointer">
                               <Edit3 className="size-3.5 text-muted-foreground" /> Edit Ingredient
                             </ContextMenuItem>
-                            <ContextMenuItem onSelect={() => onDelete(ing)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer">
+                            <ContextMenuItem onSelect={() => onDelete(ing)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
                               <Trash2 className="size-3.5" /> Delete Ingredient
                             </ContextMenuItem>
                           </ContextMenuContent>
@@ -186,7 +186,7 @@ export default function IngredientsList({
             </div>
           ))
         ) : ingredientsError ? (
-          <div className="p-6 text-center text-rose-500 border border-border bg-card rounded-xl">{ingredientsError}</div>
+          <div className="p-6 text-center text-destructive border border-border bg-card rounded-xl">{ingredientsError}</div>
         ) : filteredIngredients.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground border border-border bg-card rounded-xl">No ingredients found.</div>
         ) : (
@@ -257,7 +257,7 @@ export default function IngredientsList({
                       <ContextMenuItem onSelect={() => onEdit(ing)} className="flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-muted transition cursor-pointer">
                         <Edit3 className="size-3.5 text-muted-foreground" /> Edit Ingredient
                       </ContextMenuItem>
-                      <ContextMenuItem onSelect={() => onDelete(ing)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer">
+                      <ContextMenuItem onSelect={() => onDelete(ing)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
                         <Trash2 className="size-3.5" /> Delete Ingredient
                       </ContextMenuItem>
                     </ContextMenuContent>

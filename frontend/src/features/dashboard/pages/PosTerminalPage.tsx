@@ -248,7 +248,7 @@ export default function PosTerminalPage() {
       )}
 
       {error && (
-        <div className="p-8 text-center text-rose-500 border border-border bg-card rounded-xl">
+        <div className="p-8 text-center text-destructive border border-border bg-card rounded-xl">
           <div className="flex flex-col items-center justify-center gap-2">
             <AlertCircle className="size-8 animate-bounce" />
             <p className="font-semibold">Initialization Mismatch</p>
