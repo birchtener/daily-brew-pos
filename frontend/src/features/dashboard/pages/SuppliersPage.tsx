@@ -1,36 +1,22 @@
 import { useEffect, useState, useCallback } from 'react';
 import { 
-  Building2, 
-  Search, 
-  Plus, 
-  User, 
-  Phone, 
-  MoreHorizontal, 
-  Edit3, 
-  Trash2, 
-  LoaderCircle, 
-  AlertCircle, 
-  X,
-  Calendar
-} from 'lucide-react';
-import { 
   getSuppliers, 
   createSupplier, 
   updateSupplier, 
   deleteSupplier, 
   type Supplier 
 } from '@/api/suppliers';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { useStore } from '@/store/useStore';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
 import { toast } from 'sonner';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+
+import SuppliersHeader from '../components/suppliers/SuppliersHeader';
+import SuppliersToolbar from '../components/suppliers/SuppliersToolbar';
+import SuppliersTable from '../components/suppliers/SuppliersTable';
+import SuppliersMobileList from '../components/suppliers/SuppliersMobileList';
+import CreateSupplierDialog from '../components/suppliers/CreateSupplierDialog';
+import EditSupplierDialog from '../components/suppliers/EditSupplierDialog';
+import DeleteSupplierDialog from '../components/suppliers/DeleteSupplierDialog';
 
 export default function SuppliersPage() {
   const currentUser = useStore((s) => s.user);
@@ -186,581 +172,77 @@ export default function SuppliersPage() {
 
   return (
     <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Building2 className="size-6 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">Suppliers Registry</h1>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Manage vendor details, coordinate supplier contacts, and inspect procurement relations.
-          </p>
-        </div>
+      <SuppliersHeader
+        isAdmin={isAdmin}
+        onAddClick={handleOpenAddModal}
+      />
 
-        <Button 
-          onClick={handleOpenAddModal} 
-          className="h-9 px-4 text-xs font-semibold shrink-0 inline-flex items-center gap-1.5 self-start sm:self-center"
-        >
-          <Plus className="size-4" /> Add Supplier
-        </Button>
-      </div>
+      <SuppliersToolbar
+        searchVal={searchVal}
+        onSearchChange={setSearchVal}
+        filteredCount={filteredSuppliers.length}
+        totalCount={suppliers.length}
+      />
 
-      {/* Control panel & Search */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            value={searchVal}
-            onChange={(e) => setSearchVal(e.target.value)}
-            placeholder="Search suppliers by company or contact name..."
-            className="pl-9 w-full h-9 text-sm"
-          />
-        </div>
-        <div className="text-xs text-muted-foreground select-none">
-          Showing <span className="font-semibold text-card-foreground">{filteredSuppliers.length}</span> of {suppliers.length} vendors
-        </div>
-      </div>
+      <SuppliersTable
+        suppliers={filteredSuppliers}
+        totalCount={suppliers.length}
+        loading={loading}
+        error={error}
+        isAdmin={isAdmin}
+        onEdit={handleOpenEditModal}
+        onDelete={(supplier) => {
+          setDeletingSupplier(supplier);
+        }}
+        onRetry={fetchSuppliers}
+      />
 
-      {/* Main Table Panel (Desktop) */}
-      <div className="hidden md:block rounded-xl border border-border bg-card shadow-sm overflow-hidden select-text">
-        <div className="w-full overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/40 font-medium text-muted-foreground select-none">
-                <th className="p-4 w-62.5 md:w-80">Vendor Name</th>
-                <th className="p-4 w-50 md:w-65">Contact Person</th>
-                <th className="p-4 w-45 md:w-55">Phone Number</th>
-                <th className="p-4 w-37.5 hidden lg:table-cell">Last Updated</th>
-                <th className="p-4 w-15 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {loading && suppliers.length === 0 ? (
-                // Skeleton UI Loader
-                Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-lg bg-muted shrink-0" />
-                        <div className="h-4 bg-muted rounded w-36" />
-                      </div>
-                    </td>
-                    <td className="p-4"><div className="h-4 bg-muted rounded w-24" /></td>
-                    <td className="p-4"><div className="h-4 bg-muted rounded w-28" /></td>
-                    <td className="p-4 hidden lg:table-cell"><div className="h-4 bg-muted rounded w-20" /></td>
-                    <td className="p-4 text-center"><div className="size-6 bg-muted rounded mx-auto" /></td>
-                  </tr>
-                ))
-              ) : error ? (
-                // Error state banner
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-rose-500">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <AlertCircle className="size-8 animate-bounce" />
-                      <p className="font-semibold">Failed to load suppliers list</p>
-                      <p className="text-xs text-muted-foreground max-w-sm">{error}</p>
-                      <Button variant="outline" size="sm" onClick={fetchSuppliers} className="mt-2">
-                        Try Again
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredSuppliers.length === 0 ? (
-                // Empty state
-                <tr>
-                  <td colSpan={5} className="p-12 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <Building2 className="size-10 text-muted-foreground/30" />
-                      <div>
-                        <p className="font-medium text-foreground">No suppliers found</p>
-                        <p className="text-xs text-muted-foreground max-w-xs mx-auto mt-1">
-                          Try adjusting search terms or register a new vendor.
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                // Row mapping
-                filteredSuppliers.map((supplier) => {
-                  const updatedAt = new Date(supplier.updated_at);
+      <SuppliersMobileList
+        suppliers={filteredSuppliers}
+        totalCount={suppliers.length}
+        loading={loading}
+        error={error}
+        isAdmin={isAdmin}
+        onEdit={handleOpenEditModal}
+        onDelete={(supplier) => {
+          setDeletingSupplier(supplier);
+        }}
+      />
 
-                  return (
-                    <tr 
-                      key={supplier.id} 
-                      className="hover:bg-muted/40 transition-colors select-none cursor-context-menu"
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const btn = e.currentTarget.querySelector('.action-btn-trigger');
-                        if (btn) {
-                          const event = new MouseEvent('contextmenu', {
-                            bubbles: true,
-                            cancelable: true,
-                            clientX: e.clientX,
-                            clientY: e.clientY,
-                          });
-                          btn.dispatchEvent(event);
-                        }
-                      }}
-                    >
-                      {/* Vendor Name */}
-                      <td className="p-4 font-semibold text-card-foreground">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="size-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 select-none">
-                            <Building2 className="size-4.5" />
-                          </div>
-                          <span className="truncate">{supplier.name}</span>
-                        </div>
-                      </td>
+      <CreateSupplierDialog
+        open={isAddModalOpen}
+        formName={formName}
+        formContactName={formContactName}
+        formContactNumber={formContactNumber}
+        submitting={submitting}
+        onClose={() => setIsAddModalOpen(false)}
+        onFormNameChange={setFormName}
+        onFormContactNameChange={setFormContactName}
+        onFormContactNumberChange={setFormContactNumber}
+        onSubmit={handleAddSubmit}
+      />
 
-                      {/* Contact Person */}
-                      <td className="p-4 text-muted-foreground">
-                        {supplier.contact_name ? (
-                          <div className="flex items-center gap-2 text-foreground font-medium">
-                            <User className="size-4 text-muted-foreground shrink-0" />
-                            <span className="truncate">{supplier.contact_name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground/50 text-xs italic select-none">Not Specified</span>
-                        )}
-                      </td>
+      <EditSupplierDialog
+        open={!!editingSupplier}
+        supplier={editingSupplier}
+        formName={formName}
+        formContactName={formContactName}
+        formContactNumber={formContactNumber}
+        submitting={submitting}
+        onClose={() => setEditingSupplier(null)}
+        onFormNameChange={setFormName}
+        onFormContactNameChange={setFormContactName}
+        onFormContactNumberChange={setFormContactNumber}
+        onSubmit={handleEditSubmit}
+      />
 
-                      {/* Contact Phone */}
-                      <td className="p-4 text-muted-foreground text-left">
-                        {supplier.contact_number ? (
-                          <a 
-                            href={`tel:${supplier.contact_number}`}
-                            className="flex items-center gap-2 hover:text-primary transition font-mono whitespace-nowrap text-xs md:text-sm font-medium"
-                          >
-                            <Phone className="size-4 text-muted-foreground shrink-0" />
-                            <span>{supplier.contact_number}</span>
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground/50 text-xs italic select-none">Not Specified</span>
-                        )}
-                      </td>
-
-                      {/* Date Stamp */}
-                      <td className="p-4 hidden lg:table-cell text-xs font-mono text-muted-foreground whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <Calendar className="size-3.5 text-muted-foreground/70" />
-                          <span>{updatedAt.toLocaleDateString()}</span>
-                        </div>
-                      </td>
-
-                      {/* Context Menu Action Button Trigger (placed inside valid td) */}
-                      <td className="p-4 text-center select-none">
-                        <ContextMenu>
-                          <ContextMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 hover:bg-muted/80 action-btn-trigger"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const event = new MouseEvent('contextmenu', {
-                                  bubbles: true,
-                                  cancelable: true,
-                                  clientX: e.clientX,
-                                  clientY: e.clientY,
-                                });
-                                e.currentTarget.dispatchEvent(event);
-                              }}
-                            >
-                              <MoreHorizontal className="size-4.5" />
-                            </Button>
-                          </ContextMenuTrigger>
-
-                          <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
-                            <ContextMenuItem 
-                              onSelect={() => handleOpenEditModal(supplier)}
-                              className="flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-muted transition cursor-pointer"
-                            >
-                              <Edit3 className="size-3.5 text-muted-foreground" />
-                              Edit Details
-                            </ContextMenuItem>
-                            {isAdmin && (
-                              <ContextMenuItem 
-                                onSelect={() => {
-                                  setDeletingSupplier(supplier);
-                                }}
-                                className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
-                              >
-                                <Trash2 className="size-3.5" />
-                                Delete Supplier
-                              </ContextMenuItem>
-                            )}
-                          </ContextMenuContent>
-                        </ContextMenu>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Suppliers Mobile Stacked View */}
-      <div className="md:hidden flex flex-col gap-3">
-        {loading && suppliers.length === 0 ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="animate-pulse rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-lg bg-muted shrink-0" />
-                <div className="flex flex-col gap-2">
-                  <div className="h-3.5 bg-muted rounded w-24" />
-                  <div className="h-2.5 bg-muted rounded w-12" />
-                </div>
-              </div>
-              <div className="h-4 bg-muted rounded w-16" />
-            </div>
-          ))
-        ) : error ? (
-          <div className="p-6 text-center text-rose-500 border border-border bg-card rounded-xl">
-            {error}
-          </div>
-        ) : filteredSuppliers.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground border border-border bg-card rounded-xl">
-            No suppliers found.
-          </div>
-        ) : (
-          filteredSuppliers.map((supplier) => {
-            const updatedAt = new Date(supplier.updated_at);
-            const initials = supplier.name
-              ? supplier.name
-                  .split(' ')
-                  .map((word) => word[0])
-                  .join('')
-                  .substring(0, 2)
-                  .toUpperCase()
-              : '??';
-
-            return (
-              <div
-                key={supplier.id}
-                className="rounded-xl border border-border bg-card p-4 flex items-center justify-between gap-4 hover:bg-muted/10 transition-colors cursor-context-menu"
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const btn = e.currentTarget.querySelector('.action-btn-trigger');
-                  if (btn) {
-                    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
-                    btn.dispatchEvent(event);
-                  }
-                }}
-              >
-                {/* Column 1: Avatar, Name, Updated date */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0 select-none">
-                    {initials}
-                  </div>
-                  <div className="min-w-0 flex flex-col gap-1">
-                    <span className="font-semibold text-card-foreground truncate text-sm">{supplier.name}</span>
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground">
-                      <Calendar className="size-3 text-muted-foreground/70" />
-                      <span>{updatedAt.toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Column 2: Contact Info, Actions */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="text-right">
-                    {supplier.contact_name ? (
-                      <p className="text-xs font-semibold text-foreground truncate max-w-28">
-                        {supplier.contact_name}
-                      </p>
-                    ) : (
-                      <p className="text-[10px] text-muted-foreground/50 italic">No contact</p>
-                    )}
-                    {supplier.contact_number ? (
-                      <a
-                        href={`tel:${supplier.contact_number}`}
-                        className="text-[11px] font-mono font-medium text-primary hover:underline block"
-                      >
-                        {supplier.contact_number}
-                      </a>
-                    ) : (
-                      <p className="text-[10px] text-muted-foreground/50 italic">No phone</p>
-                    )}
-                  </div>
-                  <ContextMenu>
-                    <ContextMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 hover:bg-muted/85 action-btn-trigger shrink-0"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
-                          e.currentTarget.dispatchEvent(event);
-                        }}
-                      >
-                        <MoreHorizontal className="size-4" />
-                      </Button>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
-                      <ContextMenuItem
-                        onSelect={() => handleOpenEditModal(supplier)}
-                        className="flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-muted transition cursor-pointer"
-                      >
-                        <Edit3 className="size-3.5 text-muted-foreground" />
-                        Edit Details
-                      </ContextMenuItem>
-                      {isAdmin && (
-                        <ContextMenuItem
-                          onSelect={() => {
-                            setDeletingSupplier(supplier);
-                          }}
-                          className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-rose-500 hover:bg-rose-500/10 focus:bg-rose-500/10 focus:text-rose-500 transition cursor-pointer"
-                        >
-                          <Trash2 className="size-3.5" />
-                          Delete Supplier
-                        </ContextMenuItem>
-                      )}
-                    </ContextMenuContent>
-                  </ContextMenu>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* ── ADD SUPPLIER MODAL ────────────────────────────────────── */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 select-none">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-border pb-3.5 mb-4">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <Building2 className="size-5 text-primary" /> Register New Supplier
-              </h2>
-              <button 
-                onClick={() => setIsAddModalOpen(false)}
-                className="size-7 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground transition"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-card-foreground">
-                  Supplier / Company Name <span className="text-rose-500">*</span>
-                </label>
-                <Input
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="e.g., Mountain Brew Distributors"
-                  className="h-10 text-sm"
-                  maxLength={100}
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-card-foreground">
-                  Contact Person Name
-                </label>
-                <Input
-                  value={formContactName}
-                  onChange={(e) => setFormContactName(e.target.value)}
-                  placeholder="e.g., John Doe"
-                  className="h-10 text-sm"
-                  maxLength={50}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-card-foreground">
-                  Contact Phone Number
-                </label>
-                <Input
-                  value={formContactNumber}
-                  onChange={(e) => setFormContactNumber(e.target.value)}
-                  placeholder="e.g., +639123456789"
-                  className="h-10 text-sm font-mono"
-                  maxLength={15}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsAddModalOpen(false)}
-                  disabled={submitting}
-                  className="h-9 px-4 text-xs font-medium"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={submitting}
-                  className="h-9 px-4 text-xs font-semibold"
-                >
-                  {submitting ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <LoaderCircle className="size-3.5 animate-spin" /> Saving…
-                    </span>
-                  ) : (
-                    "Add Supplier"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ── EDIT SUPPLIER MODAL ───────────────────────────────────── */}
-      {editingSupplier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 select-none">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-border pb-3.5 mb-4">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <Edit3 className="size-5 text-primary" /> Edit Supplier Details
-              </h2>
-              <button 
-                onClick={() => setEditingSupplier(null)}
-                className="size-7 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground transition"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleEditSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-card-foreground">
-                  Supplier / Company Name <span className="text-rose-500">*</span>
-                </label>
-                <Input
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  placeholder="Company Name"
-                  className="h-10 text-sm"
-                  maxLength={100}
-                  required
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-card-foreground">
-                  Contact Person Name
-                </label>
-                <Input
-                  value={formContactName}
-                  onChange={(e) => setFormContactName(e.target.value)}
-                  placeholder="Contact Person Name"
-                  className="h-10 text-sm"
-                  maxLength={50}
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-card-foreground">
-                  Contact Phone Number
-                </label>
-                <Input
-                  value={formContactNumber}
-                  onChange={(e) => setFormContactNumber(e.target.value)}
-                  placeholder="Phone number"
-                  className="h-10 text-sm font-mono"
-                  maxLength={15}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setEditingSupplier(null)}
-                  disabled={submitting}
-                  className="h-9 px-4 text-xs font-medium"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={submitting}
-                  className="h-9 px-4 text-xs font-semibold"
-                >
-                  {submitting ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <LoaderCircle className="size-3.5 animate-spin" /> Saving…
-                    </span>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ── DELETE SUPPLIER CONFIRMATION MODAL ────────────────────── */}
-      {deletingSupplier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 select-none">
-          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-border pb-3.5 mb-4">
-              <h2 className="text-lg font-bold flex items-center gap-2 text-rose-500">
-                <Trash2 className="size-5 shrink-0" /> Confirm Permanent Deletion
-              </h2>
-              <button 
-                onClick={() => setDeletingSupplier(null)}
-                className="size-7 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground transition"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-3 py-1">
-              <p className="text-sm text-card-foreground">
-                Are you absolutely sure you want to permanently delete the vendor <span className="font-bold text-foreground">"{deletingSupplier.name}"</span>?
-              </p>
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive flex gap-2">
-                <AlertCircle className="size-4 shrink-0 mt-0.5" />
-                <span>
-                  <strong>CRITICAL WARNING:</strong> This action is irreversible. The supplier record will be removed from all active database charts. Deletion will fail if purchase orders are linked to this supplier.
-                </span>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 border-t border-border pt-4 mt-5">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setDeletingSupplier(null)}
-                disabled={submitting}
-                className="h-9 px-4 text-xs font-medium"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleDeleteSubmit}
-                disabled={submitting}
-                variant="destructive"
-                className="h-9 px-4 text-xs font-semibold"
-              >
-                {submitting ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <LoaderCircle className="size-3.5 animate-spin" /> Deleting…
-                  </span>
-                ) : (
-                  "Delete Vendor"
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteSupplierDialog
+        open={!!deletingSupplier}
+        supplier={deletingSupplier}
+        submitting={submitting}
+        onClose={() => setDeletingSupplier(null)}
+        onConfirm={handleDeleteSubmit}
+      />
     </div>
   );
 }
