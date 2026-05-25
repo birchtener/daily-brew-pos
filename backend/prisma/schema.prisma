@@ -56,6 +56,7 @@ model Notification {
   created_at DateTime @default(now()) @db.Timestamptz
 
   user User? @relation(fields: [user_id], references: [id])
+  created_by_user User @relation("NotificationCreator", fields: [created_by], references: [id])
 
   @@index([user_id, is_read])
   @@index([created_at])
@@ -99,6 +100,7 @@ model User {
   ordered_supplier_orders SupplierOrders[] @relation("SupplierOrderCreator")
 
   notifications Notification[]
+  created_notifications Notification[] @relation("NotificationCreator")
 
   // Username reuse for soft-deleted users is enforced by a partial unique index in migration SQL.
   @@index([username])
