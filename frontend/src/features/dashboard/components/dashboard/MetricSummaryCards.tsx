@@ -1,5 +1,5 @@
 import {
-  DollarSign,
+  PhilippinePeso,
   Package,
   Percent,
   TrendingUp,
@@ -30,7 +30,7 @@ export default function MetricSummaryCards({ loading, financials }: MetricSummar
             )}
           </div>
           <div className="size-9 rounded-xl bg-linear-to-tr from-emerald-500/10 to-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10 flex items-center justify-center">
-            <DollarSign className="size-4.5" />
+            <PhilippinePeso className="size-4.5" />
           </div>
         </div>
         <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold border-t border-border/40 pt-3 mt-3">

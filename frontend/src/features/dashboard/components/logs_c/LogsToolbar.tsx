@@ -2,6 +2,7 @@
 import { Search, Wifi, WifiOff, Pause, Play, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CATEGORIES = [
   { value: 'all', label: 'All Categories' },
@@ -113,27 +114,39 @@ export default function LogsToolbar({
         </div>
 
         <div className="relative min-w-45">
-          <select
+          <Select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-card-foreground cursor-pointer dark:bg-card"
+            onValueChange={(val) => setCategoryFilter(val)}
           >
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value} className="bg-background text-foreground">{c.label}</option>
-            ))}
-          </select>
+            <SelectTrigger className="h-9 w-full bg-background border border-border shadow-none text-xs font-semibold text-card-foreground text-left">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => (
+                <SelectItem key={c.value} value={c.value} className="text-xs">
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="relative min-w-45">
-          <select
+          <Select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-card-foreground cursor-pointer dark:bg-card"
+            onValueChange={(val) => setTypeFilter(val)}
           >
-            {TYPES.map((t) => (
-              <option key={t.value} value={t.value} className="bg-background text-foreground">{t.label}</option>
-            ))}
-          </select>
+            <SelectTrigger className="h-9 w-full bg-background border border-border shadow-none text-xs font-semibold text-card-foreground text-left">
+              <SelectValue placeholder="All Severities" />
+            </SelectTrigger>
+            <SelectContent>
+              {TYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value} className="text-xs">
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </>

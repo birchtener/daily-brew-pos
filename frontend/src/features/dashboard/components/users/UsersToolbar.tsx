@@ -1,6 +1,7 @@
 import { Search, RefreshCw, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface UsersToolbarProps {
   search: string;
@@ -36,15 +37,19 @@ export default function UsersToolbar({
           />
         </div>
 
-        <select
+        <Select
           value={role}
-          onChange={(e) => onRoleChange(e.target.value as 'all' | 'admin' | 'staff')}
-          className="flex h-9 min-w-38 rounded-md border border-input bg-transparent px-3 py-1 text-sm bg-card"
+          onValueChange={(val) => onRoleChange(val as 'all' | 'admin' | 'staff')}
         >
-          <option value="all">All roles</option>
-          <option value="admin">Admin</option>
-          <option value="staff">Staff</option>
-        </select>
+          <SelectTrigger className="h-9 min-w-38 text-xs font-semibold bg-background border border-border shadow-none shrink-0 text-card-foreground text-left">
+            <SelectValue placeholder="All roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All roles</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="staff">Staff</SelectItem>
+          </SelectContent>
+        </Select>
 
         <Button type="button" variant="outline" onClick={onRefresh} disabled={loading}>
           <RefreshCw className={`mr-2 size-4 ${loading ? 'animate-spin' : ''}`} />

@@ -1,6 +1,7 @@
 import { KeyRound } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export type UserFormState = {
   first_name: string;
@@ -80,14 +81,18 @@ export default function UserFormDialog({
               placeholder="Username"
             />
           )}
-          <select
+          <Select
             value={form.role}
-            onChange={(e) => onFormChange({ ...form, role: e.target.value as 'admin' | 'staff' })}
-            className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm bg-background text-foreground"
+            onValueChange={(val) => onFormChange({ ...form, role: val as 'admin' | 'staff' })}
           >
-            <option value="staff">Staff</option>
-            <option value="admin">Admin</option>
-          </select>
+            <SelectTrigger className="h-9 w-full bg-background border border-border text-sm font-medium text-foreground">
+              <SelectValue placeholder="Select role..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="staff">Staff</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {editingUserId && resetPasswordNotice && (
