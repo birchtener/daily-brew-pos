@@ -23,7 +23,7 @@ export default function CategoriesToolbar({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative w-full min-w-0 flex-1 lg:w-[420px]">
+        <div className="relative w-full min-w-0 flex-1 lg:w-105">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchVal}
