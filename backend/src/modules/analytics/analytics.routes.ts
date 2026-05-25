@@ -11,5 +11,7 @@ router.use(protect, restrictTo(Role.admin));
 router.get('/financials', AnalyticsController.getProfitMargins);
 router.get('/product-velocity', AnalyticsController.getVelocityReport);
 router.get('/inventory-health', AnalyticsController.getStockHealth);
+router.get('/export/stock-valuation', AnalyticsController.exportStockValuation);
+router.get('/export/product-profitability', AnalyticsController.exportProductProfitability);
 
 export default router;

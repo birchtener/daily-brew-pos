@@ -1,5 +1,13 @@
 import { ShoppingCart, Clock, CheckCircle, Search, Ban } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 interface Props {
   activeTab: "terminal" | "parked" | "completed" | "cancelled";
   setActiveTab: (t: "terminal" | "parked" | "completed" | "cancelled") => void;
@@ -9,6 +17,10 @@ interface Props {
   categoryFilter: string;
   setCategoryFilter: (v: string) => void;
   categories: any[];
+  orderSearchVal?: string;
+  setOrderSearchVal?: (v: string) => void;
+  orderSortVal?: string;
+  setOrderSortVal?: (v: string) => void;
 }
 
 export default function PosToolbar({
@@ -20,6 +32,10 @@ export default function PosToolbar({
   categoryFilter,
   setCategoryFilter,
   categories,
+  orderSearchVal = "",
+  setOrderSearchVal,
+  orderSortVal = "date-desc",
+  setOrderSortVal,
 }: Props) {
   return (
     <>
@@ -128,6 +144,35 @@ export default function PosToolbar({
                 {c.name}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab !== "terminal" && setOrderSearchVal && setOrderSortVal && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 mt-3 justify-between items-start sm:items-center animate-in fade-in duration-200">
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              value={orderSearchVal}
+              onChange={(e) => setOrderSearchVal(e.target.value)}
+              placeholder={`Search ${activeTab} orders...`}
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 select-none">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Sort by:</span>
+            <Select value={orderSortVal} onValueChange={setOrderSortVal}>
+              <SelectTrigger size="sm" className="h-9 w-48 text-xs font-semibold bg-background border border-border shadow-none">
+                <SelectValue placeholder="Sort orders..." />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                <SelectItem value="date-desc" className="text-xs">Date: Newest First</SelectItem>
+                <SelectItem value="date-asc" className="text-xs">Date: Oldest First</SelectItem>
+                <SelectItem value="amount-desc" className="text-xs">Amount: High to Low</SelectItem>
+                <SelectItem value="amount-asc" className="text-xs">Amount: Low to High</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}

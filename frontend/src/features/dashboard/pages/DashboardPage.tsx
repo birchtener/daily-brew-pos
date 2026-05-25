@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 import {
   getFinancials,
   getProductVelocity,
   getInventoryHealth,
+  downloadStockValuationReport,
+  downloadProductProfitabilityReport,
   type FinancialMetrics,
   type ProductVelocity,
   type StockHealth,
@@ -11,6 +13,7 @@ import {
 import { getCompletedOrders, type Order } from "@/api/orders";
 import { useStore } from "@/store/useStore";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import StaffWelcomeView from "../components/dashboard/StaffWelcomeView";
@@ -34,6 +37,49 @@ export default function DashboardPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [exportingStock, setExportingStock] = useState(false);
+  const [exportingProfit, setExportingProfit] = useState(false);
+
+  const handleStockExport = async () => {
+    setExportingStock(true);
+    try {
+      const blob = await downloadStockValuationReport();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Stock_Valuation_${new Date().toISOString().split("T")[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Stock valuation report exported!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export stock valuation report.");
+    } finally {
+      setExportingStock(false);
+    }
+  };
+
+  const handleProfitExport = async () => {
+    setExportingProfit(true);
+    try {
+      const blob = await downloadProductProfitabilityReport(dateRange.start, dateRange.end);
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Product_Profitability_${preset}_${new Date().toISOString().split("T")[0]}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Product profitability report exported!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export product profitability report.");
+    } finally {
+      setExportingProfit(false);
+    }
+  };
 
   // ── DATE CALCULATIONS FOR PRESETS ──
   const dateRange = useMemo(() => {
@@ -158,6 +204,49 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       <DashboardHeader preset={preset} onPresetChange={setPreset} />
+
+      {/* ── REPORTS EXPORT SECTION ── */}
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col md:flex-row gap-3 justify-between items-start md:items-center animate-in fade-in duration-200">
+        <div>
+          <h2 className="text-sm font-bold tracking-tight flex items-center gap-2">
+            <span>📊</span> Premium Analytics Exports
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Export structured inventory asset valuation logs and overall dynamic profitability sheets.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2.5 w-full md:w-auto shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleStockExport}
+            disabled={exportingStock}
+            className="flex items-center gap-1.5 text-xs h-9 bg-background/50 hover:bg-accent border border-border shrink-0 cursor-pointer"
+          >
+            {exportingStock ? (
+              <span className="size-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Download className="size-3.5 text-primary" />
+            )}
+            Stock Valuation Excel
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleProfitExport}
+            disabled={exportingProfit}
+            className="flex items-center gap-1.5 text-xs h-9 bg-background/50 hover:bg-accent border border-border shrink-0 cursor-pointer"
+          >
+            {exportingProfit ? (
+              <span className="size-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Download className="size-3.5 text-primary" />
+            )}
+            Product Profitability Excel
+          </Button>
+        </div>
+      </div>
 
       {error && (
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive flex gap-2">

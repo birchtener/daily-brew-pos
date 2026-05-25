@@ -41,6 +41,9 @@ export default function PosTerminalPage() {
   const [searchVal, setSearchVal] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all-categories');
 
+  const [orderSearchVal, setOrderSearchVal] = useState('');
+  const [orderSortVal, setOrderSortVal] = useState('date-desc');
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [discountCode, setDiscountCode] = useState('');
   const [selectedPayment, setSelectedPayment] = useState('cash');
@@ -84,6 +87,11 @@ export default function PosTerminalPage() {
     } else if (activeTab === 'cancelled') {
       getCancelledOrders().then(setCancelledOrders).catch(() => {});
     }
+  }, [activeTab]);
+
+  useEffect(() => {
+    setOrderSearchVal('');
+    setOrderSortVal('date-desc');
   }, [activeTab]);
 
   const addToCart = (product: Product) => {
@@ -213,6 +221,37 @@ export default function PosTerminalPage() {
     return matchesSearch && matchesCat;
   });
 
+  const getFilteredAndSortedOrders = (ordersList: Order[]) => {
+    // 1. Search Filter
+    let filtered = ordersList.filter((order) => {
+      const orderIdMatch = order.id.toLowerCase().includes(orderSearchVal.toLowerCase());
+      const itemsMatch = order.items?.some((item) => {
+        const prodName = item.product?.name || '';
+        return prodName.toLowerCase().includes(orderSearchVal.toLowerCase());
+      });
+      return orderIdMatch || itemsMatch;
+    });
+
+    // 2. Sorting
+    filtered.sort((a, b) => {
+      if (orderSortVal === 'date-desc') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      if (orderSortVal === 'date-asc') {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      if (orderSortVal === 'amount-desc') {
+        return Number(b.total) - Number(a.total);
+      }
+      if (orderSortVal === 'amount-asc') {
+        return Number(a.total) - Number(b.total);
+      }
+      return 0;
+    });
+
+    return filtered;
+  };
+
   return (
     <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       <PosToolbar
@@ -224,6 +263,10 @@ export default function PosTerminalPage() {
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
         categories={categories}
+        orderSearchVal={orderSearchVal}
+        setOrderSearchVal={setOrderSearchVal}
+        orderSortVal={orderSortVal}
+        setOrderSortVal={setOrderSortVal}
       />
 
       {error && (
@@ -273,19 +316,19 @@ export default function PosTerminalPage() {
 
       {activeTab === 'parked' && !error && (
         <div className="flex flex-col gap-4">
-          <ParkedList parkedOrders={parkedOrders} fetchData={fetchData} loadParkedOrderForEditing={loadParkedOrderForEditing} />
+          <ParkedList parkedOrders={getFilteredAndSortedOrders(parkedOrders)} fetchData={fetchData} loadParkedOrderForEditing={loadParkedOrderForEditing} />
         </div>
       )}
 
       {activeTab === 'completed' && !error && (
         <div className="flex flex-col gap-4">
-          <CompletedList completedOrders={completedOrders} fetchData={fetchData} />
+          <CompletedList completedOrders={getFilteredAndSortedOrders(completedOrders)} fetchData={fetchData} />
         </div>
       )}
 
       {activeTab === 'cancelled' && !error && (
         <div className="flex flex-col gap-4">
-          <CancelledList cancelledOrders={cancelledOrders} fetchData={fetchData} />
+          <CancelledList cancelledOrders={getFilteredAndSortedOrders(cancelledOrders)} fetchData={fetchData} />
         </div>
       )}
 

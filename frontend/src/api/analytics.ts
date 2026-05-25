@@ -57,3 +57,21 @@ export async function getInventoryHealth() {
   const { data } = await apiClient.get<ApiResponse<StockHealth[]>>('/analytics/inventory-health');
   return data.data;
 }
+
+export async function downloadStockValuationReport() {
+  const response = await apiClient.get('/analytics/export/stock-valuation', {
+    responseType: 'blob',
+  });
+  return response.data;
+}
+
+export async function downloadProductProfitabilityReport(startDate?: string, endDate?: string) {
+  const params = new URLSearchParams();
+  if (startDate) params.append('start_date', startDate);
+  if (endDate) params.append('end_date', endDate);
+
+  const response = await apiClient.get(`/analytics/export/product-profitability?${params.toString()}`, {
+    responseType: 'blob',
+  });
+  return response.data;
+}
