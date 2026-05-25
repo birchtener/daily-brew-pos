@@ -49,7 +49,7 @@ export async function generateStockValuationReport(res: Response): Promise<void>
   // Header Row Formatting
   const headerRow = worksheet.getRow(1);
   headerRow.height = 28;
-  headerRow.eachCell((cell) => {
+  headerRow.eachCell((cell: any) => {
     cell.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = {
       type: 'pattern',
@@ -84,11 +84,11 @@ export async function generateStockValuationReport(res: Response): Promise<void>
 
     const valCell = newRow.getCell('estimated_valuation');
     valCell.alignment = { horizontal: 'right', vertical: 'middle' };
-    valCell.numFmt = '$#,##0.00';
+    valCell.numFmt = '₱#,##0.00';
 
     // Zebra striping
     const bgArgb = idx % 2 === 1 ? 'FFF5F7FA' : 'FFFFFFFF';
-    newRow.eachCell((cell) => {
+    newRow.eachCell((cell: any) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -123,10 +123,10 @@ export async function generateStockValuationReport(res: Response): Promise<void>
   totStockCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
   const totValCell = totalRow.getCell('estimated_valuation');
-  totValCell.numFmt = '$#,##0.00';
+  totValCell.numFmt = '₱#,##0.00';
   totValCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
-  totalRow.eachCell((cell) => {
+  totalRow.eachCell((cell: any) => {
     cell.font = { name: 'Segoe UI', size: 10, bold: true };
     cell.border = {
       top: { style: 'thin', color: { argb: 'FF2C3E50' } },
@@ -135,9 +135,9 @@ export async function generateStockValuationReport(res: Response): Promise<void>
   });
 
   // Adjust Column Widths to fit data perfectly
-  worksheet.columns.forEach((column) => {
+  worksheet.columns.forEach((column: any) => {
     let maxLength = 0;
-    column.eachCell?.({ includeEmpty: true }, (cell) => {
+    column.eachCell?.({ includeEmpty: true }, (cell: any) => {
       const val = cell.value;
       if (val !== null && val !== undefined) {
         let str = '';
@@ -273,7 +273,7 @@ export async function generateProductProfitabilityReport(
   // Header Row Formatting
   const headerRow = worksheet.getRow(1);
   headerRow.height = 28;
-  headerRow.eachCell((cell) => {
+  headerRow.eachCell((cell: any) => {
     cell.font = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = {
       type: 'pattern',
@@ -303,15 +303,15 @@ export async function generateProductProfitabilityReport(
 
     const revCell = newRow.getCell('totalRevenue');
     revCell.alignment = { horizontal: 'right', vertical: 'middle' };
-    revCell.numFmt = '$#,##0.00';
+    revCell.numFmt = '₱#,##0.00';
 
     const cogsCell = newRow.getCell('totalCOGS');
     cogsCell.alignment = { horizontal: 'right', vertical: 'middle' };
-    cogsCell.numFmt = '$#,##0.00';
+    cogsCell.numFmt = '₱#,##0.00';
 
     const profitCell = newRow.getCell('netProfit');
     profitCell.alignment = { horizontal: 'right', vertical: 'middle' };
-    profitCell.numFmt = '$#,##0.00';
+    profitCell.numFmt = '₱#,##0.00';
 
     const marginCell = newRow.getCell('profitMargin');
     marginCell.alignment = { horizontal: 'right', vertical: 'middle' };
@@ -319,7 +319,7 @@ export async function generateProductProfitabilityReport(
 
     // Zebra striping
     const bgArgb = idx % 2 === 1 ? 'FFF5F7FA' : 'FFFFFFFF';
-    newRow.eachCell((cell) => {
+    newRow.eachCell((cell: any) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
@@ -355,22 +355,22 @@ export async function generateProductProfitabilityReport(
   totQtyCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
   const totRevCell = totalRow.getCell('totalRevenue');
-  totRevCell.numFmt = '$#,##0.00';
+  totRevCell.numFmt = '₱#,##0.00';
   totRevCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
   const totCogsCell = totalRow.getCell('totalCOGS');
-  totCogsCell.numFmt = '$#,##0.00';
+  totCogsCell.numFmt = '₱#,##0.00';
   totCogsCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
   const totProfitCell = totalRow.getCell('netProfit');
-  totProfitCell.numFmt = '$#,##0.00';
+  totProfitCell.numFmt = '₱#,##0.00';
   totProfitCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
   const totMarginCell = totalRow.getCell('profitMargin');
   totMarginCell.numFmt = '0.0%';
   totMarginCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
-  totalRow.eachCell((cell) => {
+  totalRow.eachCell((cell: any) => {
     cell.font = { name: 'Segoe UI', size: 10, bold: true };
     cell.border = {
       top: { style: 'thin', color: { argb: 'FF2C3E50' } },
@@ -379,9 +379,9 @@ export async function generateProductProfitabilityReport(
   });
 
   // Adjust Column Widths to fit data perfectly
-  worksheet.columns.forEach((column) => {
+  worksheet.columns.forEach((column: any) => {
     let maxLength = 0;
-    column.eachCell?.({ includeEmpty: true }, (cell) => {
+    column.eachCell?.({ includeEmpty: true }, (cell: any) => {
       const val = cell.value;
       if (val !== null && val !== undefined) {
         let str = '';

@@ -450,7 +450,7 @@ export async function streamPdfResponse(doc: React.ReactElement, res: Response):
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'inline; filename=document.pdf');
 
-      stream.on('error', (err) => {
+      stream.on('error', (err: any) => {
         if (!res.headersSent) {
           res.status(500).json({ success: false, message: err.message || 'PDF Streaming failed.' });
         }
