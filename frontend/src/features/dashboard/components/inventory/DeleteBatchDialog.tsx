@@ -1,6 +1,5 @@
 import { X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
 import type { Batch } from '@/api/batches';
 
 type Props = {
@@ -8,10 +7,9 @@ type Props = {
   onClose: () => void;
   onConfirm: () => void;
   submitting: boolean;
-  feedback: FeedbackState | null;
 };
 
-export default function DeleteBatchDialog({ item, onClose, onConfirm, submitting, feedback }: Props) {
+export default function DeleteBatchDialog({ item, onClose, onConfirm, submitting }: Props) {
   if (!item) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 select-none">
@@ -33,8 +31,6 @@ export default function DeleteBatchDialog({ item, onClose, onConfirm, submitting
             Qty: {Number(item.quantity_received).toFixed(1)} {item.ingredient.unit} · Cost/Unit: ₱{Number(item.cost_per_unit).toFixed(2)} · Expiry: {new Date(item.expiry).toLocaleDateString()}
           </div>
         </div>
-
-        {feedback && <div className="mt-4">{feedback.message}</div>}
 
         <div className="flex justify-end gap-2 border-t border-border pt-4 mt-5">
           <Button type="button" variant="outline" onClick={onClose} disabled={submitting} className="h-9 px-4 text-xs font-medium">Cancel</Button>

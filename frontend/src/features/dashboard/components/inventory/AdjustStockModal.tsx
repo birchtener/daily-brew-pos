@@ -7,8 +7,7 @@ import type { Ingredient } from '@/api/ingredients';
 import { getBatches, type Batch } from '@/api/batches';
 import { createAdjustment, type CreateAdjustmentPayload, type AdjustmentReason } from '@/api/adjustments';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
-
-type FeedbackState = { type: 'success' | 'error'; message: string } | null;
+import { toast } from 'sonner';
 
 type Props = {
   isOpen: boolean;
@@ -42,7 +41,6 @@ export default function AdjustStockModal({
   const [reason, setReason] = useState<AdjustmentReason>('spill');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const [batches, setBatches] = useState<Batch[]>([]);
   const [batchesLoading, setBatchesLoading] = useState(false);
@@ -56,7 +54,6 @@ export default function AdjustStockModal({
       setQuantity('');
       setReason(preSelectedBatchId ? 'expired' : 'spill');
       setNotes('');
-      setFeedback(null);
     }
   }, [isOpen, preSelectedIngredientId, preSelectedBatchId]);
 
@@ -100,28 +97,24 @@ export default function AdjustStockModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ingredientId) {
-      setFeedback({ type: 'error', message: 'Please select an ingredient.' });
+      toast.error('Please select an ingredient.');
       return;
     }
     if (useSpecificBatch && !batchId) {
-      setFeedback({ type: 'error', message: 'Please select a specific batch.' });
+      toast.error('Please select a specific batch.');
       return;
     }
     const parsedQty = parseFloat(quantity);
     if (isNaN(parsedQty) || parsedQty <= 0) {
-      setFeedback({ type: 'error', message: 'Adjustment quantity must be greater than zero.' });
+      toast.error('Adjustment quantity must be greater than zero.');
       return;
     }
     if (parsedQty > availableStock) {
-      setFeedback({
-        type: 'error',
-        message: `Cannot adjust more than available stock (${availableStock.toFixed(2)} ${selectedUnit}).`,
-      });
+      toast.error(`Cannot adjust more than available stock (${availableStock.toFixed(2)} ${selectedUnit}).`);
       return;
     }
 
     setSubmitting(true);
-    setFeedback(null);
 
     const payload: CreateAdjustmentPayload = {
       ingredient_id: ingredientId,
@@ -133,13 +126,11 @@ export default function AdjustStockModal({
 
     try {
       await createAdjustment(payload);
+      toast.success('Stock reduced successfully!');
       onSuccess();
       onClose();
     } catch (err: any) {
-      setFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to process manual stock reduction.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to process manual stock reduction.'));
     } finally {
       setSubmitting(false);
     }
@@ -320,21 +311,6 @@ export default function AdjustStockModal({
                   Cannot perform adjustments as this ingredient has no remaining quantities in active
                   batches.
                 </p>
-              </div>
-            </div>
-          )}
-
-          {/* Action Feedback alerts */}
-          {feedback && (
-            <div className="mt-2">
-              <div
-                className={`flex items-center gap-2 rounded-lg px-4 py-3 text-xs ${
-                  feedback.type === 'error'
-                    ? 'border border-destructive/20 bg-destructive/10 text-destructive'
-                    : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600'
-                }`}
-              >
-                {feedback.message}
               </div>
             </div>
           )}

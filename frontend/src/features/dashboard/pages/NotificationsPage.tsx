@@ -1,24 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Bell, CheckCheck, ExternalLink, Loader2, MessageSquareText, RefreshCw, Send, X } from 'lucide-react';
+import { Bell, ExternalLink, Loader2, MessageSquareText, RefreshCw, Send, X } from 'lucide-react';
 
 import { createNotification, deleteNotification, listNotifications, markNotificationRead, type NotificationItem } from '@/api/notifications';
 import { fetchUsers, type UpdatedUser } from '@/api/users';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
-type FeedbackState = { type: 'success' | 'error'; message: string } | null;
-
-function FeedbackBanner({ feedback }: { feedback: FeedbackState }) {
-  if (!feedback) return null;
-  const isError = feedback.type === 'error';
-  return (
-    <div className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm transition-all animate-in fade-in slide-in-from-top-1 ${isError ? 'border border-destructive/20 bg-destructive/10 text-destructive' : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>
-      {isError ? <X className="size-4 shrink-0" /> : <CheckCheck className="size-4 shrink-0" />}
-      {feedback.message}
-    </div>
-  );
-}
+import { toast } from 'sonner';
 
 function getCreatorLabel(notification: NotificationItem, users: UpdatedUser[]) {
   if (!notification.created_by || notification.created_by === (import.meta.env.VITE_SYSTEM_USER || "00000000-0000-0000-0000-000000000000")) {
@@ -41,11 +29,9 @@ export default function NotificationsPage() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const load = async () => {
     setLoading(true);
-    setFeedback(null);
     try {
       const [data, usersData] = await Promise.all([
         listNotifications({ page: 1, perPage: 50 }),
@@ -56,7 +42,7 @@ export default function NotificationsPage() {
     } catch {
       setItems([]);
       setUsers([]);
-      setFeedback({ type: 'error', message: 'We could not load notifications right now. Please try again.' });
+      toast.error('We could not load notifications right now. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -72,15 +58,14 @@ export default function NotificationsPage() {
     if (!title.trim() || !body.trim()) return;
 
     setSubmitting(true);
-    setFeedback(null);
     try {
       await createNotification({ title: title.trim(), body: body.trim() });
       setTitle('');
       setBody('');
-      setFeedback({ type: 'success', message: 'Notification published successfully.' });
+      toast.success('Notification published successfully.');
       await load();
     } catch {
-      setFeedback({ type: 'error', message: 'We could not publish the notification. Please check the text and try again.' });
+      toast.error('We could not publish the notification. Please check the text and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -103,9 +88,9 @@ export default function NotificationsPage() {
       await deleteNotification(id);
       setItems((prev) => prev.filter((item) => item.id !== id));
       setSelectedNotification((current) => (current?.id === id ? null : current));
-      setFeedback({ type: 'success', message: 'Notification removed.' });
+      toast.success('Notification removed.');
     } catch {
-      setFeedback({ type: 'error', message: 'We could not remove this notification. Please try again.' });
+      toast.error('We could not remove this notification. Please try again.');
     }
   };
 
@@ -118,8 +103,6 @@ export default function NotificationsPage() {
         </div>
         <p className="text-sm text-muted-foreground">Create announcements, review who posted them, and open each item for details.</p>
       </div>
-
-      {feedback && <FeedbackBanner feedback={feedback} />}
 
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">Create Notification</h2>

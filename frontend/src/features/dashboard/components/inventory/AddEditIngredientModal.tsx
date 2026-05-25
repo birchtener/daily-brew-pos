@@ -5,7 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Select as _Select } from '@/components/ui/select';
 import type { Unit } from '@/api/ingredients';
 import { UNIT_OPTIONS } from '@/features/dashboard/pages/InventoryPage';
-import type { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
 
 type Props = {
   mode: 'add' | 'edit';
@@ -24,7 +23,6 @@ type Props = {
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
-  feedback: FeedbackState | null;
 };
 
 export default function AddEditIngredientModal({
@@ -44,7 +42,6 @@ export default function AddEditIngredientModal({
   fileInputRef,
   onSubmit,
   submitting,
-  feedback,
 }: Props) {
   if (!isOpen) return null;
   return (
@@ -127,14 +124,6 @@ export default function AddEditIngredientModal({
               />
             </div>
           </div>
-
-          {feedback && (
-            <div className="mt-2">
-              <div className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm ${feedback.type === 'error' ? 'border border-destructive/20 bg-destructive/10 text-destructive' : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600'}`}>
-                {feedback.message}
-              </div>
-            </div>
-          )}
 
           <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={submitting} className="h-9 px-4 text-xs font-medium">Cancel</Button>

@@ -1,6 +1,5 @@
 import { X, Trash2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
 import type { Ingredient } from '@/api/ingredients';
 
 type Props = {
@@ -8,10 +7,9 @@ type Props = {
   onClose: () => void;
   onConfirm: () => void;
   submitting: boolean;
-  feedback: FeedbackState | null;
 };
 
-export default function DeleteIngredientDialog({ item, onClose, onConfirm, submitting, feedback }: Props) {
+export default function DeleteIngredientDialog({ item, onClose, onConfirm, submitting }: Props) {
   if (!item) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 select-none">
@@ -36,8 +34,6 @@ export default function DeleteIngredientDialog({ item, onClose, onConfirm, submi
             </span>
           </div>
         </div>
-
-        {feedback && <div className="mt-4">{feedback.message}</div>}
 
         <div className="flex justify-end gap-2 border-t border-border pt-4 mt-5">
           <Button type="button" variant="outline" onClick={onClose} disabled={submitting} className="h-9 px-4 text-xs font-medium">Cancel</Button>

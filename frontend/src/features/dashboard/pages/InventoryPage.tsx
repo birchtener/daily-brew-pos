@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/context-menu';
 import { useStore } from '@/store/useStore';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
+import { toast } from 'sonner';
 import InventoryToolbar from '@/features/dashboard/components/inventory/InventoryToolbar';
 import BatchToolbar from '@/features/dashboard/components/inventory/BatchToolbar';
 import AddEditIngredientModal from '@/features/dashboard/components/inventory/AddEditIngredientModal';
@@ -51,8 +52,6 @@ export const UNIT_OPTIONS: { value: Unit; label: string }[] = [
   { value: 'box', label: 'Box' },
   { value: 'can', label: 'Can' },
 ];
-
-export type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
 export function StockBadge({ currentStock, threshold }: { currentStock: number; threshold: number }) {
   if (currentStock === 0) {
@@ -105,7 +104,6 @@ export default function InventoryPage() {
   const [ingFormImage, setIngFormImage] = useState<File | null>(null);
   const [ingFormImagePreview, setIngFormImagePreview] = useState<string | null>(null);
   const [ingSubmitting, setIngSubmitting] = useState(false);
-  const [ingModalFeedback, setIngModalFeedback] = useState<FeedbackState>(null);
   const ingFileInputRef = useRef<HTMLInputElement>(null);
 
   // ── BATCHES STATE ──
@@ -126,9 +124,7 @@ export default function InventoryPage() {
     { _key: Date.now(), ingredient_id: '', quantity_received: 0, cost_per_unit: 0, expiry: '' },
   ]);
   const [receiveSubmitting, setReceiveSubmitting] = useState(false);
-  const [receiveModalFeedback, setReceiveModalFeedback] = useState<FeedbackState>(null);
   const [batchDeleteSubmitting, setBatchDeleteSubmitting] = useState(false);
-  const [batchDeleteFeedback, setBatchDeleteFeedback] = useState<FeedbackState>(null);
 
   // Suppliers list (for receive stock dropdown)
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -211,7 +207,6 @@ export default function InventoryPage() {
     setIngFormThreshold('0');
     setIngFormImage(null);
     setIngFormImagePreview(null);
-    setIngModalFeedback(null);
     setIngSubmitting(false);
   };
 
@@ -227,7 +222,6 @@ export default function InventoryPage() {
     setIngFormThreshold(String(ing.low_stock_threshold));
     setIngFormImage(null);
     setIngFormImagePreview(ing.img_path || null);
-    setIngModalFeedback(null);
     setIngSubmitting(false);
   };
 
@@ -250,11 +244,10 @@ export default function InventoryPage() {
   const handleAddIngredientSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ingFormName.trim()) {
-      setIngModalFeedback({ type: 'error', message: 'Ingredient name is required.' });
+      toast.error('Ingredient name is required.');
       return;
     }
     setIngSubmitting(true);
-    setIngModalFeedback(null);
     try {
       await createIngredient({
         name: ingFormName.trim(),
@@ -262,10 +255,11 @@ export default function InventoryPage() {
         low_stock_threshold: parseFloat(ingFormThreshold) || 0,
         image: ingFormImage,
       });
+      toast.success('Ingredient added successfully!');
       setIsAddIngredientOpen(false);
       fetchIngredients();
     } catch (err: any) {
-      setIngModalFeedback({ type: 'error', message: extractErrorMessage(err, 'Failed to add ingredient.') });
+      toast.error(extractErrorMessage(err, 'Failed to add ingredient.'));
     } finally {
       setIngSubmitting(false);
     }
@@ -275,11 +269,10 @@ export default function InventoryPage() {
     e.preventDefault();
     if (!editingIngredient) return;
     if (!ingFormName.trim()) {
-      setIngModalFeedback({ type: 'error', message: 'Ingredient name is required.' });
+      toast.error('Ingredient name is required.');
       return;
     }
     setIngSubmitting(true);
-    setIngModalFeedback(null);
     const isImageCleared = ingFormImagePreview === null && editingIngredient.img_path !== null;
     try {
       await updateIngredient(editingIngredient.id, {
@@ -289,10 +282,11 @@ export default function InventoryPage() {
         image: ingFormImage,
         ...(isImageCleared ? { img_path: null } : {}),
       });
+      toast.success('Ingredient updated successfully!');
       setEditingIngredient(null);
       fetchIngredients();
     } catch (err: any) {
-      setIngModalFeedback({ type: 'error', message: extractErrorMessage(err, 'Failed to update ingredient.') });
+      toast.error(extractErrorMessage(err, 'Failed to update ingredient.'));
     } finally {
       setIngSubmitting(false);
     }
@@ -301,14 +295,14 @@ export default function InventoryPage() {
   const handleDeleteIngredientSubmit = async () => {
     if (!deletingIngredient) return;
     setIngSubmitting(true);
-    setIngModalFeedback(null);
     try {
       await deleteIngredient(deletingIngredient.id);
+      toast.success('Ingredient deleted successfully!');
       setDeletingIngredient(null);
       fetchIngredients();
       fetchBatches();
     } catch (err: any) {
-      setIngModalFeedback({ type: 'error', message: extractErrorMessage(err, 'Failed to delete ingredient.') });
+      toast.error(extractErrorMessage(err, 'Failed to delete ingredient.'));
     } finally {
       setIngSubmitting(false);
     }
@@ -320,7 +314,6 @@ export default function InventoryPage() {
     setReceiveItems([
       { _key: Date.now(), ingredient_id: '', quantity_received: 0, cost_per_unit: 0, expiry: '' },
     ]);
-    setReceiveModalFeedback(null);
     setReceiveSubmitting(false);
     setIsReceiveStockOpen(true);
   };
@@ -345,27 +338,27 @@ export default function InventoryPage() {
   const handleReceiveStockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!receiveSupplier) {
-      setReceiveModalFeedback({ type: 'error', message: 'Please select a supplier.' });
+      toast.error('Please select a supplier.');
       return;
     }
     const validItems = receiveItems.filter((i) => i.ingredient_id && i.quantity_received > 0 && i.expiry);
     if (validItems.length === 0) {
-      setReceiveModalFeedback({ type: 'error', message: 'Add at least one valid line item with ingredient, quantity, and expiry.' });
+      toast.error('Add at least one valid line item with ingredient, quantity, and expiry.');
       return;
     }
 
     setReceiveSubmitting(true);
-    setReceiveModalFeedback(null);
     try {
       await receiveStock({
         supplier_id: receiveSupplier,
         items: validItems.map(({ _key, ...rest }) => rest),
       });
+      toast.success('Stock received successfully!');
       setIsReceiveStockOpen(false);
       fetchBatches();
       fetchIngredients();
     } catch (err: any) {
-      setReceiveModalFeedback({ type: 'error', message: extractErrorMessage(err, 'Failed to receive stock.') });
+      toast.error(extractErrorMessage(err, 'Failed to receive stock.'));
     } finally {
       setReceiveSubmitting(false);
     }
@@ -375,14 +368,14 @@ export default function InventoryPage() {
   const handleDeleteBatchSubmit = async () => {
     if (!deletingBatch) return;
     setBatchDeleteSubmitting(true);
-    setBatchDeleteFeedback(null);
     try {
       await deleteBatch(deletingBatch.id);
+      toast.success('Batch deleted successfully!');
       setDeletingBatch(null);
       fetchBatches();
       fetchIngredients();
     } catch (err: any) {
-      setBatchDeleteFeedback({ type: 'error', message: extractErrorMessage(err, 'Failed to delete batch.') });
+      toast.error(extractErrorMessage(err, 'Failed to delete batch.'));
     } finally {
       setBatchDeleteSubmitting(false);
     }
@@ -468,7 +461,7 @@ export default function InventoryPage() {
             isAdmin={isAdmin}
             onFetch={fetchIngredients}
             onEdit={handleOpenEditIngredient}
-            onDelete={(ing) => { setDeletingIngredient(ing); setIngModalFeedback(null); }}
+            onDelete={(ing) => { setDeletingIngredient(ing); }}
           />
         </TabsContent>
 
@@ -652,7 +645,7 @@ export default function InventoryPage() {
                                 </ContextMenuItem>
                                 {isAdmin && isBatchUnused(batch) && (
                                   <ContextMenuItem
-                                    onSelect={() => { setDeletingBatch(batch); setBatchDeleteFeedback(null); }}
+                                    onSelect={() => { setDeletingBatch(batch) }}
                                     className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"
                                   >
                                     <Trash2 className="size-3.5" />
@@ -682,7 +675,7 @@ export default function InventoryPage() {
               onFetch={fetchBatches}
               getBatchRowClass={getBatchRowClass}
               isBatchUnused={isBatchUnused}
-              onDelete={(b) => { setDeletingBatch(b); setBatchDeleteFeedback(null); }}
+              onDelete={(b) => { setDeletingBatch(b); }}
               onAdjust={handleOpenAdjustSpecificBatch}
             />
 
@@ -691,7 +684,7 @@ export default function InventoryPage() {
       </Tabs>
 
       {/* Modals & dialogs */}
-      <AddEditIngredientModal
+       <AddEditIngredientModal
         mode="add"
         isOpen={isAddIngredientOpen}
         onClose={() => setIsAddIngredientOpen(false)}
@@ -708,7 +701,6 @@ export default function InventoryPage() {
         fileInputRef={ingFileInputRef}
         onSubmit={handleAddIngredientSubmit}
         submitting={ingSubmitting}
-        feedback={ingModalFeedback}
       />
 
       <AddEditIngredientModal
@@ -728,7 +720,6 @@ export default function InventoryPage() {
         fileInputRef={ingFileInputRef}
         onSubmit={handleEditIngredientSubmit}
         submitting={ingSubmitting}
-        feedback={ingModalFeedback}
       />
 
       <ReceiveStockModal
@@ -744,7 +735,6 @@ export default function InventoryPage() {
         updateReceiveItem={updateReceiveItem}
         onSubmit={handleReceiveStockSubmit}
         submitting={receiveSubmitting}
-        feedback={receiveModalFeedback}
       />
 
       <DeleteIngredientDialog
@@ -752,7 +742,6 @@ export default function InventoryPage() {
         onClose={() => setDeletingIngredient(null)}
         onConfirm={handleDeleteIngredientSubmit}
         submitting={ingSubmitting}
-        feedback={ingModalFeedback}
       />
 
       <DeleteBatchDialog
@@ -760,7 +749,6 @@ export default function InventoryPage() {
         onClose={() => setDeletingBatch(null)}
         onConfirm={handleDeleteBatchSubmit}
         submitting={batchDeleteSubmitting}
-        feedback={batchDeleteFeedback}
       />
 
       <AdjustStockModal

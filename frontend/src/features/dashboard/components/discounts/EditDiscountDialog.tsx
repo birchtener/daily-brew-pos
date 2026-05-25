@@ -2,8 +2,6 @@ import { Edit3, X } from 'lucide-react';
 import type { Discount } from '@/api/discounts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import DiscountsFeedbackBanner from './DiscountsFeedbackBanner';
-import type { FeedbackState } from './types';
 
 interface EditDiscountDialogProps {
   open: boolean;
@@ -12,7 +10,6 @@ interface EditDiscountDialogProps {
   formName: string;
   formPercentage: string;
   submitting: boolean;
-  modalFeedback: FeedbackState;
   onClose: () => void;
   onFormCodeChange: (value: string) => void;
   onFormNameChange: (value: string) => void;
@@ -27,7 +24,6 @@ export default function EditDiscountDialog({
   formName,
   formPercentage,
   submitting,
-  modalFeedback,
   onClose,
   onFormCodeChange,
   onFormNameChange,
@@ -98,8 +94,6 @@ export default function EditDiscountDialog({
               required
             />
           </div>
-
-          {modalFeedback && <DiscountsFeedbackBanner feedback={modalFeedback} />}
 
           <div className="flex justify-end gap-2 border-t border-border pt-4 mt-2">
             <Button

@@ -9,7 +9,6 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { Ingredient } from '@/api/ingredients';
 import type { Supplier } from '@/api/suppliers';
-import type { FeedbackState } from '@/features/dashboard/pages/InventoryPage';
 
 type LineItem = {
   _key: number;
@@ -32,7 +31,6 @@ type Props = {
   updateReceiveItem: (key: number, field: string, value: any) => void;
   onSubmit: (e: React.FormEvent) => void;
   submitting: boolean;
-  feedback: FeedbackState | null;
 };
 
 export default function ReceiveStockModal({
@@ -48,7 +46,6 @@ export default function ReceiveStockModal({
   updateReceiveItem,
   onSubmit,
   submitting,
-  feedback,
 }: Props) {
   if (!isOpen) return null;
   return (
@@ -152,8 +149,6 @@ export default function ReceiveStockModal({
               ))}
             </div>
           </div>
-
-          {feedback && <div>{feedback.message}</div>}
 
           <div className="flex justify-end gap-2 border-t border-border pt-4 mt-1">
             <Button type="button" variant="outline" onClick={onClose} disabled={submitting} className="h-9 px-4 text-xs font-medium">Cancel</Button>

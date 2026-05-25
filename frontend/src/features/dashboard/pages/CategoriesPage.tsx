@@ -9,13 +9,12 @@ import {
 import { getProducts, type Product } from '@/api/products';
 import { useStore } from '@/store/useStore';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
+import { toast } from 'sonner';
 import CategoriesHeader from '../components/categories/CategoriesHeader';
-import CategoriesFeedbackBanner from '../components/categories/CategoriesFeedbackBanner';
 import CategoriesToolbar from '../components/categories/CategoriesToolbar';
 import CategoriesGrid from '../components/categories/CategoriesGrid';
 import DeleteCategoryDialog from '../components/categories/DeleteCategoryDialog';
 import CreateCategoryDialog from '../components/categories/CreateCategoryDialog';
-import type { FeedbackState } from '../components/categories/types';
 
 export default function CategoriesPage() {
   const currentUser = useStore((s) => s.user);
@@ -34,7 +33,6 @@ export default function CategoriesPage() {
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -58,18 +56,14 @@ export default function CategoriesPage() {
     e.preventDefault();
     if (!newCatName.trim()) return;
     setSubmitting(true);
-    setFeedback(null);
     try {
       await createCategory({ name: newCatName.trim() });
       setNewCatName('');
       setIsCreateDialogOpen(false);
-      setFeedback({ type: 'success', message: 'Category tag successfully created!' });
+      toast.success('Category tag successfully created!');
       await fetchData();
     } catch (err: any) {
-      setFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to register category.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to register category.'));
     } finally {
       setSubmitting(false);
     }
@@ -78,18 +72,14 @@ export default function CategoriesPage() {
   const handleUpdateCategory = async (id: string) => {
     if (!editingCatName.trim()) return;
     setSubmitting(true);
-    setFeedback(null);
     try {
       await updateCategory(id, { name: editingCatName.trim() });
       setEditingCatId(null);
       setEditingCatName('');
-      setFeedback({ type: 'success', message: 'Category name successfully updated.' });
+      toast.success('Category name successfully updated.');
       await fetchData();
     } catch (err: any) {
-      setFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to update category.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to update category.'));
     } finally {
       setSubmitting(false);
     }
@@ -97,17 +87,13 @@ export default function CategoriesPage() {
 
   const handleDeleteCategory = async (id: string) => {
     setSubmitting(true);
-    setFeedback(null);
     try {
       await deleteCategory(id);
-      setFeedback({ type: 'success', message: 'Category and all associated products permanently dropped.' });
+      toast.success('Category and all associated products permanently dropped.');
       setDeletingCategory(null);
       await fetchData();
     } catch (err: any) {
-      setFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'Failed to delete category.'),
-      });
+      toast.error(extractErrorMessage(err, 'Failed to delete category.'));
     } finally {
       setSubmitting(false);
     }
@@ -120,8 +106,6 @@ export default function CategoriesPage() {
   return (
     <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       <CategoriesHeader />
-
-      {feedback && <CategoriesFeedbackBanner feedback={feedback} />}
 
       <CategoriesToolbar
         isAdmin={isAdmin}
@@ -146,7 +130,6 @@ export default function CategoriesPage() {
         onEditStart={(category) => {
           setEditingCatId(category.id);
           setEditingCatName(category.name);
-          setFeedback(null);
         }}
         onEditCancel={() => {
           setEditingCatId(null);
@@ -156,7 +139,6 @@ export default function CategoriesPage() {
         onEditSave={handleUpdateCategory}
         onDeleteStart={(category) => {
           setDeletingCategory(category);
-          setFeedback(null);
         }}
       />
 

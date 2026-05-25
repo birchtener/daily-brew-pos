@@ -9,15 +9,14 @@ import {
 import { fetchUsers, type UpdatedUser } from "@/api/users";
 import { useStore } from "@/store/useStore";
 import { extractErrorMessage } from "@/lib/extractErrorMessage";
+import { toast } from 'sonner';
 
 import DiscountsHeader from "../components/discounts/DiscountsHeader";
-import DiscountsFeedbackBanner from "../components/discounts/DiscountsFeedbackBanner";
 import DiscountsToolbar from "../components/discounts/DiscountsToolbar";
 import DiscountsGrid from "../components/discounts/DiscountsGrid";
 import CreateDiscountDialog from "../components/discounts/CreateDiscountDialog";
 import EditDiscountDialog from "../components/discounts/EditDiscountDialog";
 import DeleteDiscountDialog from "../components/discounts/DeleteDiscountDialog";
-import type { FeedbackState } from "../components/discounts/types";
 
 export default function DiscountsPage() {
   const currentUser = useStore((s) => s.user);
@@ -43,8 +42,6 @@ export default function DiscountsPage() {
   );
 
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
-  const [modalFeedback, setModalFeedback] = useState<FeedbackState>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -76,15 +73,11 @@ export default function DiscountsPage() {
     if (!formCode.trim() || !formName.trim() || !formPercentage) return;
     const pct = parseInt(formPercentage);
     if (isNaN(pct) || pct < 1 || pct > 100) {
-      setFeedback({
-        type: "error",
-        message: "Percentage must be a positive integer between 1 and 100.",
-      });
+      toast.error("Percentage must be a positive integer between 1 and 100.");
       return;
     }
 
     setSubmitting(true);
-    setFeedback(null);
     try {
       await createDiscount({
         code: formCode.trim().toUpperCase(),
@@ -95,16 +88,10 @@ export default function DiscountsPage() {
       setFormName("");
       setFormPercentage("");
       setIsCreateModalOpen(false);
-      setFeedback({
-        type: "success",
-        message: "Promo discount code registered successfully!",
-      });
+      toast.success("Promo discount code registered successfully!");
       await fetchData();
     } catch (err: any) {
-      setFeedback({
-        type: "error",
-        message: extractErrorMessage(err, "Failed to register discount code."),
-      });
+      toast.error(extractErrorMessage(err, "Failed to register discount code."));
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +102,6 @@ export default function DiscountsPage() {
     setFormCode(d.code);
     setFormName(d.name);
     setFormPercentage(String(d.percentage));
-    setModalFeedback(null);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -124,15 +110,11 @@ export default function DiscountsPage() {
     if (!formCode.trim() || !formName.trim() || !formPercentage) return;
     const pct = parseInt(formPercentage);
     if (isNaN(pct) || pct < 1 || pct > 100) {
-      setModalFeedback({
-        type: "error",
-        message: "Percentage must be a positive integer between 1 and 100.",
-      });
+      toast.error("Percentage must be a positive integer between 1 and 100.");
       return;
     }
 
     setSubmitting(true);
-    setModalFeedback(null);
     try {
       await updateDiscount(editingDiscount.id, {
         code: formCode.trim().toUpperCase(),
@@ -140,16 +122,10 @@ export default function DiscountsPage() {
         percentage: pct,
       });
       setEditingDiscount(null);
-      setFeedback({
-        type: "success",
-        message: "Discount properties successfully updated.",
-      });
+      toast.success("Discount properties successfully updated.");
       await fetchData();
     } catch (err: any) {
-      setModalFeedback({
-        type: "error",
-        message: extractErrorMessage(err, "Failed to update discount details."),
-      });
+      toast.error(extractErrorMessage(err, "Failed to update discount details."));
     } finally {
       setSubmitting(false);
     }
@@ -157,20 +133,13 @@ export default function DiscountsPage() {
 
   const handleDeleteDiscount = async (id: string) => {
     setSubmitting(true);
-    setFeedback(null);
     try {
       await deleteDiscount(id);
-      setFeedback({
-        type: "success",
-        message: "Discount code permanently dropped.",
-      });
+      toast.success("Discount code permanently dropped.");
       setDeletingDiscount(null);
       await fetchData();
     } catch (err: any) {
-      setFeedback({
-        type: "error",
-        message: extractErrorMessage(err, "Failed to delete discount."),
-      });
+      toast.error(extractErrorMessage(err, "Failed to delete discount."));
       setDeletingDiscount(null);
     } finally {
       setSubmitting(false);
@@ -188,8 +157,6 @@ export default function DiscountsPage() {
     <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       <DiscountsHeader />
 
-      {feedback && <DiscountsFeedbackBanner feedback={feedback} />}
-
       <div className="flex flex-col gap-4">
         <DiscountsToolbar
           isAdmin={isAdmin}
@@ -202,7 +169,6 @@ export default function DiscountsPage() {
             setFormName("");
             setFormPercentage("");
             setIsCreateModalOpen(true);
-            setFeedback(null);
           }}
         />
 
@@ -217,7 +183,6 @@ export default function DiscountsPage() {
           onEditStart={handleOpenEditModal}
           onDeleteStart={(d) => {
             setDeletingDiscount(d);
-            setFeedback(null);
           }}
         />
       </div>
@@ -247,7 +212,6 @@ export default function DiscountsPage() {
         formName={formName}
         formPercentage={formPercentage}
         submitting={submitting}
-        modalFeedback={modalFeedback}
         onClose={() => {
           setEditingDiscount(null);
           setFormCode("");
