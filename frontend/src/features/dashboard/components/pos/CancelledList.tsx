@@ -23,8 +23,18 @@ export default function CancelledList({ cancelledOrders }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {cancelledOrders.map((order) => {
             const date = new Date(order.created_at);
-            let paymentStyle = 'bg-destructive/15 border-destructive/20 text-destructive';
-            
+            const paymentMethod = (order.payment?.method || 'none').toLowerCase();
+
+            let paymentStyle = 'bg-muted border-border text-muted-foreground';
+            if (paymentMethod === 'cash') paymentStyle = 'bg-zinc-500/10 border-zinc-500/20 text-zinc-600 dark:text-zinc-400';
+            if (paymentMethod === 'card') paymentStyle = 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400';
+            if (paymentMethod === 'gcash') paymentStyle = 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400';
+            if (paymentMethod === 'maya' || paymentMethod === 'paymaya') paymentStyle = 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400';
+
+            let paymentDisplayName = paymentMethod.toUpperCase();
+            if (paymentMethod === 'maya' || paymentMethod === 'paymaya') paymentDisplayName = 'PAYMAYA';
+            if (paymentMethod === 'gcash') paymentDisplayName = 'GCASH';
+
             return (
               <div key={order.id} className="rounded-xl border border-border bg-card p-4 shadow-sm hover:shadow transition-all duration-300 flex flex-col justify-between gap-4 select-text">
                 <div>
@@ -33,7 +43,12 @@ export default function CancelledList({ cancelledOrders }: Props) {
                       <p className="text-xs font-bold text-foreground font-mono truncate" title={order.id}>Order #{order.id.substring(0, 8).toUpperCase()}</p>
                       <p className="text-[10px] text-muted-foreground mt-0.5 font-mono select-none">{date.toLocaleString()}</p>
                     </div>
-                    <span className={`inline-flex items-center gap-1 rounded-full ${paymentStyle} px-2 py-0.5 text-[10px] font-bold select-none`}>Cancelled</span>
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 shrink-0">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 border border-destructive/20 px-2 py-0.5 text-[9px] font-bold text-destructive select-none">Cancelled</span>
+                      {paymentMethod !== 'none' && (
+                        <span className={`inline-flex items-center gap-1 rounded-full ${paymentStyle} border px-2 py-0.5 text-[9px] font-bold select-none`}>{paymentDisplayName}</span>
+                      )}
+                    </div>
                   </div>
 
                   {order.items && order.items.length > 0 && (

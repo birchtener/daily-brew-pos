@@ -385,7 +385,10 @@ export class OrdersService {
   static async getCancelledOrders() {
     return await prisma.orders.findMany({
       where: { order_status: 'cancelled' },
-      include: { items: { include: { product: true } } },
+      include: { 
+        items: { include: { product: true } },
+        payment: true
+      },
       orderBy: { created_at: 'desc' }
     });
   }

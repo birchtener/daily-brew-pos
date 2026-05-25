@@ -26,12 +26,16 @@ export default function CompletedList({ completedOrders, fetchData }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {completedOrders.map((order) => {
             const date = new Date(order.created_at);
-            const paymentMethod = order.payment?.method || 'cash';
+            const paymentMethod = (order.payment?.method || 'cash').toLowerCase();
 
-            let paymentStyle = 'bg-emerald-500/15 border-emerald-500/20 text-emerald-600 dark:text-emerald-400';
-            if (paymentMethod === 'card') paymentStyle = 'bg-indigo-500/15 border-indigo-500/20 text-indigo-600 dark:text-indigo-400';
-            if (paymentMethod === 'gcash') paymentStyle = 'bg-blue-500/15 border-blue-500/20 text-blue-600 dark:text-blue-400';
-            if (paymentMethod === 'maya') paymentStyle = 'bg-emerald-600/15 border-emerald-600/20 text-emerald-600 dark:text-emerald-500';
+            let paymentStyle = 'bg-zinc-500/15 border-zinc-500/20 text-zinc-600 dark:text-zinc-400'; // Default Cash (Gray)
+            if (paymentMethod === 'card') paymentStyle = 'bg-red-500/15 border-red-500/20 text-red-600 dark:text-red-400'; // Red
+            if (paymentMethod === 'gcash') paymentStyle = 'bg-blue-500/15 border-blue-500/20 text-blue-600 dark:text-blue-400'; // Blue
+            if (paymentMethod === 'maya' || paymentMethod === 'paymaya') paymentStyle = 'bg-emerald-500/15 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'; // Green
+
+            let paymentDisplayName = paymentMethod.toUpperCase();
+            if (paymentMethod === 'maya' || paymentMethod === 'paymaya') paymentDisplayName = 'PAYMAYA';
+            if (paymentMethod === 'gcash') paymentDisplayName = 'GCASH';
 
             return (
               <div key={order.id} className="rounded-xl border border-border bg-card p-4 shadow-sm hover:shadow transition-all duration-300 flex flex-col justify-between gap-4 select-text">
@@ -41,7 +45,10 @@ export default function CompletedList({ completedOrders, fetchData }: Props) {
                       <p className="text-xs font-bold text-foreground font-mono truncate" title={order.id}>Order #{order.id.substring(0, 8).toUpperCase()}</p>
                       <p className="text-[10px] text-muted-foreground mt-0.5 font-mono select-none">{date.toLocaleString()}</p>
                     </div>
-                    <span className={`inline-flex items-center gap-1 rounded-full ${paymentStyle} px-2 py-0.5 text-[10px] font-bold select-none`}>Settled</span>
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 shrink-0">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-600 dark:text-emerald-400 select-none">Settled</span>
+                      <span className={`inline-flex items-center gap-1 rounded-full ${paymentStyle} border px-2 py-0.5 text-[9px] font-bold select-none`}>{paymentDisplayName}</span>
+                    </div>
                   </div>
 
                   {order.items && order.items.length > 0 && (

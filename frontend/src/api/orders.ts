@@ -24,7 +24,7 @@ export type Order = {
   discount_code: string | null;
   sub_total: number;
   total: number;
-  order_status: 'pending' | 'parked' | 'completed' | 'cancelled';
+  order_status: 'parked' | 'completed' | 'cancelled';
   created_at: string;
   created_by: string;
   items?: OrderItem[];
