@@ -270,16 +270,51 @@ export class OrdersService {
   }
 
   static async voidOrder(orderId: string, userId: string) {
+    const ingredientsToScan = new Set<string>();
+
     try {
-      const targetOrder = await prisma.orders.findUnique({ where: { id: orderId } });
+      const voidedOrder = await prisma.$transaction(async (tx) => {
+        const targetOrder = await tx.orders.findUnique({
+          where: { id: orderId },
+          include: {
+            items: {
+              include: {
+                stock_deductions: {
+                  include: {
+                    batch: true
+                  }
+                }
+              }
+            }
+          }
+        });
 
-      if (!targetOrder || targetOrder.order_status === 'cancelled') {
-        throw createHttpError('Access Failure: Target order reference unavailable or already cancelled.', 400);
-      }
+        if (!targetOrder || targetOrder.order_status === 'cancelled') {
+          throw createHttpError('Access Failure: Target order reference unavailable or already cancelled.', 400);
+        }
 
-      const voidedOrder = await prisma.orders.update({
-        where: { id: orderId },
-        data: { order_status: 'cancelled' }
+        if (targetOrder.order_status === 'completed') {
+          for (const item of targetOrder.items) {
+            for (const deduction of item.stock_deductions) {
+              const currentRemaining = new Prisma.Decimal(deduction.batch.quantity_remaining);
+              const updatedRemaining = currentRemaining.plus(deduction.quantity_deducted);
+
+              await tx.ingredientBatches.update({
+                where: { id: deduction.batch_id },
+                data: { quantity_remaining: updatedRemaining }
+              });
+
+              ingredientsToScan.add(deduction.batch.ingredient_id);
+            }
+          }
+        }
+
+        const updated = await tx.orders.update({
+          where: { id: orderId },
+          data: { order_status: 'cancelled' }
+        });
+
+        return updated;
       });
 
       void AuditService.log({
@@ -289,13 +324,15 @@ export class OrdersService {
         userId
       });
 
+      this.queueThresholdChecks(ingredientsToScan);
+
       return voidedOrder;
     }  catch (error) {
       if (error && typeof error === 'object' && 'statusCode' in error) {
         throw error;
       }
 
-      throw createHttpError('Validation Failure: Parked order settlement failed.', 500);
+      throw createHttpError('Validation Failure: Order voiding failed.', 500);
     }
   }
 
