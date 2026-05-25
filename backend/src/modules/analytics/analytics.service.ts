@@ -103,7 +103,15 @@ export class AnalyticsService {
       }
     });
 
-    const inventoryStatusReport = ingredients.map((ing) => {
+    const lowStockIngredients = ingredients.filter(ingredient => {
+      const totalStock = ingredient.batches.reduce((sum, batch) => {
+        return sum + batch.quantity_remaining.toNumber();
+      }, 0);
+
+      return totalStock < ingredient.low_stock_threshold.toNumber();
+    });
+
+    const inventoryStatusReport = lowStockIngredients.map((ing) => {
       const aggregateStockRemaining = ing.batches.reduce((acc, currentBatch) => {
         return acc.plus(currentBatch.quantity_remaining);
       }, new Prisma.Decimal(0));
