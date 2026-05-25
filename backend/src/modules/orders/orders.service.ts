@@ -268,4 +268,75 @@ export class OrdersService {
       orderBy: { created_at: 'desc' }
     });
   }
+
+  static async voidOrder(orderId: string, userId: string) {
+    try {
+      const targetOrder = await prisma.orders.findUnique({ where: { id: orderId } });
+
+      if (!targetOrder || targetOrder.order_status === 'cancelled') {
+        throw createHttpError('Access Failure: Target order reference unavailable or already cancelled.', 400);
+      }
+
+      const voidedOrder = await prisma.orders.update({
+        where: { id: orderId },
+        data: { order_status: 'cancelled' }
+      });
+
+      void AuditService.log({
+        message: `POS ORDER VOIDED: Order [${orderId}] has been voided.`,
+        category: LogCategory.order,
+        type: LogType.warn,
+        userId
+      });
+
+      return voidedOrder;
+    }  catch (error) {
+      if (error && typeof error === 'object' && 'statusCode' in error) {
+        throw error;
+      }
+
+      throw createHttpError('Validation Failure: Parked order settlement failed.', 500);
+    }
+  }
+
+  static async deleteParkedOrder(orderId: string, userId: string) {
+    try {
+      const targetOrder = await prisma.orders.findUnique({ 
+        where: { id: orderId, order_status: 'parked' }
+      });
+
+      if (!targetOrder) {
+        throw createHttpError('Access Failure: Target order reference unavailable.', 400);
+      }
+
+      await prisma.orderItems.deleteMany({ where: { order_id: orderId } });
+
+      const deleted = await prisma.orders.delete({
+        where: { id: orderId }
+      });
+
+      void AuditService.log({
+        message: `POS PARKED ORDER DELETED: Parked Order [${orderId}] permanently removed from system without sale completion.`,
+        category: LogCategory.order,
+        type: LogType.warn,
+        userId
+      });
+
+      return deleted;
+    } catch (error) {
+      if (error && typeof error === 'object' && 'statusCode' in error) {
+        throw error;
+      }
+
+      throw createHttpError('Validation Failure: Failed to delete order.', 500);
+    }
+  }
+
+  static async getCancelledOrders() {
+    return await prisma.orders.findMany({
+      where: { order_status: 'cancelled' },
+      include: { items: { include: { product: true } } },
+      orderBy: { created_at: 'desc' }
+    });
+  }
 }
