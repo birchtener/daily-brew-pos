@@ -3,8 +3,8 @@ import { io, Socket } from 'socket.io-client';
 import { AlertCircle, CheckCircle2, Info, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAuditLogs, type AuditLog, type LogCategory, type LogType } from '@/api/audit';
 import { Button } from '@/components/ui/button';
-import LogsToolbar from '@/features/dashboard/components/logs/LogsToolbar';
-import LogsList from '@/features/dashboard/components/logs/LogsList';
+import LogsToolbar from '@/features/dashboard/components/logs_c/LogsToolbar';
+import LogsList from '@/features/dashboard/components/logs_c/LogsList';
 
 const CATEGORIES: { value: LogCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All Categories' },
