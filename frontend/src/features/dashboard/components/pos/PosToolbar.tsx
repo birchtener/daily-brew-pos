@@ -1,10 +1,10 @@
  
-import { ShoppingCart, Clock, CheckCircle, Search } from 'lucide-react';
+import { ShoppingCart, Clock, CheckCircle, Search, Ban } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface Props {
-  activeTab: 'terminal' | 'parked' | 'completed';
-  setActiveTab: (t: 'terminal' | 'parked' | 'completed') => void;
+  activeTab: 'terminal' | 'parked' | 'completed' | 'cancelled';
+  setActiveTab: (t: 'terminal' | 'parked' | 'completed' | 'cancelled') => void;
   parkedCount: number;
   searchVal: string;
   setSearchVal: (v: string) => void;
@@ -68,37 +68,49 @@ export default function PosToolbar({
           >
             <ShoppingCart className="size-3.5" /> Completed
           </button>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 mt-3">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input value={searchVal} onChange={(e) => setSearchVal(e.target.value)} placeholder="Filter beverages catalog..." className="pl-9 h-9 text-sm" />
-        </div>
-
-        <div className="flex flex-wrap gap-1.5 w-full sm:w-auto items-center justify-start sm:justify-end overflow-x-auto select-none">
           <button
-            onClick={() => setCategoryFilter('all-categories')}
-            className={`h-8 px-3 text-xs font-semibold rounded-lg border transition-all ${
-              categoryFilter === 'all-categories' ? 'bg-primary/10 border-primary text-primary' : 'border-border bg-background text-muted-foreground hover:text-foreground'
+            onClick={() => { setActiveTab('cancelled'); setFeedback(null); }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              activeTab === 'cancelled' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            All
+            <Ban className="size-3.5" /> Cancelled
           </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => setCategoryFilter(c.id)}
-              className={`h-8 px-3 text-xs font-semibold rounded-lg border transition-all ${
-                categoryFilter === c.id ? 'bg-primary/10 border-primary text-primary' : 'border-border bg-background text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
         </div>
       </div>
+
+      {
+        activeTab === 'terminal' && (
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col sm:flex-row gap-3 mt-3">
+                <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input value={searchVal} onChange={(e) => setSearchVal(e.target.value)} placeholder="Filter beverages catalog..." className="pl-9 h-9 text-sm" />
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 w-full sm:w-auto items-center justify-start sm:justify-end overflow-x-auto select-none">
+                <button
+                    onClick={() => setCategoryFilter('all-categories')}
+                    className={`h-8 px-3 text-xs font-semibold rounded-lg border transition-all ${
+                    categoryFilter === 'all-categories' ? 'bg-primary/10 border-primary text-primary' : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                    }`}
+                >
+                    All
+                </button>
+                {categories.map((c) => (
+                    <button
+                    key={c.id}
+                    onClick={() => setCategoryFilter(c.id)}
+                    className={`h-8 px-3 text-xs font-semibold rounded-lg border transition-all ${
+                        categoryFilter === c.id ? 'bg-primary/10 border-primary text-primary' : 'border-border bg-background text-muted-foreground hover:text-foreground'
+                    }`}
+                    >
+                    {c.name}
+                    </button>
+                ))}
+                </div>
+            </div>
+        )
+      }
     </>
   );
 }

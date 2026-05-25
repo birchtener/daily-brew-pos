@@ -57,6 +57,11 @@ export async function getCompletedOrders() {
   return data.data;
 }
 
+export async function getCancelledOrders() {
+  const { data } = await apiClient.get<ApiResponse<Order[]>>('/orders/cancelled');
+  return data.data;
+}
+
 export async function finalizeParkedOrder(
   id: string,
   payload: {
@@ -66,5 +71,15 @@ export async function finalizeParkedOrder(
   }
 ) {
   const { data } = await apiClient.put<ApiResponse<Order>>(`/orders/parked/${id}/finalize`, payload);
+  return data.data;
+}
+
+export async function cancelParkedOrder(id: string) {
+  const { data } = await apiClient.delete<ApiResponse<null>>(`/orders/parked/${id}`);
+  return data.data;
+}
+
+export async function voidOrder(id: string) {
+  const { data } = await apiClient.delete<ApiResponse<null>>(`/orders/completed/${id}/void`);
   return data.data;
 }

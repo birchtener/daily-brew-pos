@@ -6,6 +6,7 @@ import {
   getCompletedOrders,
   finalizeParkedOrder,
   type Order,
+  getCancelledOrders,
 } from '@/api/orders';
 import { getProducts, type Product } from '@/api/products';
 import { getCategories, type Category } from '@/api/categories';
@@ -16,6 +17,7 @@ import ParkedList from '@/features/dashboard/components/pos/ParkedList';
 import CompletedList from '@/features/dashboard/components/pos/CompletedList';
 import CartPanel from '@/features/dashboard/components/pos/CartPanel';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
+import CancelledList from '../components/pos/CancelledList';
 
 type CartItem = {
   product: Product;
@@ -25,12 +27,13 @@ type CartItem = {
 type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
 export default function PosTerminalPage() {
-  const [activeTab, setActiveTab] = useState<'terminal' | 'parked' | 'completed'>('terminal');
+  const [activeTab, setActiveTab] = useState<'terminal' | 'parked' | 'completed' | 'cancelled'>('terminal');
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [parkedOrders, setParkedOrders] = useState<Order[]>([]);
   const [completedOrders, setCompletedOrders] = useState<Order[]>([]);
+  const [cancelledOrders, setCancelledOrders] = useState<Order[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,16 +52,18 @@ export default function PosTerminalPage() {
     setLoading(true);
     setError(null);
     try {
-      const [prodsData, catsData, parkedData, completedData] = await Promise.all([
+      const [prodsData, catsData, parkedData, completedData, cancelledData] = await Promise.all([
         getProducts(),
         getCategories(),
         getParkedOrders(),
         getCompletedOrders(),
+        getCancelledOrders(),
       ]);
       setProducts(prodsData);
       setCategories(catsData);
       setParkedOrders(parkedData);
       setCompletedOrders(completedData);
+      setCancelledOrders(cancelledData);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to initialize POS Workstation.');
     } finally {
@@ -75,6 +80,8 @@ export default function PosTerminalPage() {
       getParkedOrders().then(setParkedOrders).catch(() => {});
     } else if (activeTab === 'completed') {
       getCompletedOrders().then(setCompletedOrders).catch(() => {});
+    } else if (activeTab === 'cancelled') {
+      getCancelledOrders().then(setCancelledOrders).catch(() => {});
     }
   }, [activeTab]);
 
@@ -184,14 +191,16 @@ export default function PosTerminalPage() {
         });
       }
 
-      const [parkedData, completedData, prodsData] = await Promise.all([
+      const [parkedData, completedData, prodsData, cancelledData] = await Promise.all([
         getParkedOrders(),
         getCompletedOrders(),
         getProducts(),
+        getCancelledOrders(),
       ]);
       setParkedOrders(parkedData);
       setCompletedOrders(completedData);
       setProducts(prodsData);
+      setCancelledOrders(cancelledData);
       clearCart();
     } catch (err: any) {
       setFeedback({
@@ -212,7 +221,7 @@ export default function PosTerminalPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-400 mx-auto select-none">
+    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       <PosToolbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -284,13 +293,19 @@ export default function PosTerminalPage() {
 
       {activeTab === 'parked' && !error && (
         <div className="flex flex-col gap-4">
-          <ParkedList parkedOrders={parkedOrders} loadParkedOrderForEditing={loadParkedOrderForEditing} />
+          <ParkedList parkedOrders={parkedOrders} fetchData={fetchData} loadParkedOrderForEditing={loadParkedOrderForEditing} />
         </div>
       )}
 
       {activeTab === 'completed' && !error && (
         <div className="flex flex-col gap-4">
-          <CompletedList completedOrders={completedOrders} />
+          <CompletedList completedOrders={completedOrders} fetchData={fetchData} />
+        </div>
+      )}
+
+      {activeTab === 'cancelled' && !error && (
+        <div className="flex flex-col gap-4">
+          <CancelledList cancelledOrders={cancelledOrders} fetchData={fetchData} />
         </div>
       )}
     </div>

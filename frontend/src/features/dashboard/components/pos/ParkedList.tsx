@@ -1,13 +1,14 @@
  
-import { Clock, ArrowLeftRight } from 'lucide-react';
+import { Clock, ArrowLeftRight, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
+import { cancelParkedOrder } from '@/api/orders';
 interface Props {
   parkedOrders: any[];
   loadParkedOrderForEditing: (order: any) => void;
+  fetchData: () => void;
 }
 
-export default function ParkedList({ parkedOrders, loadParkedOrderForEditing }: Props) {
+export default function ParkedList({ parkedOrders, loadParkedOrderForEditing, fetchData }: Props) {
   return (
     <div className="flex flex-col gap-4">
       {parkedOrders.length === 0 ? (
@@ -55,10 +56,18 @@ export default function ParkedList({ parkedOrders, loadParkedOrderForEditing }: 
                     <p className="text-[10px] text-muted-foreground leading-none">Total Value</p>
                     <p className="text-xs font-extrabold text-primary mt-1">₱{Number(order.total).toFixed(2)}</p>
                   </div>
-
-                  <Button onClick={() => loadParkedOrderForEditing(order)} className="h-8 px-3 text-[10px] font-bold shrink-0 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 shadow-none inline-flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <Button variant="destructive" className="h-8 px-3 text-[10px] font-bold shrink-0 border border-destructive/50" onClick={async () => {
+                      await cancelParkedOrder(order.id);
+                      fetchData();
+                    }}>
+                      <Ban className="size-3" />
+                      Cancel
+                    </Button>
+                    <Button onClick={() => loadParkedOrderForEditing(order)} className="h-8 px-3 text-[10px] font-bold shrink-0 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 shadow-none inline-flex items-center gap-1">
                     <ArrowLeftRight className="size-3" /> Edit & Settle
                   </Button>
+                  </div>
                 </div>
               </div>
             );
