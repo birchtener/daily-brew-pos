@@ -1,4 +1,4 @@
-import { Boxes, AlertCircle, AlertTriangle, Calendar as CalendarIcon, Package, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Boxes, AlertCircle, AlertTriangle, Calendar as CalendarIcon, Package, MoreHorizontal, Trash2, Scale } from 'lucide-react';
 import type { Batch } from '@/api/batches';
 import { Button } from '@/components/ui/button';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '@/components/ui/context-menu';
@@ -13,6 +13,7 @@ type Props = {
   getBatchRowClass: (b: Batch) => string;
   isBatchUnused: (b: Batch) => boolean;
   onDelete: (b: Batch) => void;
+  onAdjust?: (b: Batch) => void;
 };
 
 export default function BatchesList({
@@ -25,6 +26,7 @@ export default function BatchesList({
   getBatchRowClass,
   isBatchUnused,
   onDelete,
+  onAdjust,
 }: Props) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -117,24 +119,25 @@ export default function BatchesList({
                         </div>
                       </td>
                       <td className="p-4 hidden lg:table-cell text-xs font-mono text-muted-foreground whitespace-nowrap">{receivedDate.toLocaleDateString()}</td>
-                      {isAdmin && (
-                        <td className="p-4 text-center select-none">
-                          {isBatchUnused(batch) ? (
-                            <ContextMenu>
-                              <ContextMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="size-8 hover:bg-muted/80 action-btn-trigger"><MoreHorizontal className="size-4.5" /></Button>
-                              </ContextMenuTrigger>
-                              <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
-                                <ContextMenuItem onSelect={() => onDelete(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
-                                  <Trash2 className="size-3.5" /> Delete Batch
-                                </ContextMenuItem>
-                              </ContextMenuContent>
-                            </ContextMenu>
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground/40 select-none">—</span>
-                          )}
-                        </td>
-                      )}
+                      <td className="p-4 text-center select-none">
+                        <ContextMenu>
+                          <ContextMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-8 hover:bg-muted/80 action-btn-trigger"><MoreHorizontal className="size-4.5" /></Button>
+                          </ContextMenuTrigger>
+                          <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
+                            {onAdjust && (
+                              <ContextMenuItem onSelect={() => onAdjust(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold hover:bg-muted focus:bg-muted transition cursor-pointer">
+                                <Scale className="size-3.5 text-primary" /> Report Spillage/Expiry
+                              </ContextMenuItem>
+                            )}
+                            {isAdmin && isBatchUnused(batch) && (
+                              <ContextMenuItem onSelect={() => onDelete(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
+                                <Trash2 className="size-3.5" /> Delete Batch
+                              </ContextMenuItem>
+                            )}
+                          </ContextMenuContent>
+                        </ContextMenu>
+                      </td>
                     </tr>
                   );
                 })
@@ -171,16 +174,23 @@ export default function BatchesList({
 
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="text-right"><p className="text-xs font-mono font-bold text-foreground">{Number(batch.quantity_remaining).toFixed(1)} remaining</p><p className="text-[10px] text-muted-foreground font-mono">Recv: {Number(batch.quantity_received).toFixed(1)} · ₱{Number(batch.cost_per_unit).toFixed(2)}/u</p></div>
-                  {isAdmin && isBatchUnused(batch) && (
-                    <ContextMenu>
-                      <ContextMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8 hover:bg-muted/85 action-btn-trigger shrink-0"><MoreHorizontal className="size-4" /></Button>
-                      </ContextMenuTrigger>
-                      <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
-                        <ContextMenuItem onSelect={() => onDelete(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"><Trash2 className="size-3.5" /> Delete Batch</ContextMenuItem>
-                      </ContextMenuContent>
-                    </ContextMenu>
-                  )}
+                  <ContextMenu>
+                    <ContextMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8 hover:bg-muted/85 action-btn-trigger shrink-0"><MoreHorizontal className="size-4" /></Button>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
+                      {onAdjust && (
+                        <ContextMenuItem onSelect={() => onAdjust(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold hover:bg-muted focus:bg-muted transition cursor-pointer">
+                          <Scale className="size-3.5 text-primary" /> Report Spillage/Expiry
+                        </ContextMenuItem>
+                      )}
+                      {isAdmin && isBatchUnused(batch) && (
+                        <ContextMenuItem onSelect={() => onDelete(batch)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
+                          <Trash2 className="size-3.5" /> Delete Batch
+                        </ContextMenuItem>
+                      )}
+                    </ContextMenuContent>
+                  </ContextMenu>
                 </div>
               </div>
             );

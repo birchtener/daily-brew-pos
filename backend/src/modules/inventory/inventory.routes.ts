@@ -5,6 +5,7 @@ import { ProductsController } from './products/products.controller';
 import { SuppliersController } from './suppliers/suppliers.controller';
 import { BatchesController } from './batches/batches.controller';
 import { DiscountsController } from './discounts/discounts.controller';
+import { AdjustmentsController } from './adjustments/adjustments.controller';
 import { protect } from '../../middlewares/auth.middleware';
 import { restrictTo } from '../../middlewares/rbac.middleware';
 import { Role } from '../../generated/prisma/client';
@@ -53,5 +54,9 @@ router.delete('/discounts/:id', restrictTo(Role.admin), DiscountsController.dele
 router.get('/batches', restrictTo(Role.admin, Role.staff), BatchesController.getBatches);
 router.post('/batches/receive', restrictTo(Role.admin, Role.staff), BatchesController.receiveStock);
 router.delete('/batches/:id', restrictTo(Role.admin), BatchesController.deleteBatch);
+
+// Adjustment Routes
+router.get('/adjustments', restrictTo(Role.admin, Role.staff), AdjustmentsController.getAdjustments);
+router.post('/adjustments', restrictTo(Role.admin, Role.staff), AdjustmentsController.createAdjustment);
 
 export default router;

@@ -1,4 +1,4 @@
-import { Search, PackagePlus } from 'lucide-react';
+import { Search, PackagePlus, Scale } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +13,7 @@ type Props = {
   filteredCount: number;
   totalCount: number;
   onReceiveStock: () => void;
+  onAdjustStock?: () => void;
 };
 
 export default function BatchToolbar({
@@ -24,6 +25,7 @@ export default function BatchToolbar({
   filteredCount,
   totalCount,
   onReceiveStock,
+  onAdjustStock,
 }: Props) {
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -58,6 +60,15 @@ export default function BatchToolbar({
         <div className="text-xs text-muted-foreground select-none">
           Showing <span className="font-semibold text-card-foreground">{filteredCount}</span> of {totalCount}
         </div>
+        {onAdjustStock && (
+          <Button
+            onClick={onAdjustStock}
+            variant="outline"
+            className="h-9 px-4 text-xs font-semibold shrink-0 inline-flex items-center gap-1.5 border-border hover:bg-muted"
+          >
+            <Scale className="size-4" /> Reduce Stock
+          </Button>
+        )}
         <Button
           onClick={onReceiveStock}
           className="h-9 px-4 text-xs font-semibold shrink-0 inline-flex items-center gap-1.5"

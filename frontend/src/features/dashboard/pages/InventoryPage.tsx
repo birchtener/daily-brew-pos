@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Boxes, AlertCircle, Package, AlertTriangle, Calendar as CalendarIcon, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Boxes, AlertCircle, Package, AlertTriangle, Calendar as CalendarIcon, MoreHorizontal, Trash2, Scale } from 'lucide-react';
 import {
   getIngredients,
   createIngredient,
@@ -37,6 +37,7 @@ import DeleteIngredientDialog from '@/features/dashboard/components/inventory/De
 import DeleteBatchDialog from '@/features/dashboard/components/inventory/DeleteBatchDialog';
 import IngredientsList from '@/features/dashboard/components/inventory/IngredientsList';
 import BatchesList from '@/features/dashboard/components/inventory/BatchesList';
+import AdjustStockModal from '@/features/dashboard/components/inventory/AdjustStockModal';
 
 // ── Constants ──────────────────────────────────────────────────
 export const UNIT_OPTIONS: { value: Unit; label: string }[] = [
@@ -131,6 +132,23 @@ export default function InventoryPage() {
 
   // Suppliers list (for receive stock dropdown)
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+
+  // ── ADJUSTMENT STATE ──
+  const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
+  const [adjustPreselectedIngredientId, setAdjustPreselectedIngredientId] = useState<string | undefined>(undefined);
+  const [adjustPreselectedBatchId, setAdjustPreselectedBatchId] = useState<string | undefined>(undefined);
+
+  const handleOpenAdjustStock = () => {
+    setAdjustPreselectedIngredientId(undefined);
+    setAdjustPreselectedBatchId(undefined);
+    setIsAdjustStockOpen(true);
+  };
+
+  const handleOpenAdjustSpecificBatch = (batch: Batch) => {
+    setAdjustPreselectedIngredientId(batch.ingredient_id);
+    setAdjustPreselectedBatchId(batch.id);
+    setIsAdjustStockOpen(true);
+  };
 
   // ── SEARCH DEBOUNCE ──
   useEffect(() => {
@@ -439,6 +457,7 @@ export default function InventoryPage() {
             totalCount={ingredients.length}
             isAdmin={isAdmin}
             onAddIngredient={handleOpenAddIngredient}
+            onAdjustStock={handleOpenAdjustStock}
           />
 
           <IngredientsList
@@ -465,6 +484,7 @@ export default function InventoryPage() {
             filteredCount={filteredBatches.length}
             totalCount={batches.length}
             onReceiveStock={handleOpenReceiveStock}
+            onAdjustStock={handleOpenAdjustStock}
           />
 
           {/* Legend */}
@@ -493,7 +513,7 @@ export default function InventoryPage() {
                     <th className="p-4 w-25">Cost/Unit</th>
                     <th className="p-4 w-27.5">Expiry</th>
                     <th className="p-4 w-27.5 hidden lg:table-cell">Received</th>
-                    {isAdmin && <th className="p-4 w-15 text-center">Actions</th>}
+                    <th className="p-4 w-15 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -507,12 +527,12 @@ export default function InventoryPage() {
                         <td className="p-4"><div className="h-4 bg-muted rounded w-16" /></td>
                         <td className="p-4"><div className="h-4 bg-muted rounded w-20" /></td>
                         <td className="p-4 hidden lg:table-cell"><div className="h-4 bg-muted rounded w-20" /></td>
-                        {isAdmin && <td className="p-4 text-center"><div className="size-6 bg-muted rounded mx-auto" /></td>}
+                        <td className="p-4 text-center"><div className="size-6 bg-muted rounded mx-auto" /></td>
                       </tr>
                     ))
                   ) : batchesError ? (
                     <tr>
-                      <td colSpan={isAdmin ? 8 : 7} className="p-8 text-center text-destructive">
+                      <td colSpan={8} className="p-8 text-center text-destructive">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <AlertCircle className="size-8 animate-bounce" />
                           <p className="font-semibold">Failed to load stock batches</p>
@@ -523,7 +543,7 @@ export default function InventoryPage() {
                     </tr>
                   ) : filteredBatches.length === 0 ? (
                     <tr>
-                      <td colSpan={isAdmin ? 8 : 7} className="p-12 text-center text-muted-foreground">
+                      <td colSpan={8} className="p-12 text-center text-muted-foreground">
                         <div className="flex flex-col items-center justify-center gap-3">
                           <Boxes className="size-10 text-muted-foreground/30" />
                           <div>
@@ -546,7 +566,6 @@ export default function InventoryPage() {
                           key={batch.id}
                           className={`hover:bg-muted/40 transition-colors select-none cursor-context-menu ${getBatchRowClass(batch)}`}
                           onContextMenu={(e) => {
-                            if (!isAdmin || !isBatchUnused(batch)) return;
                             e.preventDefault();
                             e.stopPropagation();
                             const btn = e.currentTarget.querySelector('.action-btn-trigger');
@@ -590,11 +609,11 @@ export default function InventoryPage() {
                           <td className="p-4 text-xs font-mono whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
                               {(() => {
-                                const exp = new Date(batch.expiry);
-                                exp.setHours(0, 0, 0, 0);
-                                if (exp < today) return <AlertTriangle className="size-3.5 text-destructive" />;
-                                if (exp <= in7Days) return <AlertTriangle className="size-3.5 text-amber-500" />;
-                                return <CalendarIcon className="size-3.5 text-foreground" />;
+                                  const exp = new Date(batch.expiry);
+                                  exp.setHours(0, 0, 0, 0);
+                                  if (exp < today) return <AlertTriangle className="size-3.5 text-destructive" />;
+                                  if (exp <= in7Days) return <AlertTriangle className="size-3.5 text-amber-500" />;
+                                  return <CalendarIcon className="size-3.5 text-foreground" />;
                               })()}
                               {expiryDate.toLocaleDateString()}
                             </div>
@@ -606,40 +625,43 @@ export default function InventoryPage() {
                           </td>
 
                           {/* Actions */}
-                          {isAdmin && (
-                            <td className="p-4 text-center select-none">
-                              {isBatchUnused(batch) ? (
-                                <ContextMenu>
-                                  <ContextMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="size-8 hover:bg-muted/80 action-btn-trigger"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
-                                        e.currentTarget.dispatchEvent(event);
-                                      }}
-                                    >
-                                      <MoreHorizontal className="size-4.5" />
-                                    </Button>
-                                  </ContextMenuTrigger>
-                                  <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
-                                    <ContextMenuItem
-                                      onSelect={() => { setDeletingBatch(batch); setBatchDeleteFeedback(null); }}
-                                      className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"
-                                    >
-                                      <Trash2 className="size-3.5" />
-                                      Delete Batch
-                                    </ContextMenuItem>
-                                  </ContextMenuContent>
-                                </ContextMenu>
-                              ) : (
-                                <span className="text-[10px] text-muted-foreground/40 select-none">—</span>
-                              )}
-                            </td>
-                          )}
+                          <td className="p-4 text-center select-none">
+                            <ContextMenu>
+                              <ContextMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8 hover:bg-muted/80 action-btn-trigger"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
+                                    e.currentTarget.dispatchEvent(event);
+                                  }}
+                                >
+                                  <MoreHorizontal className="size-4.5" />
+                                </Button>
+                              </ContextMenuTrigger>
+                              <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
+                                <ContextMenuItem
+                                  onSelect={() => handleOpenAdjustSpecificBatch(batch)}
+                                  className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold hover:bg-muted focus:bg-muted transition cursor-pointer"
+                                >
+                                  <Scale className="size-3.5 text-primary" />
+                                  Report Spillage/Expiry
+                                </ContextMenuItem>
+                                {isAdmin && isBatchUnused(batch) && (
+                                  <ContextMenuItem
+                                    onSelect={() => { setDeletingBatch(batch); setBatchDeleteFeedback(null); }}
+                                    className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"
+                                  >
+                                    <Trash2 className="size-3.5" />
+                                    Delete Batch
+                                  </ContextMenuItem>
+                                )}
+                              </ContextMenuContent>
+                            </ContextMenu>
+                          </td>
                         </tr>
                       );
                     })
@@ -661,6 +683,7 @@ export default function InventoryPage() {
               getBatchRowClass={getBatchRowClass}
               isBatchUnused={isBatchUnused}
               onDelete={(b) => { setDeletingBatch(b); setBatchDeleteFeedback(null); }}
+              onAdjust={handleOpenAdjustSpecificBatch}
             />
 
           </div>
@@ -738,6 +761,18 @@ export default function InventoryPage() {
         onConfirm={handleDeleteBatchSubmit}
         submitting={batchDeleteSubmitting}
         feedback={batchDeleteFeedback}
+      />
+
+      <AdjustStockModal
+        isOpen={isAdjustStockOpen}
+        onClose={() => setIsAdjustStockOpen(false)}
+        ingredients={ingredients}
+        onSuccess={() => {
+          fetchIngredients();
+          fetchBatches();
+        }}
+        preSelectedIngredientId={adjustPreselectedIngredientId}
+        preSelectedBatchId={adjustPreselectedBatchId}
       />
     </div>
   );

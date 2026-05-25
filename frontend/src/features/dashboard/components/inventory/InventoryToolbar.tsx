@@ -1,5 +1,5 @@
  
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Scale } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -10,6 +10,7 @@ type Props = {
   totalCount: number;
   isAdmin: boolean;
   onAddIngredient: () => void;
+  onAdjustStock?: () => void;
 };
 
 export default function InventoryToolbar({
@@ -19,7 +20,8 @@ export default function InventoryToolbar({
   totalCount,
   isAdmin,
   onAddIngredient,
-}: Props) {
+  onAdjustStock,
+ }: Props) {
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
       <div className="relative flex-1 max-w-md w-full">
@@ -35,6 +37,15 @@ export default function InventoryToolbar({
         <div className="text-xs text-muted-foreground select-none">
           Showing <span className="font-semibold text-card-foreground">{filteredCount}</span> of {totalCount}
         </div>
+        {onAdjustStock && (
+          <Button
+            onClick={onAdjustStock}
+            variant="outline"
+            className="h-9 px-4 text-xs font-semibold shrink-0 inline-flex items-center gap-1.5 border-border hover:bg-muted"
+          >
+            <Scale className="size-4" /> Reduce Stock
+          </Button>
+        )}
         {isAdmin && (
           <Button
             onClick={onAddIngredient}
