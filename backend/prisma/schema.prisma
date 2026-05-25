@@ -292,7 +292,7 @@ model Orders {
   discount_code String?     @db.VarChar(50)
   sub_total     Decimal     @db.Decimal(10, 2)
   total         Decimal     @db.Decimal(10, 2)
-  order_status  OrderStatus @default(pending)
+  order_status  OrderStatus @default(completed)
   created_at    DateTime    @default(now()) @db.Timestamptz
   created_by    String      @db.Uuid
 
@@ -304,7 +304,6 @@ model Orders {
 }
 
 enum OrderStatus {
-  pending
   parked
   completed
   cancelled
