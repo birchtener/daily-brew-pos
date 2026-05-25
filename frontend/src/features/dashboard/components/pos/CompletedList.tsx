@@ -1,7 +1,9 @@
  
+import { useState } from 'react';
 import { voidOrder } from '@/api/orders';
 import { Button } from '@/components/ui/button';
 import { Ban, CheckCircle } from 'lucide-react';
+import ConfirmationDialog from './ConfirmationDialog';
 
 interface Props {
   completedOrders: any[];
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export default function CompletedList({ completedOrders, fetchData }: Props) {
+  const [orderToVoid, setOrderToVoid] = useState<any | null>(null);
   return (
     <div className="flex flex-col gap-4">
       {completedOrders.length === 0 ? (
@@ -58,10 +61,7 @@ export default function CompletedList({ completedOrders, fetchData }: Props) {
                     <p className="text-[10px] text-muted-foreground leading-none">Total Value</p>
                     <p className="text-xs font-extrabold text-primary mt-1">₱{Number(order.total).toFixed(2)}</p>
                   </div>
-                  <Button variant="destructive" className="h-8 px-3 text-[10px] font-bold shrink-0 border border-destructive/50" onClick={async () => {
-                    await voidOrder(order.id);
-                    fetchData();
-                  }}>
+                  <Button variant="destructive" className="h-8 px-3 text-[10px] font-bold shrink-0 border border-destructive/50" onClick={() => setOrderToVoid(order)}>
                     <Ban className="size-3" />
                     Void Order
                   </Button>
@@ -71,6 +71,21 @@ export default function CompletedList({ completedOrders, fetchData }: Props) {
           })}
         </div>
       )}
+
+      <ConfirmationDialog
+        isOpen={!!orderToVoid}
+        onClose={() => setOrderToVoid(null)}
+        onConfirm={async () => {
+          if (orderToVoid) {
+            await voidOrder(orderToVoid.id);
+            setOrderToVoid(null);
+            fetchData();
+          }
+        }}
+        title="Void Completed Transaction"
+        description={`Warning: You are about to void settled Order #${orderToVoid?.id.substring(0, 8).toUpperCase()}. This will reverse the transaction in sales history, restock the ingredients in FIFO order, and log a permanent void activity log. Do you want to proceed?`}
+        confirmText="Void Transaction"
+      />
     </div>
   );
 }

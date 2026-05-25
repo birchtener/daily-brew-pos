@@ -19,6 +19,7 @@ import CartPanel from '@/features/dashboard/components/pos/CartPanel';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
 import CancelledList from '../components/pos/CancelledList';
 import { toast } from 'sonner';
+import ConfirmationDialog from '@/features/dashboard/components/pos/ConfirmationDialog';
 
 type CartItem = {
   product: Product;
@@ -45,6 +46,7 @@ export default function PosTerminalPage() {
   const [selectedPayment, setSelectedPayment] = useState('cash');
   const [editingParkedOrder, setEditingParkedOrder] = useState<Order | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isVoidCartOpen, setIsVoidCartOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -248,7 +250,7 @@ export default function PosTerminalPage() {
 
           <CartPanel
             cartItems={cartItems}
-            clearCart={clearCart}
+            clearCart={() => setIsVoidCartOpen(true)}
             editingParkedOrder={editingParkedOrder}
             removeFromCart={removeFromCart}
             updateQuantity={updateQuantity}
@@ -283,6 +285,18 @@ export default function PosTerminalPage() {
           <CancelledList cancelledOrders={cancelledOrders} fetchData={fetchData} />
         </div>
       )}
+
+      <ConfirmationDialog
+        isOpen={isVoidCartOpen}
+        onClose={() => setIsVoidCartOpen(false)}
+        onConfirm={() => {
+          clearCart();
+          setIsVoidCartOpen(false);
+        }}
+        title="Void Current Order"
+        description="Are you sure you want to clear your current checkout session? This will remove all items from the cart and reset any discount coupon code entered."
+        confirmText="Void Cart"
+      />
     </div>
   );
 }

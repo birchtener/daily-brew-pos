@@ -1,7 +1,10 @@
  
+import { useState } from 'react';
 import { Clock, ArrowLeftRight, Ban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cancelParkedOrder } from '@/api/orders';
+import ConfirmationDialog from './ConfirmationDialog';
+
 interface Props {
   parkedOrders: any[];
   loadParkedOrderForEditing: (order: any) => void;
@@ -9,6 +12,7 @@ interface Props {
 }
 
 export default function ParkedList({ parkedOrders, loadParkedOrderForEditing, fetchData }: Props) {
+  const [orderToCancel, setOrderToCancel] = useState<any | null>(null);
   return (
     <div className="flex flex-col gap-4">
       {parkedOrders.length === 0 ? (
@@ -57,10 +61,7 @@ export default function ParkedList({ parkedOrders, loadParkedOrderForEditing, fe
                     <p className="text-xs font-extrabold text-primary mt-1">₱{Number(order.total).toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button variant="destructive" className="h-8 px-3 text-[10px] font-bold shrink-0 border border-destructive/50" onClick={async () => {
-                      await cancelParkedOrder(order.id);
-                      fetchData();
-                    }}>
+                    <Button variant="destructive" className="h-8 px-3 text-[10px] font-bold shrink-0 border border-destructive/50" onClick={() => setOrderToCancel(order)}>
                       <Ban className="size-3" />
                       Cancel
                     </Button>
@@ -74,6 +75,21 @@ export default function ParkedList({ parkedOrders, loadParkedOrderForEditing, fe
           })}
         </div>
       )}
+
+      <ConfirmationDialog
+        isOpen={!!orderToCancel}
+        onClose={() => setOrderToCancel(null)}
+        onConfirm={async () => {
+          if (orderToCancel) {
+            await cancelParkedOrder(orderToCancel.id);
+            setOrderToCancel(null);
+            fetchData();
+          }
+        }}
+        title="Cancel Parked Order"
+        description={`Are you sure you want to cancel parked Order #${orderToCancel?.id.substring(0, 8).toUpperCase()}? This action is permanent and will move this order to the Cancelled history list.`}
+        confirmText="Cancel Order"
+      />
     </div>
   );
 }

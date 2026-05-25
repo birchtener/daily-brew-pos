@@ -155,7 +155,7 @@ export default function IngredientsList({
                             <ContextMenuItem onSelect={() => onEdit(ing)} className="flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-muted transition cursor-pointer">
                               <Edit3 className="size-3.5 text-muted-foreground" /> Edit Ingredient
                             </ContextMenuItem>
-                            <ContextMenuItem onSelect={() => onDelete(ing)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
+                            <ContextMenuItem onSelect={() => onDelete(ing)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
                               <Trash2 className="size-3.5" /> Delete Ingredient
                             </ContextMenuItem>
                           </ContextMenuContent>
@@ -257,7 +257,7 @@ export default function IngredientsList({
                       <ContextMenuItem onSelect={() => onEdit(ing)} className="flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-medium text-foreground hover:bg-muted transition cursor-pointer">
                         <Edit3 className="size-3.5 text-muted-foreground" /> Edit Ingredient
                       </ContextMenuItem>
-                      <ContextMenuItem onSelect={() => onDelete(ing)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
+                      <ContextMenuItem onSelect={() => onDelete(ing)} className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer">
                         <Trash2 className="size-3.5" /> Delete Ingredient
                       </ContextMenuItem>
                     </ContextMenuContent>
