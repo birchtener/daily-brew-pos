@@ -9,7 +9,6 @@ interface Props {
   categoryFilter: string;
   setCategoryFilter: (v: string) => void;
   categories: any[];
-  setFeedback: (f: any) => void;
 }
 
 export default function PosToolbar({
@@ -21,7 +20,6 @@ export default function PosToolbar({
   categoryFilter,
   setCategoryFilter,
   categories,
-  setFeedback,
 }: Props) {
   return (
     <>
@@ -41,7 +39,6 @@ export default function PosToolbar({
           <button
             onClick={() => {
               setActiveTab("terminal");
-              setFeedback(null);
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "terminal"
@@ -54,7 +51,6 @@ export default function PosToolbar({
           <button
             onClick={() => {
               setActiveTab("parked");
-              setFeedback(null);
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all relative ${
               activeTab === "parked"
@@ -72,7 +68,6 @@ export default function PosToolbar({
           <button
             onClick={() => {
               setActiveTab("completed");
-              setFeedback(null);
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "completed"
@@ -85,7 +80,6 @@ export default function PosToolbar({
           <button
             onClick={() => {
               setActiveTab("cancelled");
-              setFeedback(null);
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "cancelled"

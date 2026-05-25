@@ -57,7 +57,7 @@ export class FIFOService {
 
     if (!remainingToDeduct.isZero()) {
       throw Object.assign(
-        new Error(`STOCKOUT EXCEPTION: Insufficient raw material inventory tracking lines available for Ingredient ID [${ingredientId}]. Missing: ${remainingToDeduct.toFixed(3)} units.`),
+        new Error(`Insufficient ingredients. Please restock to continue.`),
         { statusCode: 400 }
       );
     }

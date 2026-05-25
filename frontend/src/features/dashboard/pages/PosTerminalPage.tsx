@@ -18,13 +18,12 @@ import CompletedList from '@/features/dashboard/components/pos/CompletedList';
 import CartPanel from '@/features/dashboard/components/pos/CartPanel';
 import { extractErrorMessage } from '@/lib/extractErrorMessage';
 import CancelledList from '../components/pos/CancelledList';
+import { toast } from 'sonner';
 
 type CartItem = {
   product: Product;
   quantity: number;
 };
-
-type FeedbackState = { type: 'success' | 'error'; message: string } | null;
 
 export default function PosTerminalPage() {
   const [activeTab, setActiveTab] = useState<'terminal' | 'parked' | 'completed' | 'cancelled'>('terminal');
@@ -46,7 +45,6 @@ export default function PosTerminalPage() {
   const [selectedPayment, setSelectedPayment] = useState('cash');
   const [editingParkedOrder, setEditingParkedOrder] = useState<Order | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -86,7 +84,6 @@ export default function PosTerminalPage() {
   }, [activeTab]);
 
   const addToCart = (product: Product) => {
-    setFeedback(null);
     setCartItems((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
@@ -99,7 +96,6 @@ export default function PosTerminalPage() {
   };
 
   const updateQuantity = (productId: string, delta: number) => {
-    setFeedback(null);
     setCartItems((prev) =>
       prev
         .map((item) => {
@@ -113,7 +109,6 @@ export default function PosTerminalPage() {
   };
 
   const removeFromCart = (productId: string) => {
-    setFeedback(null);
     setCartItems((prev) => prev.filter((item) => item.product.id !== productId));
   };
 
@@ -122,7 +117,6 @@ export default function PosTerminalPage() {
     setDiscountCode('');
     setSelectedPayment('cash');
     setEditingParkedOrder(null);
-    setFeedback(null);
   };
 
   const subTotal = cartItems.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
@@ -150,18 +144,16 @@ export default function PosTerminalPage() {
       setCartItems(mapped);
     }
 
-    setFeedback(null);
     setActiveTab('terminal');
   };
 
   const handleCheckoutSubmit = async (park = false) => {
     if (cartItems.length === 0) {
-      setFeedback({ type: 'error', message: 'Cart is empty. Please add products.' });
+      toast.error('Cart is empty. Please add products.');
       return;
     }
 
     setSubmitting(true);
-    setFeedback(null);
 
     const itemsPayload = cartItems.map((item) => ({
       product_id: item.product.id,
@@ -175,7 +167,7 @@ export default function PosTerminalPage() {
           items: itemsPayload,
           payment_method: selectedPayment,
         });
-        setFeedback({ type: 'success', message: 'Parked order successfully settled and completed!' });
+        toast.success('Parked order successfully settled and completed!');
       } else {
         await checkout({
           discount_code: discountCode.trim() || null,
@@ -183,12 +175,12 @@ export default function PosTerminalPage() {
           park,
           payment_method: park ? null : selectedPayment,
         });
-        setFeedback({
-          type: 'success',
-          message: park
-            ? 'Order successfully parked in pending cache!'
-            : 'Order checkout successfully completed and settled!',
-        });
+
+        if (park) {
+          toast.success('Order successfully parked!');
+        } else {
+          toast.success('Order checkout successfull!');
+        }
       }
 
       const [parkedData, completedData, prodsData, cancelledData] = await Promise.all([
@@ -203,10 +195,7 @@ export default function PosTerminalPage() {
       setCancelledOrders(cancelledData);
       clearCart();
     } catch (err: any) {
-      setFeedback({
-        type: 'error',
-        message: extractErrorMessage(err, 'POS checkout processing failed.'),
-      });
+      toast.error(extractErrorMessage(err, 'POS checkout processing failed.'));
     } finally {
       setSubmitting(false);
     }
@@ -231,21 +220,7 @@ export default function PosTerminalPage() {
         categoryFilter={categoryFilter}
         setCategoryFilter={setCategoryFilter}
         categories={categories}
-        setFeedback={setFeedback}
       />
-
-      {feedback && (
-        <div
-          className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm transition-all animate-in fade-in slide-in-from-top-1 ${
-            feedback.type === 'error'
-              ? 'border border-destructive/20 bg-destructive/10 text-destructive'
-              : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-          }`}
-        >
-          <AlertCircle className="size-4 shrink-0" />
-          {feedback.message}
-        </div>
-      )}
 
       {error && (
         <div className="p-8 text-center text-destructive border border-border bg-card rounded-xl">

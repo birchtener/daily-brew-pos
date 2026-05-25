@@ -100,7 +100,7 @@ export default function InventoryPage() {
   // Ingredient form
   const [ingFormName, setIngFormName] = useState('');
   const [ingFormUnit, setIngFormUnit] = useState<Unit>('kg');
-  const [ingFormThreshold, setIngFormThreshold] = useState('5');
+  const [ingFormThreshold, setIngFormThreshold] = useState('0');
   const [ingFormImage, setIngFormImage] = useState<File | null>(null);
   const [ingFormImagePreview, setIngFormImagePreview] = useState<string | null>(null);
   const [ingSubmitting, setIngSubmitting] = useState(false);
@@ -190,7 +190,7 @@ export default function InventoryPage() {
   const resetIngredientForm = () => {
     setIngFormName('');
     setIngFormUnit('kg');
-    setIngFormThreshold('5');
+    setIngFormThreshold('0');
     setIngFormImage(null);
     setIngFormImagePreview(null);
     setIngModalFeedback(null);
@@ -241,7 +241,7 @@ export default function InventoryPage() {
       await createIngredient({
         name: ingFormName.trim(),
         unit: ingFormUnit,
-        low_stock_threshold: parseFloat(ingFormThreshold) || 5,
+        low_stock_threshold: parseFloat(ingFormThreshold) || 0,
         image: ingFormImage,
       });
       setIsAddIngredientOpen(false);
@@ -267,7 +267,7 @@ export default function InventoryPage() {
       await updateIngredient(editingIngredient.id, {
         name: ingFormName.trim(),
         unit: ingFormUnit,
-        low_stock_threshold: parseFloat(ingFormThreshold) || 5,
+        low_stock_threshold: parseFloat(ingFormThreshold) || 0,
         image: ingFormImage,
         ...(isImageCleared ? { img_path: null } : {}),
       });
