@@ -77,7 +77,7 @@ export class ProductsService {
             }
         });
 
-        if (!product) {
+        if (!product || product.deleted_at !== null) {
             throw createHttpError('Validation Failure: Target resource not found.', 404);
         }
 
@@ -93,6 +93,7 @@ export class ProductsService {
 
     static async getProducts(userId: string) {
         const products = await prisma.product.findMany({
+            where: { deleted_at: null },
             orderBy: { name: 'asc' },
             include: {
                 category: true,
@@ -105,7 +106,7 @@ export class ProductsService {
         });
 
         await AuditService.log({
-            message: `CATALOG: All products retrieved.`,
+            message: `CATALOG: All active products retrieved.`,
             category: LogCategory.product,
             type: LogType.info,
             userId
@@ -175,37 +176,20 @@ export class ProductsService {
         try {
             const deletedProduct = await prisma.$transaction(async (tx) => {
                 const productWithRelations = await tx.product.findUnique({
-                    where: { id },
-                    include: {
-                        recipes: {
-                            include: { ingredient: true }
-                        }
-                    }
-                });
-
-                if (!productWithRelations) {
-                    throw createHttpError('Validation Failure: Target resource not found.', 404);
-                }
-
-                for (const recipe of productWithRelations.recipes) {
-                    auditTrail.push({
-                        message: `INVENTORY: Recipe formula link mapping Ingredient [${recipe.ingredient.name}] to Product [${productWithRelations.name}] dropped via Product deletion.`,
-                        category: LogCategory.inventory,
-                        type: LogType.warn,
-                        userId
-                    });
-                }
-
-                await tx.recipes.deleteMany({
-                    where: { product_id: id }
-                });
-
-                const deleted = await tx.product.delete({
                     where: { id }
                 });
 
+                if (!productWithRelations || productWithRelations.deleted_at !== null) {
+                    throw createHttpError('Validation Failure: Target resource not found.', 404);
+                }
+
+                const deleted = await tx.product.update({
+                    where: { id },
+                    data: { deleted_at: new Date() }
+                });
+
                 auditTrail.push({
-                    message: `CATALOG: Product [${productWithRelations.name}] permanently deleted from active sales lines.`,
+                    message: `CATALOG: Product [${productWithRelations.name}] soft-deleted from active POS menu lines.`,
                     category: LogCategory.product,
                     type: LogType.warn,
                     userId
@@ -226,10 +210,6 @@ export class ProductsService {
 
             if (isKnownPrismaError(error, 'P2025')) {
                 throw createHttpError('Validation Failure: Target resource not found.', 404);
-            }
-
-            if (isKnownPrismaError(error, 'P2003')) {
-                throw createHttpError('Validation Failure: Product cannot be deleted while dependent records exist.', 409);
             }
 
             throw createHttpError('Validation Failure: Product deletion failed.', 500);
