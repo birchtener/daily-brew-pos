@@ -75,3 +75,13 @@ export async function downloadProductProfitabilityReport(startDate?: string, end
   });
   return response.data;
 }
+
+export async function downloadDailyZReport(date?: string) {
+  const params = new URLSearchParams();
+  if (date) params.append('date', date);
+
+  const response = await apiClient.get(`/analytics/export/z-report?${params.toString()}`, {
+    responseType: 'blob',
+  });
+  return response.data;
+}

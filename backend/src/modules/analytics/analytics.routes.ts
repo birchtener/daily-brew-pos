@@ -13,5 +13,6 @@ router.get('/product-velocity', AnalyticsController.getVelocityReport);
 router.get('/inventory-health', AnalyticsController.getStockHealth);
 router.get('/export/stock-valuation', AnalyticsController.exportStockValuation);
 router.get('/export/product-profitability', AnalyticsController.exportProductProfitability);
+router.get('/export/z-report', AnalyticsController.getDailyZReportPdf);
 
 export default router;

@@ -48,7 +48,8 @@ export default function PosTerminalPage() {
   const [discountCode, setDiscountCode] = useState('');
   const [selectedPayment, setSelectedPayment] = useState('cash');
   const [editingParkedOrder, setEditingParkedOrder] = useState<Order | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingCheckout, setSubmittingCheckout] = useState(false);
+  const [submittingPark, setSubmittingPark] = useState(false);
   const [isVoidCartOpen, setIsVoidCartOpen] = useState(false);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
@@ -165,7 +166,11 @@ export default function PosTerminalPage() {
       return;
     }
 
-    setSubmitting(true);
+    if (park) {
+      setSubmittingPark(true);
+    } else {
+      setSubmittingCheckout(true);
+    }
 
     const itemsPayload = cartItems.map((item) => ({
       product_id: item.product.id,
@@ -209,7 +214,8 @@ export default function PosTerminalPage() {
     } catch (err: any) {
       toast.error(extractErrorMessage(err, 'POS checkout processing failed.'));
     } finally {
-      setSubmitting(false);
+      setSubmittingCheckout(false);
+      setSubmittingPark(false);
     }
   };
 
@@ -309,7 +315,8 @@ export default function PosTerminalPage() {
             discountAmount={discountAmount}
             total={total}
             handleCheckoutSubmit={handleCheckoutSubmit}
-            submitting={submitting}
+            submittingCheckout={submittingCheckout}
+            submittingPark={submittingPark}
           />
         </div>
       )}
@@ -351,7 +358,7 @@ export default function PosTerminalPage() {
           className="lg:hidden fixed bottom-6 left-6 z-40 bg-primary text-background shadow-lg hover:shadow-xl rounded-full p-4 flex items-center justify-center border border-primary/20 cursor-pointer animate-in zoom-in-95 hover:scale-105 transition-all duration-300"
         >
           <div className="relative">
-            <ShoppingCart className="size-6 stroke-[2]" />
+            <ShoppingCart className="size-6 stroke-2" />
             <span className="absolute -top-3.5 -right-3.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-sm border-2 border-background animate-bounce">
               {cartItems.reduce((acc, c) => acc + c.quantity, 0)}
             </span>
@@ -395,7 +402,8 @@ export default function PosTerminalPage() {
                 discountAmount={discountAmount}
                 total={total}
                 handleCheckoutSubmit={handleCheckoutSubmit}
-                submitting={submitting}
+                submittingCheckout={submittingCheckout}
+                submittingPark={submittingPark}
               />
             </div>
           </div>

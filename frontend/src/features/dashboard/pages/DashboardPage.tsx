@@ -1,19 +1,24 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { AlertTriangle, Download } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import {
   getFinancials,
   getProductVelocity,
   getInventoryHealth,
   downloadStockValuationReport,
   downloadProductProfitabilityReport,
+  downloadDailyZReport,
   type FinancialMetrics,
   type ProductVelocity,
   type StockHealth,
 } from "@/api/analytics";
+import {
+  getRecentSupplierOrders,
+  downloadPurchaseOrderPdf,
+  type SupplierOrder,
+} from "@/api/batches";
 import { getCompletedOrders, type Order } from "@/api/orders";
 import { useStore } from "@/store/useStore";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 import StaffWelcomeView from "../components/dashboard/StaffWelcomeView";
@@ -40,6 +45,11 @@ export default function DashboardPage() {
 
   const [exportingStock, setExportingStock] = useState(false);
   const [exportingProfit, setExportingProfit] = useState(false);
+  const [exportingZReport, setExportingZReport] = useState(false);
+  const [exportingPO, setExportingPO] = useState(false);
+
+  const [recentOrders, setRecentOrders] = useState<SupplierOrder[]>([]);
+  const [selectedPoId, setSelectedPoId] = useState<string>("");
 
   const handleStockExport = async () => {
     setExportingStock(true);
@@ -81,6 +91,51 @@ export default function DashboardPage() {
     }
   };
 
+  const handleZReportExport = async () => {
+    setExportingZReport(true);
+    try {
+      const todayStr = new Date().toISOString().split("T")[0];
+      const blob = await downloadDailyZReport(todayStr);
+      const url = window.URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Z-Report_${todayStr}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Daily Z-Report PDF exported!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export Daily Z-Report.");
+    } finally {
+      setExportingZReport(false);
+    }
+  };
+
+  const handlePOExport = async () => {
+    if (!selectedPoId) {
+      toast.error("Please select a recent Purchase Order to export.");
+      return;
+    }
+    setExportingPO(true);
+    try {
+      const blob = await downloadPurchaseOrderPdf(selectedPoId);
+      const url = window.URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Purchase_Order_${selectedPoId.substring(0, 8).toUpperCase()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Purchase Order PDF exported!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export Purchase Order PDF.");
+    } finally {
+      setExportingPO(false);
+    }
+  };
+
   // ── DATE CALCULATIONS FOR PRESETS ──
   const dateRange = useMemo(() => {
     const end = new Date();
@@ -119,17 +174,22 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [finData, velData, healthData, completedData] = await Promise.all([
+      const [finData, velData, healthData, completedData, recentOrdersData] = await Promise.all([
         getFinancials(dateRange.start, dateRange.end),
         getProductVelocity(dateRange.start, dateRange.end),
         getInventoryHealth(),
         getCompletedOrders(),
+        getRecentSupplierOrders(),
       ]);
 
       setFinancials(finData);
       setVelocity(velData);
       setHealth(healthData);
       setCompletedOrders(completedData);
+      setRecentOrders(recentOrdersData || []);
+      if (recentOrdersData && recentOrdersData.length > 0) {
+        setSelectedPoId(recentOrdersData[0].id);
+      }
     } catch (err: any) {
       console.error(err);
       const message =
@@ -205,49 +265,6 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       <DashboardHeader preset={preset} onPresetChange={setPreset} />
 
-      {/* ── REPORTS EXPORT SECTION ── */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex flex-col md:flex-row gap-3 justify-between items-start md:items-center animate-in fade-in duration-200">
-        <div>
-          <h2 className="text-sm font-bold tracking-tight flex items-center gap-2">
-            <span>📊</span> Premium Analytics Exports
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Export structured inventory asset valuation logs and overall dynamic profitability sheets.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2.5 w-full md:w-auto shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleStockExport}
-            disabled={exportingStock}
-            className="flex items-center gap-1.5 text-xs h-9 bg-background/50 hover:bg-accent border border-border shrink-0 cursor-pointer"
-          >
-            {exportingStock ? (
-              <span className="size-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Download className="size-3.5 text-primary" />
-            )}
-            Stock Valuation Excel
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleProfitExport}
-            disabled={exportingProfit}
-            className="flex items-center gap-1.5 text-xs h-9 bg-background/50 hover:bg-accent border border-border shrink-0 cursor-pointer"
-          >
-            {exportingProfit ? (
-              <span className="size-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Download className="size-3.5 text-primary" />
-            )}
-            Product Profitability Excel
-          </Button>
-        </div>
-      </div>
-
       {error && (
         <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive flex gap-2">
           <AlertTriangle className="size-4 shrink-0 mt-0.5 animate-bounce" />
@@ -255,7 +272,21 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <MetricSummaryCards loading={loading} financials={financials} />
+      <MetricSummaryCards
+        loading={loading}
+        financials={financials}
+        exportingZReport={exportingZReport}
+        handleZReportExport={handleZReportExport}
+        exportingStock={exportingStock}
+        handleStockExport={handleStockExport}
+        exportingProfit={exportingProfit}
+        handleProfitExport={handleProfitExport}
+        recentOrders={recentOrders}
+        selectedPoId={selectedPoId}
+        setSelectedPoId={setSelectedPoId}
+        exportingPO={exportingPO}
+        handlePOExport={handlePOExport}
+      />
 
       {/* ── CHARTS SECTIONS ── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">

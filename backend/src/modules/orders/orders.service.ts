@@ -5,6 +5,7 @@ import { AuditService } from '../audit/audit.service';
 import { z } from 'zod';
 import { CreateOrderSchema, FinalizeParkedOrderSchema } from './orders.validation';
 import { StockMonitorService } from '../inventory/services/stockMonitor.service';
+import { convertUnit } from '../../utils/unitConverter';
 
 const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
 
@@ -218,14 +219,26 @@ export class OrdersService {
     orderQuantity: number,
     ingredientsSet: Set<string>
   ) {
-    const productRecipe = await tx.recipes.findMany({ where: { product_id: productId } });
+    const productRecipe = await tx.recipes.findMany({
+      where: { product_id: productId },
+      include: {
+        ingredient: true
+      }
+    });
 
     for (const step of productRecipe) {
-      const totalNeededVolume = new Prisma.Decimal(step.quantity).times(orderQuantity).toNumber();
+      const totalNeededVolumeInRecipeUnit = new Prisma.Decimal(step.quantity).times(orderQuantity).toNumber();
+
+      // Convert quantity from recipe unit (step.unit) to ingredient base unit (step.ingredient.unit)
+      const convertedNeededVolume = convertUnit(
+        totalNeededVolumeInRecipeUnit,
+        step.unit as any,
+        step.ingredient.unit as any
+      );
 
       ingredientsSet.add(step.ingredient_id);
 
-      const batchAllocations = await FIFOService.calculateFIFODeduction(tx, step.ingredient_id, totalNeededVolume);
+      const batchAllocations = await FIFOService.calculateFIFODeduction(tx, step.ingredient_id, convertedNeededVolume);
 
       for (const allocation of batchAllocations) {
         await tx.orderItemStockDeductions.create({

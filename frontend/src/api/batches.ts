@@ -56,3 +56,29 @@ export async function deleteBatch(id: string) {
   const { data } = await apiClient.delete<ApiResponse<any>>(`/inventory/batches/${id}`);
   return data.data;
 }
+
+export type SupplierOrder = {
+  id: string;
+  supplier_id: string;
+  ordered_at: string;
+  ordered_by: string;
+  supplier: {
+    name: string;
+  };
+  ordered_by_user: {
+    first_name: string;
+    last_name: string;
+  };
+};
+
+export async function getRecentSupplierOrders() {
+  const { data } = await apiClient.get<ApiResponse<SupplierOrder[]>>('/inventory/supplier-orders/recent');
+  return data.data;
+}
+
+export async function downloadPurchaseOrderPdf(id: string) {
+  const response = await apiClient.get(`/inventory/supplier-orders/${id}/pdf`, {
+    responseType: 'blob',
+  });
+  return response.data;
+}

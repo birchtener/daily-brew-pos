@@ -54,6 +54,8 @@ router.delete('/discounts/:id', restrictTo(Role.admin), DiscountsController.dele
 router.get('/batches', restrictTo(Role.admin, Role.staff), BatchesController.getBatches);
 router.post('/batches/receive', restrictTo(Role.admin, Role.staff), BatchesController.receiveStock);
 router.delete('/batches/:id', restrictTo(Role.admin), BatchesController.deleteBatch);
+router.get('/supplier-orders/recent', restrictTo(Role.admin, Role.staff), BatchesController.getRecentSupplierOrders);
+router.get('/supplier-orders/:id/pdf', restrictTo(Role.admin, Role.staff), BatchesController.getPurchaseOrderPdf);
 
 // Adjustment Routes
 router.get('/adjustments', restrictTo(Role.admin, Role.staff), AdjustmentsController.getAdjustments);

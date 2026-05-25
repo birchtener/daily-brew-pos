@@ -21,7 +21,8 @@ interface Props {
   discountAmount: number;
   total: number;
   handleCheckoutSubmit: (park?: boolean) => Promise<void> | void;
-  submitting: boolean;
+  submittingCheckout: boolean;
+  submittingPark: boolean;
   className?: string;
 }
 
@@ -40,7 +41,8 @@ export default function CartPanel({
   discountAmount,
   total,
   handleCheckoutSubmit,
-  submitting,
+  submittingCheckout,
+  submittingPark,
   className,
 }: Props) {
   return (
@@ -156,13 +158,13 @@ export default function CartPanel({
           </div>
 
           <div className="flex flex-col gap-2 mt-2 select-none">
-            <Button onClick={() => handleCheckoutSubmit(false)} disabled={submitting} className="w-full h-10 text-xs font-bold shrink-0 bg-primary hover:bg-primary/95 text-primary-foreground shadow">
-              {submitting ? (<span className="inline-flex items-center gap-1.5"><LoaderCircle className="size-3.5 animate-spin" /> Processing…</span>) : (editingParkedOrder ? 'Finalize Settlement' : 'Checkout')}
+            <Button onClick={() => handleCheckoutSubmit(false)} disabled={submittingCheckout || submittingPark} className="w-full h-10 text-xs font-bold shrink-0 bg-primary hover:bg-primary/95 text-primary-foreground shadow">
+              {submittingCheckout ? (<span className="inline-flex items-center gap-1.5"><LoaderCircle className="size-3.5 animate-spin" /> Processing…</span>) : (editingParkedOrder ? 'Finalize Settlement' : 'Checkout')}
             </Button>
 
             {!editingParkedOrder && (
-              <Button onClick={() => handleCheckoutSubmit(true)} disabled={submitting} variant="outline" className="w-full h-10 text-xs font-semibold shrink-0 border-primary/20 text-primary hover:bg-primary/5 shadow-none">
-                {submitting ? (<span className="inline-flex items-center gap-1.5"><LoaderCircle className="size-3.5 animate-spin" /> Parking…</span>) : 'Park Order'}
+              <Button onClick={() => handleCheckoutSubmit(true)} disabled={submittingCheckout || submittingPark} variant="outline" className="w-full h-10 text-xs font-semibold shrink-0 border-primary/20 text-primary hover:bg-primary/5 shadow-none">
+                {submittingPark ? (<span className="inline-flex items-center gap-1.5"><LoaderCircle className="size-3.5 animate-spin" /> Parking…</span>) : 'Park Order'}
               </Button>
             )}
           </div>
