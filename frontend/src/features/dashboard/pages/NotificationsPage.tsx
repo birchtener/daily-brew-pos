@@ -110,7 +110,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-1 pb-12 sm:px-4">
+    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       <div>
         <div className="mb-1 flex items-center gap-2">
           <Bell className="size-6 text-primary" />

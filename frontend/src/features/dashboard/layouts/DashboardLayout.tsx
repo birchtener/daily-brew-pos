@@ -61,7 +61,7 @@ function DashboardShell() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" className="relative" onClick={toggleDark}>
+            <Button type="button" variant="ghost" className="relative" onClick={toggleDark}>
               {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </Button>
 

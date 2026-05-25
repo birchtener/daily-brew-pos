@@ -406,7 +406,7 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-400 mx-auto">
+    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">

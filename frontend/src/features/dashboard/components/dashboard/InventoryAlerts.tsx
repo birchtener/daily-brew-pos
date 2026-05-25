@@ -38,7 +38,7 @@ export default function InventoryAlerts({ loading, stockAlerts }: InventoryAlert
         </div>
       ) : stockAlerts.length === 0 ? (
         <div className="text-center py-6 px-4 rounded-xl border border-dashed border-muted-foreground/20 bg-muted/10 text-muted-foreground text-xs italic">
-          🎉 Excellent! All raw ingredient inventory levels reside above stock trigger margins.
+          Excellent! All raw ingredient inventory levels reside above stock trigger margins.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

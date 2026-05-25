@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const setUser = useStore((s) => s.setUser);
 
   return (
-    <div className="flex flex-col gap-8 px-0 sm:px-6 lg:px-16 pb-12">
+    <div className="flex flex-col gap-6 px-1 sm:px-4 pb-12 w-full max-w-7xl mx-auto select-none">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">Settings</h1>
