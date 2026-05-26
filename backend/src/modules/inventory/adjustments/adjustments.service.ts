@@ -227,7 +227,7 @@ export class AdjustmentsService {
               },
               include: {
                 ingredient: { select: { name: true, unit: true } },
-                message: `INVENTORY: Manual stock reduction (FIFO Summary) for [${ingredient.name}] — Total Qty: -${adjustmentQuantity} ${ingredient.unit}, Reason: ${input.reason.toUpperCase()}. Notes: "${input.notes || ""}"`,
+                batch: { select: { received_at: true, expiry: true } },
               },
             });
 
@@ -242,7 +242,7 @@ export class AdjustmentsService {
           }
 
           auditTrail.push({
-            message: `INVENTORY: Manual stock reduction (FIFO Summary) for [${ingredient.name}] — Total Qty: -${remainingToDeduct} ${ingredient.unit}, Reason: ${input.reason.toUpperCase()}. Notes: "${input.notes || ""}"`,
+            message: `INVENTORY: Manual stock reduction (FIFO Summary) for [${ingredient.name}] — Total Qty: -${adjustmentQuantity} ${ingredient.unit}, Reason: ${input.reason.toUpperCase()}. Notes: "${input.notes || ""}"`,
             category: LogCategory.inventory,
             type: LogType.warn,
             userId,
