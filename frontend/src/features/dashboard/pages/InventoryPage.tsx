@@ -537,7 +537,6 @@ export default function InventoryPage() {
             filteredCount={filteredBatches.length}
             totalCount={batches.length}
             onReceiveStock={handleOpenReceiveStock}
-            onAdjustStock={handleOpenAdjustStock}
           />
 
           {/* Legend */}
