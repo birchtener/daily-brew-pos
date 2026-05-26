@@ -197,10 +197,16 @@ enum AdjustmentReason {
   correction
 }
 
+enum AdjustmentDirection {
+  decrease
+  increase
+}
+
 model InventoryAdjustment {
   id            String           @id @default(uuid()) @db.Uuid
   ingredient_id String           @db.Uuid
   batch_id      String           @db.Uuid
+  direction     AdjustmentDirection @default(decrease)
   quantity      Decimal          @db.Decimal(10, 3) // Quantity reduced in this transaction
   cost_lost     Decimal          @db.Decimal(10, 2) // Quantity * Batch.cost_per_unit
   reason        AdjustmentReason

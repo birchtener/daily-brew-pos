@@ -1,13 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { X, LoaderCircle, AlertTriangle, Scale, ClipboardEdit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Ingredient } from '@/api/ingredients';
-import { getBatches, type Batch } from '@/api/batches';
-import { createAdjustment, type CreateAdjustmentPayload, type AdjustmentReason } from '@/api/adjustments';
-import { extractErrorMessage } from '@/lib/extractErrorMessage';
-import { toast } from 'sonner';
+import React, { useEffect, useState } from "react";
+import {
+  X,
+  LoaderCircle,
+  AlertTriangle,
+  Scale,
+  ClipboardEdit,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Ingredient } from "@/api/ingredients";
+import { getBatches, type Batch } from "@/api/batches";
+import {
+  createAdjustment,
+  type CreateAdjustmentPayload,
+  type AdjustmentReason,
+  type AdjustmentDirection,
+} from "@/api/adjustments";
+import { extractErrorMessage } from "@/lib/extractErrorMessage";
+import { toast } from "sonner";
 
 type Props = {
   isOpen: boolean;
@@ -19,11 +36,11 @@ type Props = {
 };
 
 const REASON_OPTIONS: { value: AdjustmentReason; label: string }[] = [
-  { value: 'spill', label: 'Spillage / Accident' },
-  { value: 'expired', label: 'Expiration' },
-  { value: 'waste', label: 'Wastage / Bad Prep' },
-  { value: 'theft', label: 'Unexplained Theft / Loss' },
-  { value: 'correction', label: 'Stock-take Correction' },
+  { value: "spill", label: "Spillage / Accident" },
+  { value: "expired", label: "Expiration" },
+  { value: "waste", label: "Wastage / Bad Prep" },
+  { value: "theft", label: "Unexplained Theft / Loss" },
+  { value: "correction", label: "Stock-take Correction" },
 ];
 
 export default function AdjustStockModal({
@@ -34,12 +51,13 @@ export default function AdjustStockModal({
   preSelectedIngredientId,
   preSelectedBatchId,
 }: Props) {
-  const [ingredientId, setIngredientId] = useState('');
+  const [ingredientId, setIngredientId] = useState("");
+  const [direction, setDirection] = useState<AdjustmentDirection>("decrease");
   const [useSpecificBatch, setUseSpecificBatch] = useState(false);
-  const [batchId, setBatchId] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [reason, setReason] = useState<AdjustmentReason>('spill');
-  const [notes, setNotes] = useState('');
+  const [batchId, setBatchId] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [reason, setReason] = useState<AdjustmentReason>("spill");
+  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -48,12 +66,13 @@ export default function AdjustStockModal({
   // Initialize/reset form state on open
   useEffect(() => {
     if (isOpen) {
-      setIngredientId(preSelectedIngredientId || '');
+      setIngredientId(preSelectedIngredientId || "");
+      setDirection("decrease");
       setUseSpecificBatch(!!preSelectedBatchId);
-      setBatchId(preSelectedBatchId || '');
-      setQuantity('');
-      setReason(preSelectedBatchId ? 'expired' : 'spill');
-      setNotes('');
+      setBatchId(preSelectedBatchId || "");
+      setQuantity("");
+      setReason(preSelectedBatchId ? "expired" : "spill");
+      setNotes("");
     }
   }, [isOpen, preSelectedIngredientId, preSelectedBatchId]);
 
@@ -69,11 +88,12 @@ export default function AdjustStockModal({
         const active = await getBatches(ingredientId);
         // Filter out fully depleted batches, but always retain the preSelectedBatchId if it matches
         const filtered = active.filter(
-          (b) => Number(b.quantity_remaining) > 0 || b.id === preSelectedBatchId
+          (b) =>
+            Number(b.quantity_remaining) > 0 || b.id === preSelectedBatchId,
         );
         setBatches(filtered);
       } catch (err) {
-        console.error('Failed to fetch batches in AdjustStockModal:', err);
+        console.error("Failed to fetch batches in AdjustStockModal:", err);
       } finally {
         setBatchesLoading(false);
       }
@@ -81,10 +101,18 @@ export default function AdjustStockModal({
     fetchIngredientBatches();
   }, [ingredientId, preSelectedBatchId]);
 
+  useEffect(() => {
+    if (direction === "increase") {
+      setUseSpecificBatch(true);
+    } else if (!preSelectedBatchId) {
+      setUseSpecificBatch(false);
+    }
+  }, [direction, preSelectedBatchId]);
+
   if (!isOpen) return null;
 
   const selectedIngredient = ingredients.find((ing) => ing.id === ingredientId);
-  const selectedUnit = selectedIngredient ? selectedIngredient.unit : '';
+  const selectedUnit = selectedIngredient ? selectedIngredient.unit : "";
 
   // Calculate available remaining stock based on toggle
   const selectedBatch = batches.find((b) => b.id === batchId);
@@ -97,20 +125,26 @@ export default function AdjustStockModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ingredientId) {
-      toast.error('Please select an ingredient.');
+      toast.error("Please select an ingredient.");
+      return;
+    }
+    if (direction === "increase" && !useSpecificBatch) {
+      toast.error("Please select a specific batch to increase stock.");
       return;
     }
     if (useSpecificBatch && !batchId) {
-      toast.error('Please select a specific batch.');
+      toast.error("Please select a specific batch.");
       return;
     }
     const parsedQty = parseFloat(quantity);
     if (isNaN(parsedQty) || parsedQty <= 0) {
-      toast.error('Adjustment quantity must be greater than zero.');
+      toast.error("Adjustment quantity must be greater than zero.");
       return;
     }
-    if (parsedQty > availableStock) {
-      toast.error(`Cannot adjust more than available stock (${availableStock.toFixed(2)} ${selectedUnit}).`);
+    if (direction === "decrease" && parsedQty > availableStock) {
+      toast.error(
+        `Cannot reduce more than available stock (${availableStock.toFixed(2)} ${selectedUnit}).`,
+      );
       return;
     }
 
@@ -118,6 +152,7 @@ export default function AdjustStockModal({
 
     const payload: CreateAdjustmentPayload = {
       ingredient_id: ingredientId,
+      direction,
       quantity: parsedQty,
       reason,
       notes: notes.trim() || undefined,
@@ -126,11 +161,22 @@ export default function AdjustStockModal({
 
     try {
       await createAdjustment(payload);
-      toast.success('Stock reduced successfully!');
+      toast.success(
+        direction === "increase"
+          ? "Stock increase saved successfully!"
+          : "Stock adjustment saved successfully!",
+      );
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(extractErrorMessage(err, 'Failed to process manual stock reduction.'));
+      toast.error(
+        extractErrorMessage(
+          err,
+          direction === "increase"
+            ? "Failed to process stock increase."
+            : "Failed to process stock adjustment.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -142,7 +188,8 @@ export default function AdjustStockModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3.5 mb-4">
           <h2 className="text-lg font-bold flex items-center gap-2">
-            <ClipboardEdit className="size-5 text-primary animate-pulse" /> Manual Stock Reduction
+            <ClipboardEdit className="size-5 text-primary animate-pulse" />{" "}
+            {direction === "increase" ? "Increase Stock" : "Stock Adjustment"}
           </h2>
           <button
             onClick={onClose}
@@ -153,6 +200,23 @@ export default function AdjustStockModal({
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Direction Selector */}
+          <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted/20 p-1">
+            {(["decrease", "increase"] as AdjustmentDirection[]).map(
+              (option) => (
+                <Button
+                  key={option}
+                  type="button"
+                  variant={direction === option ? "default" : "ghost"}
+                  onClick={() => setDirection(option)}
+                  className="h-9 text-xs font-semibold"
+                >
+                  {option === "decrease" ? "Reduce" : "Increase"}
+                </Button>
+              ),
+            )}
+          </div>
+
           {/* Ingredient Selector */}
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-semibold text-card-foreground">
@@ -162,12 +226,12 @@ export default function AdjustStockModal({
               value={ingredientId}
               onValueChange={(val) => {
                 setIngredientId(val);
-                setBatchId('');
+                setBatchId("");
               }}
               disabled={!!preSelectedIngredientId}
             >
               <SelectTrigger className="h-10 w-full bg-background border border-border shadow-none text-sm font-medium text-foreground">
-                <SelectValue placeholder="Select ingredient to reduce…" />
+                <SelectValue placeholder="Select ingredient to adjust…" />
               </SelectTrigger>
               <SelectContent>
                 {ingredients.map((ing) => (
@@ -181,7 +245,7 @@ export default function AdjustStockModal({
 
           {ingredientId && (
             <>
-              {/* Batch-Specific Reduction Switch */}
+              {/* Batch-Specific Adjustment Switch */}
               <div className="flex items-center justify-between py-1 bg-muted/20 px-2 rounded-lg border border-border/40">
                 <label className="flex items-center gap-2.5 cursor-pointer select-none">
                   <input
@@ -189,12 +253,14 @@ export default function AdjustStockModal({
                     checked={useSpecificBatch}
                     onChange={(e) => {
                       setUseSpecificBatch(e.target.checked);
-                      if (!e.target.checked) setBatchId('');
+                      if (!e.target.checked) setBatchId("");
                     }}
-                    disabled={!!preSelectedBatchId}
+                    disabled={!!preSelectedBatchId || direction === "increase"}
                     className="rounded border-border bg-background text-primary focus:ring-primary size-4"
                   />
-                  <span className="text-xs font-bold text-card-foreground">Reduce Specific Batch</span>
+                  <span className="text-xs font-bold text-card-foreground">
+                    Target Specific Batch
+                  </span>
                 </label>
                 {batchesLoading && (
                   <LoaderCircle className="size-3.5 text-muted-foreground animate-spin" />
@@ -205,18 +271,27 @@ export default function AdjustStockModal({
               {useSpecificBatch && (
                 <div className="flex flex-col gap-1.5 animate-in slide-in-from-top-2 duration-150">
                   <label className="text-xs font-semibold text-card-foreground">
-                    Select Stock Batch <span className="text-destructive">*</span>
+                    Select Stock Batch{" "}
+                    <span className="text-destructive">*</span>
                   </label>
-                  <Select value={batchId} onValueChange={setBatchId} disabled={!!preSelectedBatchId}>
+                  <Select
+                    value={batchId}
+                    onValueChange={setBatchId}
+                    disabled={!!preSelectedBatchId}
+                  >
                     <SelectTrigger className="h-10 w-full bg-background border border-border shadow-none text-xs font-mono">
                       <SelectValue placeholder="Select batch..." />
                     </SelectTrigger>
                     <SelectContent>
                       {batches.map((b) => (
-                        <SelectItem key={b.id} value={b.id} className="font-mono text-[11px]">
-                          Expiry: {new Date(b.expiry).toLocaleDateString()} — Left:{' '}
-                          {Number(b.quantity_remaining).toFixed(1)} {selectedUnit} [
-                          {b.supplier_order.supplier.name}]
+                        <SelectItem
+                          key={b.id}
+                          value={b.id}
+                          className="font-mono text-[11px]"
+                        >
+                          Expiry: {new Date(b.expiry).toLocaleDateString()} —
+                          Left: {Number(b.quantity_remaining).toFixed(1)}{" "}
+                          {selectedUnit} [{b.supplier_order.supplier.name}]
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -228,11 +303,19 @@ export default function AdjustStockModal({
               <div className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-muted/40 text-xs">
                 <Scale className="size-4 text-primary" />
                 <div className="flex-1">
-                  <span className="text-muted-foreground">Available Stock to Deduct:</span>{' '}
+                  <span className="text-muted-foreground">
+                    {direction === "increase"
+                      ? "Current Stock:"
+                      : "Available Stock:"}
+                  </span>{" "}
                   <span className="font-bold font-mono">
                     {availableStock.toFixed(2)} {selectedUnit}
                   </span>
-                  {useSpecificBatch ? (
+                  {direction === "increase" ? (
+                    <span className="text-muted-foreground text-[10px] block">
+                      (Will be added to the selected batch)
+                    </span>
+                  ) : useSpecificBatch ? (
                     <span className="text-muted-foreground text-[10px] block">
                       (Limit of chosen batch)
                     </span>
@@ -250,7 +333,10 @@ export default function AdjustStockModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-card-foreground">
-                Deduct Quantity <span className="text-destructive">*</span>
+                {direction === "increase"
+                  ? "Increase Quantity"
+                  : "Adjust Quantity"}{" "}
+                <span className="text-destructive">*</span>
               </label>
               <Input
                 type="number"
@@ -260,7 +346,10 @@ export default function AdjustStockModal({
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="0.000"
                 className="h-10 text-sm font-mono"
-                disabled={!ingredientId || availableStock === 0}
+                disabled={
+                  !ingredientId ||
+                  (direction === "decrease" && availableStock === 0)
+                }
                 required
               />
             </div>
@@ -279,7 +368,11 @@ export default function AdjustStockModal({
                 </SelectTrigger>
                 <SelectContent>
                   {REASON_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    <SelectItem
+                      key={opt.value}
+                      value={opt.value}
+                      className="text-xs"
+                    >
                       {opt.label}
                     </SelectItem>
                   ))}
@@ -290,7 +383,9 @@ export default function AdjustStockModal({
 
           {/* Notes Area */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-card-foreground">Notes / Context</label>
+            <label className="text-xs font-semibold text-card-foreground">
+              Notes / Context
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -308,8 +403,9 @@ export default function AdjustStockModal({
               <div>
                 <p className="font-semibold">Zero Stock Available</p>
                 <p className="text-[10px] text-destructive/80 mt-0.5">
-                  Cannot perform adjustments as this ingredient has no remaining quantities in active
-                  batches.
+                  {direction === "increase"
+                    ? "Select a batch and enter the quantity to add back to stock."
+                    : "Cannot perform reductions as this ingredient has no remaining quantities in active batches."}
                 </p>
               </div>
             </div>
@@ -328,15 +424,22 @@ export default function AdjustStockModal({
             </Button>
             <Button
               type="submit"
-              disabled={submitting || !ingredientId || availableStock === 0}
+              disabled={
+                submitting ||
+                !ingredientId ||
+                (direction === "decrease" && availableStock === 0) ||
+                (direction === "increase" && !batchId)
+              }
               className="h-9 px-4 text-xs font-semibold"
             >
               {submitting ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <LoaderCircle className="size-3.5 animate-spin" /> Deducting…
+                  <LoaderCircle className="size-3.5 animate-spin" /> Saving…
                 </span>
+              ) : direction === "increase" ? (
+                "Save Increase"
               ) : (
-                'Process Deduction'
+                "Save Adjustment"
               )}
             </Button>
           </div>

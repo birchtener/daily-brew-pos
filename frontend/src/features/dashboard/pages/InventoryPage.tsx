@@ -1,5 +1,14 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { Boxes, AlertCircle, Package, AlertTriangle, Calendar as CalendarIcon, MoreHorizontal, Trash2, Scale } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from "react";
+import {
+  Boxes,
+  AlertCircle,
+  Package,
+  AlertTriangle,
+  Calendar as CalendarIcon,
+  MoreHorizontal,
+  Trash2,
+  Scale,
+} from "lucide-react";
 import {
   getIngredients,
   createIngredient,
@@ -7,53 +16,56 @@ import {
   deleteIngredient,
   type Ingredient,
   type Unit,
-} from '@/api/ingredients';
+} from "@/api/ingredients";
 import {
   getBatches,
   receiveStock,
   deleteBatch,
   type Batch,
   type ReceiveStockLineItem,
-} from '@/api/batches';
-import {
-  getSuppliers,
-  type Supplier,
-} from '@/api/suppliers';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
+} from "@/api/batches";
+import { getSuppliers, type Supplier } from "@/api/suppliers";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from '@/components/ui/context-menu';
-import { useStore } from '@/store/useStore';
-import { extractErrorMessage } from '@/lib/extractErrorMessage';
-import { toast } from 'sonner';
-import InventoryToolbar from '@/features/dashboard/components/inventory/InventoryToolbar';
-import BatchToolbar from '@/features/dashboard/components/inventory/BatchToolbar';
-import AddEditIngredientModal from '@/features/dashboard/components/inventory/AddEditIngredientModal';
-import ReceiveStockModal from '@/features/dashboard/components/inventory/ReceiveStockModal';
-import DeleteIngredientDialog from '@/features/dashboard/components/inventory/DeleteIngredientDialog';
-import DeleteBatchDialog from '@/features/dashboard/components/inventory/DeleteBatchDialog';
-import IngredientsList from '@/features/dashboard/components/inventory/IngredientsList';
-import BatchesList from '@/features/dashboard/components/inventory/BatchesList';
-import AdjustStockModal from '@/features/dashboard/components/inventory/AdjustStockModal';
+} from "@/components/ui/context-menu";
+import { useStore } from "@/store/useStore";
+import { extractErrorMessage } from "@/lib/extractErrorMessage";
+import { toast } from "sonner";
+import InventoryToolbar from "@/features/dashboard/components/inventory/InventoryToolbar";
+import BatchToolbar from "@/features/dashboard/components/inventory/BatchToolbar";
+import AddEditIngredientModal from "@/features/dashboard/components/inventory/AddEditIngredientModal";
+import ReceiveStockModal from "@/features/dashboard/components/inventory/ReceiveStockModal";
+import DeleteIngredientDialog from "@/features/dashboard/components/inventory/DeleteIngredientDialog";
+import DeleteBatchDialog from "@/features/dashboard/components/inventory/DeleteBatchDialog";
+import IngredientsList from "@/features/dashboard/components/inventory/IngredientsList";
+import BatchesList from "@/features/dashboard/components/inventory/BatchesList";
+import AdjustStockModal from "@/features/dashboard/components/inventory/AdjustStockModal";
 
 // ── Constants ──────────────────────────────────────────────────
 export const UNIT_OPTIONS: { value: Unit; label: string }[] = [
-  { value: 'kg', label: 'Kilogram (kg)' },
-  { value: 'g', label: 'Gram (g)' },
-  { value: 'mg', label: 'Milligram (mg)' },
-  { value: 'l', label: 'Liter (l)' },
-  { value: 'ml', label: 'Milliliter (ml)' },
-  { value: 'oz', label: 'Ounce (oz)' },
-  { value: 'pcs', label: 'Pieces (pcs)' },
-  { value: 'box', label: 'Box' },
-  { value: 'can', label: 'Can' },
+  { value: "kg", label: "Kilogram (kg)" },
+  { value: "g", label: "Gram (g)" },
+  { value: "mg", label: "Milligram (mg)" },
+  { value: "l", label: "Liter (l)" },
+  { value: "ml", label: "Milliliter (ml)" },
+  { value: "oz", label: "Ounce (oz)" },
+  { value: "pcs", label: "Pieces (pcs)" },
+  { value: "box", label: "Box" },
+  { value: "can", label: "Can" },
 ];
 
-export function StockBadge({ currentStock, threshold }: { currentStock: number; threshold: number }) {
+export function StockBadge({
+  currentStock,
+  threshold,
+}: {
+  currentStock: number;
+  threshold: number;
+}) {
   if (currentStock === 0) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-2 py-0.5 text-[11px] font-semibold text-destructive border border-destructive/20">
@@ -81,28 +93,34 @@ export function StockBadge({ currentStock, threshold }: { currentStock: number; 
 // ── Main Page ──────────────────────────────────────────────────
 export default function InventoryPage() {
   const currentUser = useStore((s) => s.user);
-  const isAdmin = currentUser?.role === 'admin';
+  const isAdmin = currentUser?.role === "admin";
 
-  const [activeTab, setActiveTab] = useState('ingredients');
+  const [activeTab, setActiveTab] = useState("ingredients");
 
   // ── INGREDIENTS STATE ──
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [ingredientsLoading, setIngredientsLoading] = useState(true);
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
-  const [ingredientSearch, setIngredientSearch] = useState('');
-  const [ingredientSearchDebounced, setIngredientSearchDebounced] = useState('');
+  const [ingredientSearch, setIngredientSearch] = useState("");
+  const [ingredientSearchDebounced, setIngredientSearchDebounced] =
+    useState("");
 
   // Ingredient modals
   const [isAddIngredientOpen, setIsAddIngredientOpen] = useState(false);
-  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
-  const [deletingIngredient, setDeletingIngredient] = useState<Ingredient | null>(null);
+  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(
+    null,
+  );
+  const [deletingIngredient, setDeletingIngredient] =
+    useState<Ingredient | null>(null);
 
   // Ingredient form
-  const [ingFormName, setIngFormName] = useState('');
-  const [ingFormUnit, setIngFormUnit] = useState<Unit>('kg');
-  const [ingFormThreshold, setIngFormThreshold] = useState('0');
+  const [ingFormName, setIngFormName] = useState("");
+  const [ingFormUnit, setIngFormUnit] = useState<Unit>("kg");
+  const [ingFormThreshold, setIngFormThreshold] = useState("0");
   const [ingFormImage, setIngFormImage] = useState<File | null>(null);
-  const [ingFormImagePreview, setIngFormImagePreview] = useState<string | null>(null);
+  const [ingFormImagePreview, setIngFormImagePreview] = useState<string | null>(
+    null,
+  );
   const [ingSubmitting, setIngSubmitting] = useState(false);
   const ingFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,18 +128,26 @@ export default function InventoryPage() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [batchesLoading, setBatchesLoading] = useState(true);
   const [batchesError, setBatchesError] = useState<string | null>(null);
-  const [batchSearch, setBatchSearch] = useState('');
-  const [batchSearchDebounced, setBatchSearchDebounced] = useState('');
-  const [batchIngredientFilter, setBatchIngredientFilter] = useState('');
+  const [batchSearch, setBatchSearch] = useState("");
+  const [batchSearchDebounced, setBatchSearchDebounced] = useState("");
+  const [batchIngredientFilter, setBatchIngredientFilter] = useState("");
 
   // Batch modals
   const [isReceiveStockOpen, setIsReceiveStockOpen] = useState(false);
   const [deletingBatch, setDeletingBatch] = useState<Batch | null>(null);
 
   // Receive stock form
-  const [receiveSupplier, setReceiveSupplier] = useState('');
-  const [receiveItems, setReceiveItems] = useState<(ReceiveStockLineItem & { _key: number })[]>([
-    { _key: Date.now(), ingredient_id: '', quantity_received: 0, cost_per_unit: 0, expiry: '' },
+  const [receiveSupplier, setReceiveSupplier] = useState("");
+  const [receiveItems, setReceiveItems] = useState<
+    (ReceiveStockLineItem & { _key: number })[]
+  >([
+    {
+      _key: Date.now(),
+      ingredient_id: "",
+      quantity_received: 0,
+      cost_per_unit: 0,
+      expiry: "",
+    },
   ]);
   const [receiveSubmitting, setReceiveSubmitting] = useState(false);
   const [batchDeleteSubmitting, setBatchDeleteSubmitting] = useState(false);
@@ -131,8 +157,11 @@ export default function InventoryPage() {
 
   // ── ADJUSTMENT STATE ──
   const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
-  const [adjustPreselectedIngredientId, setAdjustPreselectedIngredientId] = useState<string | undefined>(undefined);
-  const [adjustPreselectedBatchId, setAdjustPreselectedBatchId] = useState<string | undefined>(undefined);
+  const [adjustPreselectedIngredientId, setAdjustPreselectedIngredientId] =
+    useState<string | undefined>(undefined);
+  const [adjustPreselectedBatchId, setAdjustPreselectedBatchId] = useState<
+    string | undefined
+  >(undefined);
 
   const handleOpenAdjustStock = () => {
     setAdjustPreselectedIngredientId(undefined);
@@ -148,7 +177,10 @@ export default function InventoryPage() {
 
   // ── SEARCH DEBOUNCE ──
   useEffect(() => {
-    const h = setTimeout(() => setIngredientSearchDebounced(ingredientSearch), 400);
+    const h = setTimeout(
+      () => setIngredientSearchDebounced(ingredientSearch),
+      400,
+    );
     return () => clearTimeout(h);
   }, [ingredientSearch]);
 
@@ -165,7 +197,9 @@ export default function InventoryPage() {
       const data = await getIngredients();
       setIngredients(data);
     } catch (err: any) {
-      setIngredientsError(err?.response?.data?.message || 'Failed to fetch ingredients.');
+      setIngredientsError(
+        err?.response?.data?.message || "Failed to fetch ingredients.",
+      );
     } finally {
       setIngredientsLoading(false);
     }
@@ -178,7 +212,9 @@ export default function InventoryPage() {
       const data = await getBatches(batchIngredientFilter || undefined);
       setBatches(data);
     } catch (err: any) {
-      setBatchesError(err?.response?.data?.message || 'Failed to fetch batches.');
+      setBatchesError(
+        err?.response?.data?.message || "Failed to fetch batches.",
+      );
     } finally {
       setBatchesLoading(false);
     }
@@ -202,9 +238,9 @@ export default function InventoryPage() {
 
   // ── INGREDIENT HANDLERS ──
   const resetIngredientForm = () => {
-    setIngFormName('');
-    setIngFormUnit('kg');
-    setIngFormThreshold('0');
+    setIngFormName("");
+    setIngFormUnit("kg");
+    setIngFormThreshold("0");
     setIngFormImage(null);
     setIngFormImagePreview(null);
     setIngSubmitting(false);
@@ -238,13 +274,13 @@ export default function InventoryPage() {
   const clearIngImage = () => {
     setIngFormImage(null);
     setIngFormImagePreview(null);
-    if (ingFileInputRef.current) ingFileInputRef.current.value = '';
+    if (ingFileInputRef.current) ingFileInputRef.current.value = "";
   };
 
   const handleAddIngredientSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ingFormName.trim()) {
-      toast.error('Ingredient name is required.');
+      toast.error("Ingredient name is required.");
       return;
     }
     setIngSubmitting(true);
@@ -255,11 +291,11 @@ export default function InventoryPage() {
         low_stock_threshold: parseFloat(ingFormThreshold) || 0,
         image: ingFormImage,
       });
-      toast.success('Ingredient added successfully!');
+      toast.success("Ingredient added successfully!");
       setIsAddIngredientOpen(false);
       fetchIngredients();
     } catch (err: any) {
-      toast.error(extractErrorMessage(err, 'Failed to add ingredient.'));
+      toast.error(extractErrorMessage(err, "Failed to add ingredient."));
     } finally {
       setIngSubmitting(false);
     }
@@ -269,11 +305,12 @@ export default function InventoryPage() {
     e.preventDefault();
     if (!editingIngredient) return;
     if (!ingFormName.trim()) {
-      toast.error('Ingredient name is required.');
+      toast.error("Ingredient name is required.");
       return;
     }
     setIngSubmitting(true);
-    const isImageCleared = ingFormImagePreview === null && editingIngredient.img_path !== null;
+    const isImageCleared =
+      ingFormImagePreview === null && editingIngredient.img_path !== null;
     try {
       await updateIngredient(editingIngredient.id, {
         name: ingFormName.trim(),
@@ -282,11 +319,11 @@ export default function InventoryPage() {
         image: ingFormImage,
         ...(isImageCleared ? { img_path: null } : {}),
       });
-      toast.success('Ingredient updated successfully!');
+      toast.success("Ingredient updated successfully!");
       setEditingIngredient(null);
       fetchIngredients();
     } catch (err: any) {
-      toast.error(extractErrorMessage(err, 'Failed to update ingredient.'));
+      toast.error(extractErrorMessage(err, "Failed to update ingredient."));
     } finally {
       setIngSubmitting(false);
     }
@@ -297,12 +334,12 @@ export default function InventoryPage() {
     setIngSubmitting(true);
     try {
       await deleteIngredient(deletingIngredient.id);
-      toast.success('Ingredient deleted successfully!');
+      toast.success("Ingredient deleted successfully!");
       setDeletingIngredient(null);
       fetchIngredients();
       fetchBatches();
     } catch (err: any) {
-      toast.error(extractErrorMessage(err, 'Failed to delete ingredient.'));
+      toast.error(extractErrorMessage(err, "Failed to delete ingredient."));
     } finally {
       setIngSubmitting(false);
     }
@@ -310,9 +347,15 @@ export default function InventoryPage() {
 
   // ── RECEIVE STOCK HANDLERS ──
   const handleOpenReceiveStock = () => {
-    setReceiveSupplier('');
+    setReceiveSupplier("");
     setReceiveItems([
-      { _key: Date.now(), ingredient_id: '', quantity_received: 0, cost_per_unit: 0, expiry: '' },
+      {
+        _key: Date.now(),
+        ingredient_id: "",
+        quantity_received: 0,
+        cost_per_unit: 0,
+        expiry: "",
+      },
     ]);
     setReceiveSubmitting(false);
     setIsReceiveStockOpen(true);
@@ -321,7 +364,13 @@ export default function InventoryPage() {
   const addReceiveItem = () => {
     setReceiveItems((prev) => [
       ...prev,
-      { _key: Date.now() + Math.random(), ingredient_id: '', quantity_received: 0, cost_per_unit: 0, expiry: '' },
+      {
+        _key: Date.now() + Math.random(),
+        ingredient_id: "",
+        quantity_received: 0,
+        cost_per_unit: 0,
+        expiry: "",
+      },
     ]);
   };
 
@@ -331,19 +380,25 @@ export default function InventoryPage() {
 
   const updateReceiveItem = (key: number, field: string, value: any) => {
     setReceiveItems((prev) =>
-      prev.map((item) => (item._key === key ? { ...item, [field]: value } : item))
+      prev.map((item) =>
+        item._key === key ? { ...item, [field]: value } : item,
+      ),
     );
   };
 
   const handleReceiveStockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!receiveSupplier) {
-      toast.error('Please select a supplier.');
+      toast.error("Please select a supplier.");
       return;
     }
-    const validItems = receiveItems.filter((i) => i.ingredient_id && i.quantity_received > 0 && i.expiry);
+    const validItems = receiveItems.filter(
+      (i) => i.ingredient_id && i.quantity_received > 0 && i.expiry,
+    );
     if (validItems.length === 0) {
-      toast.error('Add at least one valid line item with ingredient, quantity, and expiry.');
+      toast.error(
+        "Add at least one valid line item with ingredient, quantity, and expiry.",
+      );
       return;
     }
 
@@ -353,12 +408,12 @@ export default function InventoryPage() {
         supplier_id: receiveSupplier,
         items: validItems.map(({ _key, ...rest }) => rest),
       });
-      toast.success('Stock received successfully!');
+      toast.success("Stock received successfully!");
       setIsReceiveStockOpen(false);
       fetchBatches();
       fetchIngredients();
     } catch (err: any) {
-      toast.error(extractErrorMessage(err, 'Failed to receive stock.'));
+      toast.error(extractErrorMessage(err, "Failed to receive stock."));
     } finally {
       setReceiveSubmitting(false);
     }
@@ -370,12 +425,12 @@ export default function InventoryPage() {
     setBatchDeleteSubmitting(true);
     try {
       await deleteBatch(deletingBatch.id);
-      toast.success('Batch deleted successfully!');
+      toast.success("Batch deleted successfully!");
       setDeletingBatch(null);
       fetchBatches();
       fetchIngredients();
     } catch (err: any) {
-      toast.error(extractErrorMessage(err, 'Failed to delete batch.'));
+      toast.error(extractErrorMessage(err, "Failed to delete batch."));
     } finally {
       setBatchDeleteSubmitting(false);
     }
@@ -406,10 +461,10 @@ export default function InventoryPage() {
     expiry.setHours(0, 0, 0, 0);
     const isDepleted = Number(batch.quantity_remaining) === 0;
 
-    if (isDepleted) return 'opacity-50';
-    if (expiry < today) return 'bg-destructive/8 dark:bg-destructive/10';
-    if (expiry <= in7Days) return 'bg-amber-500/8 dark:bg-amber-500/10';
-    return '';
+    if (isDepleted) return "opacity-50";
+    if (expiry < today) return "bg-destructive/8 dark:bg-destructive/10";
+    if (expiry <= in7Days) return "bg-amber-500/8 dark:bg-amber-500/10";
+    return "";
   };
 
   const isBatchUnused = (batch: Batch) => {
@@ -422,10 +477,13 @@ export default function InventoryPage() {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Boxes className="size-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Inventory Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Inventory Management
+          </h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Manage ingredient catalog, receive supplier deliveries, and monitor stock levels in real time.
+          Manage ingredient catalog, receive supplier deliveries, and monitor
+          stock levels in real time.
         </p>
       </div>
 
@@ -461,7 +519,9 @@ export default function InventoryPage() {
             isAdmin={isAdmin}
             onFetch={fetchIngredients}
             onEdit={handleOpenEditIngredient}
-            onDelete={(ing) => { setDeletingIngredient(ing); }}
+            onDelete={(ing) => {
+              setDeletingIngredient(ing);
+            }}
           />
         </TabsContent>
 
@@ -483,13 +543,16 @@ export default function InventoryPage() {
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground select-none px-1">
             <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm bg-destructive/30 border border-destructive/40" /> Expired
+              <span className="size-2.5 rounded-sm bg-destructive/30 border border-destructive/40" />{" "}
+              Expired
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm bg-amber-500/30 border border-amber-500/40" /> Expires within 7 days
+              <span className="size-2.5 rounded-sm bg-amber-500/30 border border-amber-500/40" />{" "}
+              Expires within 7 days
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-2.5 rounded-sm bg-muted border border-border opacity-50" /> Fully depleted
+              <span className="size-2.5 rounded-sm bg-muted border border-border opacity-50" />{" "}
+              Fully depleted
             </div>
           </div>
 
@@ -505,7 +568,9 @@ export default function InventoryPage() {
                     <th className="p-4 w-30">Qty Remaining</th>
                     <th className="p-4 w-25">Cost/Unit</th>
                     <th className="p-4 w-27.5">Expiry</th>
-                    <th className="p-4 w-27.5 hidden lg:table-cell">Received</th>
+                    <th className="p-4 w-27.5 hidden lg:table-cell">
+                      Received
+                    </th>
                     <th className="p-4 w-15 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -513,36 +578,73 @@ export default function InventoryPage() {
                   {batchesLoading && batches.length === 0 ? (
                     Array.from({ length: 4 }).map((_, i) => (
                       <tr key={i} className="animate-pulse">
-                        <td className="p-4"><div className="h-4 bg-muted rounded w-28" /></td>
-                        <td className="p-4"><div className="h-4 bg-muted rounded w-24" /></td>
-                        <td className="p-4"><div className="h-4 bg-muted rounded w-16" /></td>
-                        <td className="p-4"><div className="h-4 bg-muted rounded w-16" /></td>
-                        <td className="p-4"><div className="h-4 bg-muted rounded w-16" /></td>
-                        <td className="p-4"><div className="h-4 bg-muted rounded w-20" /></td>
-                        <td className="p-4 hidden lg:table-cell"><div className="h-4 bg-muted rounded w-20" /></td>
-                        <td className="p-4 text-center"><div className="size-6 bg-muted rounded mx-auto" /></td>
+                        <td className="p-4">
+                          <div className="h-4 bg-muted rounded w-28" />
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-muted rounded w-24" />
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-muted rounded w-16" />
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-muted rounded w-16" />
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-muted rounded w-16" />
+                        </td>
+                        <td className="p-4">
+                          <div className="h-4 bg-muted rounded w-20" />
+                        </td>
+                        <td className="p-4 hidden lg:table-cell">
+                          <div className="h-4 bg-muted rounded w-20" />
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="size-6 bg-muted rounded mx-auto" />
+                        </td>
                       </tr>
                     ))
                   ) : batchesError ? (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-destructive">
+                      <td
+                        colSpan={8}
+                        className="p-8 text-center text-destructive"
+                      >
                         <div className="flex flex-col items-center justify-center gap-2">
                           <AlertCircle className="size-8 animate-bounce" />
-                          <p className="font-semibold">Failed to load stock batches</p>
-                          <p className="text-xs text-muted-foreground max-w-sm">{batchesError}</p>
-                          <Button variant="outline" size="sm" onClick={fetchBatches} className="mt-2">Try Again</Button>
+                          <p className="font-semibold">
+                            Failed to load stock batches
+                          </p>
+                          <p className="text-xs text-muted-foreground max-w-sm">
+                            {batchesError}
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={fetchBatches}
+                            className="mt-2"
+                          >
+                            Try Again
+                          </Button>
                         </div>
                       </td>
                     </tr>
                   ) : filteredBatches.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="p-12 text-center text-muted-foreground">
+                      <td
+                        colSpan={8}
+                        className="p-12 text-center text-muted-foreground"
+                      >
                         <div className="flex flex-col items-center justify-center gap-3">
                           <Boxes className="size-10 text-muted-foreground/30" />
                           <div>
-                            <p className="font-medium text-foreground">No stock batches found</p>
+                            <p className="font-medium text-foreground">
+                              No stock batches found
+                            </p>
                             <p className="text-xs text-muted-foreground max-w-xs mx-auto mt-1">
-                              {batches.length === 0 ? 'Receive your first stock delivery to get started.' : 'Try adjusting your search or filter.'}
+                              {batches.length === 0
+                                ? "Receive your first stock delivery to get started."
+                                : "Try adjusting your search or filter."}
                             </p>
                           </div>
                         </div>
@@ -561,20 +663,31 @@ export default function InventoryPage() {
                           onContextMenu={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            const btn = e.currentTarget.querySelector('.action-btn-trigger');
+                            const btn = e.currentTarget.querySelector(
+                              ".action-btn-trigger",
+                            );
                             if (btn) {
-                              const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
+                              const event = new MouseEvent("contextmenu", {
+                                bubbles: true,
+                                cancelable: true,
+                                clientX: e.clientX,
+                                clientY: e.clientY,
+                              });
                               btn.dispatchEvent(event);
                             }
                           }}
                         >
                           {/* Ingredient */}
-                          <td className={`p-4 font-semibold text-card-foreground ${isDepleted ? 'line-through' : ''}`}>
+                          <td
+                            className={`p-4 font-semibold text-card-foreground ${isDepleted ? "line-through" : ""}`}
+                          >
                             <div className="flex items-center gap-3 min-w-0">
                               <div className="size-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 select-none">
                                 <Package className="size-4" />
                               </div>
-                              <span className="truncate">{batch.ingredient.name}</span>
+                              <span className="truncate">
+                                {batch.ingredient.name}
+                              </span>
                             </div>
                           </td>
 
@@ -585,12 +698,14 @@ export default function InventoryPage() {
 
                           {/* Qty Received */}
                           <td className="p-4 font-mono text-xs text-muted-foreground">
-                            {Number(batch.quantity_received).toFixed(1)} {batch.ingredient.unit}
+                            {Number(batch.quantity_received).toFixed(1)}{" "}
+                            {batch.ingredient.unit}
                           </td>
 
                           {/* Qty Remaining */}
                           <td className="p-4 font-mono text-xs font-semibold">
-                            {Number(batch.quantity_remaining).toFixed(1)} {batch.ingredient.unit}
+                            {Number(batch.quantity_remaining).toFixed(1)}{" "}
+                            {batch.ingredient.unit}
                           </td>
 
                           {/* Cost/Unit */}
@@ -602,11 +717,19 @@ export default function InventoryPage() {
                           <td className="p-4 text-xs font-mono whitespace-nowrap">
                             <div className="flex items-center gap-1.5">
                               {(() => {
-                                  const exp = new Date(batch.expiry);
-                                  exp.setHours(0, 0, 0, 0);
-                                  if (exp < today) return <AlertTriangle className="size-3.5 text-destructive" />;
-                                  if (exp <= in7Days) return <AlertTriangle className="size-3.5 text-amber-500" />;
-                                  return <CalendarIcon className="size-3.5 text-foreground" />;
+                                const exp = new Date(batch.expiry);
+                                exp.setHours(0, 0, 0, 0);
+                                if (exp < today)
+                                  return (
+                                    <AlertTriangle className="size-3.5 text-destructive" />
+                                  );
+                                if (exp <= in7Days)
+                                  return (
+                                    <AlertTriangle className="size-3.5 text-amber-500" />
+                                  );
+                                return (
+                                  <CalendarIcon className="size-3.5 text-foreground" />
+                                );
                               })()}
                               {expiryDate.toLocaleDateString()}
                             </div>
@@ -628,7 +751,15 @@ export default function InventoryPage() {
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: e.clientX, clientY: e.clientY });
+                                    const event = new MouseEvent(
+                                      "contextmenu",
+                                      {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        clientX: e.clientX,
+                                        clientY: e.clientY,
+                                      },
+                                    );
                                     e.currentTarget.dispatchEvent(event);
                                   }}
                                 >
@@ -637,7 +768,9 @@ export default function InventoryPage() {
                               </ContextMenuTrigger>
                               <ContextMenuContent className="w-48 bg-card border border-border text-foreground shadow-md rounded-md p-1 z-50">
                                 <ContextMenuItem
-                                  onSelect={() => handleOpenAdjustSpecificBatch(batch)}
+                                  onSelect={() =>
+                                    handleOpenAdjustSpecificBatch(batch)
+                                  }
                                   className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold hover:bg-muted focus:bg-muted transition cursor-pointer"
                                 >
                                   <Scale className="size-3.5 text-primary" />
@@ -645,7 +778,9 @@ export default function InventoryPage() {
                                 </ContextMenuItem>
                                 {isAdmin && isBatchUnused(batch) && (
                                   <ContextMenuItem
-                                    onSelect={() => { setDeletingBatch(batch) }}
+                                    onSelect={() => {
+                                      setDeletingBatch(batch);
+                                    }}
                                     className="w-full flex items-center gap-2 rounded px-2.5 py-1.5 text-left text-xs font-semibold text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive transition cursor-pointer"
                                   >
                                     <Trash2 className="size-3.5" />
@@ -675,16 +810,17 @@ export default function InventoryPage() {
               onFetch={fetchBatches}
               getBatchRowClass={getBatchRowClass}
               isBatchUnused={isBatchUnused}
-              onDelete={(b) => { setDeletingBatch(b); }}
+              onDelete={(b) => {
+                setDeletingBatch(b);
+              }}
               onAdjust={handleOpenAdjustSpecificBatch}
             />
-
           </div>
         </TabsContent>
       </Tabs>
 
       {/* Modals & dialogs */}
-       <AddEditIngredientModal
+      <AddEditIngredientModal
         mode="add"
         isOpen={isAddIngredientOpen}
         onClose={() => setIsAddIngredientOpen(false)}

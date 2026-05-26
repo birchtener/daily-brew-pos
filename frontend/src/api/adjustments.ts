@@ -1,12 +1,19 @@
-import { apiClient } from './client';
-import type { Unit } from './ingredients';
+import { apiClient } from "./client";
+import type { Unit } from "./ingredients";
 
-export type AdjustmentReason = 'spill' | 'expired' | 'waste' | 'theft' | 'correction';
+export type AdjustmentReason =
+  | "spill"
+  | "expired"
+  | "waste"
+  | "theft"
+  | "correction";
+export type AdjustmentDirection = "decrease" | "increase";
 
 export type InventoryAdjustment = {
   id: string;
   ingredient_id: string;
   batch_id: string;
+  direction: AdjustmentDirection;
   quantity: number;
   cost_lost: number;
   reason: AdjustmentReason;
@@ -21,6 +28,7 @@ export type InventoryAdjustment = {
 export type CreateAdjustmentPayload = {
   ingredient_id: string;
   batch_id?: string;
+  direction: AdjustmentDirection;
   quantity: number;
   reason: AdjustmentReason;
   notes?: string;
@@ -33,12 +41,18 @@ type ApiResponse<T> = {
 };
 
 export async function createAdjustment(payload: CreateAdjustmentPayload) {
-  const { data } = await apiClient.post<ApiResponse<InventoryAdjustment[]>>('/inventory/adjustments', payload);
+  const { data } = await apiClient.post<ApiResponse<InventoryAdjustment[]>>(
+    "/inventory/adjustments",
+    payload,
+  );
   return data.data;
 }
 
 export async function getAdjustments(ingredientId?: string) {
   const params = ingredientId ? { ingredient_id: ingredientId } : {};
-  const { data } = await apiClient.get<ApiResponse<InventoryAdjustment[]>>('/inventory/adjustments', { params });
+  const { data } = await apiClient.get<ApiResponse<InventoryAdjustment[]>>(
+    "/inventory/adjustments",
+    { params },
+  );
   return data.data;
 }

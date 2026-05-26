@@ -1,12 +1,12 @@
-import { prisma } from '../../../config/db';
-import { LogCategory, LogType, Prisma } from '../../../generated/prisma/client';
-import { AuditService } from '../../audit/audit.service';
-import { StockMonitorService } from '../services/stockMonitor.service';
-import { globalEventBus, APP_EVENTS } from '../../../config/events';
-import { z } from 'zod';
-import { CreateAdjustmentSchema } from './adjustments.validation';
+import { prisma } from "../../../config/db";
+import { LogCategory, LogType, Prisma } from "../../../generated/prisma/client";
+import { AuditService } from "../../audit/audit.service";
+import { StockMonitorService } from "../services/stockMonitor.service";
+import { globalEventBus, APP_EVENTS } from "../../../config/events";
+import { z } from "zod";
+import { CreateAdjustmentSchema } from "./adjustments.validation";
 
-const createHttpError = (message: string, statusCode: number) => 
+const createHttpError = (message: string, statusCode: number) =>
   Object.assign(new Error(message), { statusCode });
 
 type AuditEntry = {
@@ -25,7 +25,7 @@ export class AdjustmentsService {
 
     const adjustments = await prisma.inventoryAdjustment.findMany({
       where,
-      orderBy: { created_at: 'desc' },
+      orderBy: { created_at: "desc" },
       include: {
         ingredient: {
           select: { name: true, unit: true },
@@ -53,7 +53,7 @@ export class AdjustmentsService {
 
   static async createAdjustment(
     input: z.infer<typeof CreateAdjustmentSchema>,
-    userId: string
+    userId: string,
   ) {
     const auditTrail: AuditEntry[] = [];
 
@@ -66,10 +66,21 @@ export class AdjustmentsService {
         });
 
         if (!ingredient) {
-          throw createHttpError('Validation Failure: Ingredient not found.', 404);
+          throw createHttpError(
+            "Validation Failure: Ingredient not found.",
+            404,
+          );
         }
 
-        const remainingToDeduct = new Prisma.Decimal(input.quantity);
+        const adjustmentQuantity = new Prisma.Decimal(input.quantity);
+        const isIncrease = input.direction === "increase";
+
+        if (isIncrease && !input.batch_id) {
+          throw createHttpError(
+            "Validation Failure: Increasing stock requires a target batch.",
+            400,
+          );
+        }
 
         // 2. Case A: Adjusting a specific batch
         if (input.batch_id) {
@@ -84,25 +95,30 @@ export class AdjustmentsService {
           });
 
           if (!batch) {
-            throw createHttpError('Validation Failure: Target stock batch not found.', 404);
+            throw createHttpError(
+              "Validation Failure: Target stock batch not found.",
+              404,
+            );
           }
 
           if (batch.ingredient_id !== input.ingredient_id) {
             throw createHttpError(
-              'Validation Failure: Selected batch does not belong to specified ingredient.',
-              400
+              "Validation Failure: Selected batch does not belong to specified ingredient.",
+              400,
             );
           }
 
           const available = new Prisma.Decimal(batch.quantity_remaining);
-          if (available.lt(remainingToDeduct)) {
+          if (!isIncrease && available.lt(adjustmentQuantity)) {
             throw createHttpError(
-              `Validation Failure: Insufficient stock in target batch. Available: ${available} ${ingredient.unit}, Requested: ${remainingToDeduct} ${ingredient.unit}.`,
-              400
+              `Validation Failure: Insufficient stock in target batch. Available: ${available} ${ingredient.unit}, Requested Reduction: ${adjustmentQuantity} ${ingredient.unit}.`,
+              400,
             );
           }
 
-          const updatedRemaining = available.minus(remainingToDeduct);
+          const updatedRemaining = isIncrease
+            ? available.plus(adjustmentQuantity)
+            : available.minus(adjustmentQuantity);
 
           // Update batch stock
           await tx.ingredientBatches.update({
@@ -111,14 +127,17 @@ export class AdjustmentsService {
           });
 
           // Calculate precise cost basis lost
-          const costLost = remainingToDeduct.times(batch.cost_per_unit);
+          const costLost = isIncrease
+            ? new Prisma.Decimal(0)
+            : adjustmentQuantity.times(batch.cost_per_unit);
 
           // Create the adjustment log record
           const adjustment = await tx.inventoryAdjustment.create({
             data: {
               ingredient_id: input.ingredient_id,
               batch_id: batch.id,
-              quantity: remainingToDeduct,
+              direction: input.direction,
+              quantity: adjustmentQuantity,
               cost_lost: costLost,
               reason: input.reason,
               notes: input.notes || null,
@@ -131,36 +150,43 @@ export class AdjustmentsService {
           });
 
           auditTrail.push({
-            message: `INVENTORY: Manual stock reduction (Specific Batch) for [${ingredient.name}] — Qty: -${remainingToDeduct} ${ingredient.unit}, Cost Lost: ₱${costLost.toFixed(2)}, Reason: ${input.reason.toUpperCase()}. Notes: "${input.notes || ''}"`,
+            message: `INVENTORY: Manual stock ${isIncrease ? "increase" : "reduction"} (Specific Batch) for [${ingredient.name}] — Qty: ${isIncrease ? "+" : "-"}${adjustmentQuantity} ${ingredient.unit}${isIncrease ? "" : `, Cost Lost: ₱${costLost.toFixed(2)}`}, Reason: ${input.reason.toUpperCase()}. Notes: "${input.notes || ""}"`,
             category: LogCategory.inventory,
-            type: LogType.warn,
+            type: isIncrease ? LogType.success : LogType.warn,
             userId,
           });
 
           return [adjustment];
         } else {
+          if (isIncrease) {
+            throw createHttpError(
+              "Validation Failure: Increasing stock requires a target batch.",
+              400,
+            );
+          }
+
           // 3. Case B: Ingredient-level adjustment using FIFO
           const activeBatches = await tx.ingredientBatches.findMany({
             where: {
               ingredient_id: input.ingredient_id,
               quantity_remaining: { gt: 0 },
             },
-            orderBy: { received_at: 'asc' }, // FIFO: oldest batches first
+            orderBy: { received_at: "asc" }, // FIFO: oldest batches first
           });
 
           const totalAvailable = activeBatches.reduce(
             (acc, b) => acc.plus(new Prisma.Decimal(b.quantity_remaining)),
-            new Prisma.Decimal(0)
+            new Prisma.Decimal(0),
           );
 
-          if (totalAvailable.lt(remainingToDeduct)) {
+          if (totalAvailable.lt(adjustmentQuantity)) {
             throw createHttpError(
-              `Validation Failure: Insufficient stock. Total Available: ${totalAvailable} ${ingredient.unit}, Requested Reduction: ${remainingToDeduct} ${ingredient.unit}.`,
-              400
+              `Validation Failure: Insufficient stock. Total Available: ${totalAvailable} ${ingredient.unit}, Requested Reduction: ${adjustmentQuantity} ${ingredient.unit}.`,
+              400,
             );
           }
 
-          let remainingNeeded = remainingToDeduct;
+          let remainingNeeded = adjustmentQuantity;
           const adjustmentsCreated = [];
 
           for (const batch of activeBatches) {
@@ -192,6 +218,7 @@ export class AdjustmentsService {
               data: {
                 ingredient_id: input.ingredient_id,
                 batch_id: batch.id,
+                direction: input.direction,
                 quantity: quantityToDeduct,
                 cost_lost: costLost,
                 reason: input.reason,
@@ -200,7 +227,7 @@ export class AdjustmentsService {
               },
               include: {
                 ingredient: { select: { name: true, unit: true } },
-                batch: { select: { received_at: true, expiry: true } },
+                message: `INVENTORY: Manual stock reduction (FIFO Summary) for [${ingredient.name}] — Total Qty: -${adjustmentQuantity} ${ingredient.unit}, Reason: ${input.reason.toUpperCase()}. Notes: "${input.notes || ""}"`,
               },
             });
 
@@ -215,7 +242,7 @@ export class AdjustmentsService {
           }
 
           auditTrail.push({
-            message: `INVENTORY: Manual stock reduction (FIFO Summary) for [${ingredient.name}] — Total Qty: -${remainingToDeduct} ${ingredient.unit}, Reason: ${input.reason.toUpperCase()}. Notes: "${input.notes || ''}"`,
+            message: `INVENTORY: Manual stock reduction (FIFO Summary) for [${ingredient.name}] — Total Qty: -${remainingToDeduct} ${ingredient.unit}, Reason: ${input.reason.toUpperCase()}. Notes: "${input.notes || ""}"`,
             category: LogCategory.inventory,
             type: LogType.warn,
             userId,
@@ -239,10 +266,13 @@ export class AdjustmentsService {
 
       return result;
     } catch (error) {
-      if (error && typeof error === 'object' && 'statusCode' in error) {
+      if (error && typeof error === "object" && "statusCode" in error) {
         throw error;
       }
-      throw createHttpError('Validation Failure: Stock manual adjustment failed.', 500);
+      throw createHttpError(
+        "Validation Failure: Stock manual adjustment failed.",
+        500,
+      );
     }
   }
 }
