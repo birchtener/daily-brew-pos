@@ -1,8 +1,13 @@
-import { Request, Response } from 'express';
-import { OrdersService } from './orders.service';
-import { CreateOrderSchema, FinalizeParkedOrderSchema } from './orders.validation';
+import { Request, Response } from "express";
+import { OrdersService } from "./orders.service";
+import {
+  CreateOrderSchema,
+  FinalizeParkedOrderSchema,
+  VoidOrderSchema,
+} from "./orders.validation";
 
-const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
+const createHttpError = (message: string, statusCode: number) =>
+  Object.assign(new Error(message), { statusCode });
 
 export class OrdersController {
   static async checkout(req: Request, res: Response) {
@@ -23,14 +28,21 @@ export class OrdersController {
 
   static async finalizeParked(req: Request, res: Response) {
     const { id } = req.params;
-    if (typeof id !== 'string') {
-      throw createHttpError('Bad Request: Invalid URL route execution parameter format.', 400);
+    if (typeof id !== "string") {
+      throw createHttpError(
+        "Bad Request: Invalid URL route execution parameter format.",
+        400,
+      );
     }
 
     const cleanData = FinalizeParkedOrderSchema.parse(req.body);
-    
-    const data = await OrdersService.checkoutParkedOrder(id, cleanData, req.user!.id);
-    
+
+    const data = await OrdersService.checkoutParkedOrder(
+      id,
+      cleanData,
+      req.user!.id,
+    );
+
     res.status(200).json({ success: true, data });
   }
 
@@ -41,8 +53,11 @@ export class OrdersController {
 
   static async cancelParked(req: Request, res: Response) {
     const { id } = req.params;
-    if (typeof id !== 'string') {
-      throw createHttpError('Bad Request: Invalid URL route execution parameter format.', 400);
+    if (typeof id !== "string") {
+      throw createHttpError(
+        "Bad Request: Invalid URL route execution parameter format.",
+        400,
+      );
     }
 
     const data = await OrdersService.deleteParkedOrder(id, req.user!.id);
@@ -51,11 +66,15 @@ export class OrdersController {
 
   static async voidOrder(req: Request, res: Response) {
     const { id } = req.params;
-    if (typeof id !== 'string') {
-      throw createHttpError('Bad Request: Invalid URL route execution parameter format.', 400);
+    if (typeof id !== "string") {
+      throw createHttpError(
+        "Bad Request: Invalid URL route execution parameter format.",
+        400,
+      );
     }
 
-    const data = await OrdersService.voidOrder(id, req.user!.id);
+    const { reason } = VoidOrderSchema.parse(req.body);
+    const data = await OrdersService.voidOrder(id, req.user!.id, reason);
     res.status(200).json({ success: true, data });
   }
 }

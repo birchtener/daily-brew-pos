@@ -1,5 +1,6 @@
-import { X, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { X, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { ReactNode } from "react";
 
 type Props = {
   isOpen: boolean;
@@ -9,7 +10,9 @@ type Props = {
   description: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'destructive' | 'default' | 'outline';
+  variant?: "destructive" | "default" | "outline";
+  confirmDisabled?: boolean;
+  children?: ReactNode;
 };
 
 export default function ConfirmationDialog({
@@ -18,9 +21,11 @@ export default function ConfirmationDialog({
   onConfirm,
   title,
   description,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  variant = 'destructive',
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  variant = "destructive",
+  confirmDisabled = false,
+  children,
 }: Props) {
   if (!isOpen) return null;
   return (
@@ -29,7 +34,8 @@ export default function ConfirmationDialog({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3.5 mb-4">
           <h2 className="text-lg font-bold flex items-center gap-2 text-destructive">
-            <AlertTriangle className="size-5 shrink-0 animate-pulse text-destructive" /> {title}
+            <AlertTriangle className="size-5 shrink-0 animate-pulse text-destructive" />{" "}
+            {title}
           </h2>
           <button
             onClick={onClose}
@@ -44,6 +50,8 @@ export default function ConfirmationDialog({
           {description}
         </div>
 
+        {children}
+
         {/* Actions */}
         <div className="flex justify-end gap-2 border-t border-border pt-4 mt-5">
           <Button
@@ -57,6 +65,7 @@ export default function ConfirmationDialog({
           <Button
             onClick={onConfirm}
             variant={variant}
+            disabled={confirmDisabled}
             className="h-9 px-4 text-xs font-semibold shadow-sm"
           >
             {confirmText}

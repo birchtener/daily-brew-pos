@@ -1,5 +1,5 @@
-import { apiClient } from './client';
-import { type Product } from './products';
+import { apiClient } from "./client";
+import { type Product } from "./products";
 
 export type OrderItem = {
   id: string;
@@ -24,7 +24,8 @@ export type Order = {
   discount_code: string | null;
   sub_total: number;
   total: number;
-  order_status: 'parked' | 'completed' | 'cancelled';
+  order_status: "parked" | "completed" | "cancelled";
+  void_reason?: string | null;
   created_at: string;
   created_by: string;
   items?: OrderItem[];
@@ -43,22 +44,24 @@ export async function checkout(payload: {
   park?: boolean;
   payment_method?: string | null;
 }) {
-  const { data } = await apiClient.post<ApiResponse<Order>>('/orders', payload);
+  const { data } = await apiClient.post<ApiResponse<Order>>("/orders", payload);
   return data.data;
 }
 
 export async function getParkedOrders() {
-  const { data } = await apiClient.get<ApiResponse<Order[]>>('/orders/parked');
+  const { data } = await apiClient.get<ApiResponse<Order[]>>("/orders/parked");
   return data.data;
 }
 
 export async function getCompletedOrders() {
-  const { data } = await apiClient.get<ApiResponse<Order[]>>('/orders/completed');
+  const { data } =
+    await apiClient.get<ApiResponse<Order[]>>("/orders/completed");
   return data.data;
 }
 
 export async function getCancelledOrders() {
-  const { data } = await apiClient.get<ApiResponse<Order[]>>('/orders/cancelled');
+  const { data } =
+    await apiClient.get<ApiResponse<Order[]>>("/orders/cancelled");
   return data.data;
 }
 
@@ -68,18 +71,28 @@ export async function finalizeParkedOrder(
     discount_code?: string | null;
     items: { product_id: string; quantity: number }[];
     payment_method: string;
-  }
+  },
 ) {
-  const { data } = await apiClient.put<ApiResponse<Order>>(`/orders/parked/${id}/finalize`, payload);
+  const { data } = await apiClient.put<ApiResponse<Order>>(
+    `/orders/parked/${id}/finalize`,
+    payload,
+  );
   return data.data;
 }
 
 export async function cancelParkedOrder(id: string) {
-  const { data } = await apiClient.delete<ApiResponse<null>>(`/orders/parked/${id}`);
+  const { data } = await apiClient.delete<ApiResponse<null>>(
+    `/orders/parked/${id}`,
+  );
   return data.data;
 }
 
-export async function voidOrder(id: string) {
-  const { data } = await apiClient.delete<ApiResponse<null>>(`/orders/completed/${id}/void`);
+export async function voidOrder(id: string, reason: string) {
+  const { data } = await apiClient.delete<ApiResponse<null>>(
+    `/orders/completed/${id}/void`,
+    {
+      data: { reason },
+    },
+  );
   return data.data;
 }

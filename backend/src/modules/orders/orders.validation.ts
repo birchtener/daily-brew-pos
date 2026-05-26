@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const OrderLineItemSchema = z.object({
   product_id: z.string().uuid(),
@@ -16,4 +16,8 @@ export const FinalizeParkedOrderSchema = z.object({
   discount_code: z.string().max(50).optional().nullable(),
   items: z.array(OrderLineItemSchema).min(1),
   payment_method: z.string().min(1).max(20),
+});
+
+export const VoidOrderSchema = z.object({
+  reason: z.string().trim().min(3, "Void reason is required.").max(500),
 });
