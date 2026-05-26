@@ -51,12 +51,12 @@ export default function PosToolbar({
           </p>
         </div>
 
-        <div className="flex bg-card p-1 rounded-xl border border-border shadow-sm w-full sm:w-fit overflow-x-auto shrink-0 flex-nowrap scrollbar-none select-none">
+        <div className="grid grid-cols-2 gap-2 bg-card p-1 rounded-xl border border-border shadow-sm w-full sm:w-fit sm:flex sm:gap-0 overflow-visible sm:overflow-x-auto shrink-0 sm:flex-nowrap scrollbar-none select-none">
           <button
             onClick={() => {
               setActiveTab("terminal");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
+            className={`flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
               activeTab === "terminal"
                 ? "bg-primary text-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -68,7 +68,7 @@ export default function PosToolbar({
             onClick={() => {
               setActiveTab("parked");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all relative shrink-0 ${
+            className={`flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-lg transition-all relative shrink-0 ${
               activeTab === "parked"
                 ? "bg-primary text-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -76,7 +76,7 @@ export default function PosToolbar({
           >
             <Clock className="size-3.5" /> Parked
             {parkedCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white shadow-sm animate-pulse">
+              <span className="absolute -top-1 -right-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white shadow-sm animate-pulse">
                 {parkedCount}
               </span>
             )}
@@ -85,7 +85,7 @@ export default function PosToolbar({
             onClick={() => {
               setActiveTab("completed");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
+            className={`flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
               activeTab === "completed"
                 ? "bg-primary text-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -97,7 +97,7 @@ export default function PosToolbar({
             onClick={() => {
               setActiveTab("cancelled");
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
+            className={`flex w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
               activeTab === "cancelled"
                 ? "bg-primary text-background shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -161,16 +161,29 @@ export default function PosToolbar({
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 select-none">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Sort by:</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Sort by:
+            </span>
             <Select value={orderSortVal} onValueChange={setOrderSortVal}>
-              <SelectTrigger size="sm" className="h-9 w-48 text-xs font-semibold bg-background border border-border shadow-none">
+              <SelectTrigger
+                size="sm"
+                className="h-9 w-48 text-xs font-semibold bg-background border border-border shadow-none"
+              >
                 <SelectValue placeholder="Sort orders..." />
               </SelectTrigger>
               <SelectContent position="popper">
-                <SelectItem value="date-desc" className="text-xs">Date: Newest First</SelectItem>
-                <SelectItem value="date-asc" className="text-xs">Date: Oldest First</SelectItem>
-                <SelectItem value="amount-desc" className="text-xs">Amount: High to Low</SelectItem>
-                <SelectItem value="amount-asc" className="text-xs">Amount: Low to High</SelectItem>
+                <SelectItem value="date-desc" className="text-xs">
+                  Date: Newest First
+                </SelectItem>
+                <SelectItem value="date-asc" className="text-xs">
+                  Date: Oldest First
+                </SelectItem>
+                <SelectItem value="amount-desc" className="text-xs">
+                  Amount: High to Low
+                </SelectItem>
+                <SelectItem value="amount-asc" className="text-xs">
+                  Amount: Low to High
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
