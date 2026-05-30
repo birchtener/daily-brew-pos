@@ -1,6 +1,6 @@
-import { v2 as cloudinary } from 'cloudinary';
-import multer from 'multer';
-import path from 'path';
+import { v2 as cloudinary } from "cloudinary";
+import multer from "multer";
+import path from "path";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -14,12 +14,20 @@ export const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
     const fileExt = path.extname(file.originalname).toLowerCase();
 
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/octet-stream'];
+    const allowedMimeTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "application/octet-stream",
+    ];
 
-    const isMimeValid = allowedMimeTypes.includes(file.mimetype) || file.mimetype.startsWith('image/');
+    const isMimeValid =
+      allowedMimeTypes.includes(file.mimetype) ||
+      file.mimetype.startsWith("image/");
     const isExtValid = allowedExtensions.includes(fileExt);
 
     if (isMimeValid && isExtValid) {
@@ -27,28 +35,69 @@ export const upload = multer({
     } else {
       cb(
         Object.assign(
-          new Error(`Invalid File Type: Received type [${file.mimetype}] with extension [${fileExt}]. Only standard image assets are allowed.`), 
-          { statusCode: 400 }
-        ) as any, 
-        false
+          new Error(
+            `Invalid File Type: Received type [${file.mimetype}] with extension [${fileExt}]. Only standard image assets are allowed.`,
+          ),
+          { statusCode: 400 },
+        ) as any,
+        false,
       );
     }
-  }
+  },
 });
 
-
-export const streamUpload = (fileBuffer: Buffer, subFolder: 'products' | 'avatars' | 'ingredients'): Promise<string> => {
+export const streamUpload = (
+  fileBuffer: Buffer,
+  subFolder: "products" | "avatars" | "ingredients",
+): Promise<string> => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
-      { 
+      {
         folder: `daily_brew/${subFolder}`,
-        transformation: [{ quality: 'auto:good', fetch_format: 'auto' }] 
+        transformation: [{ quality: "auto:good", fetch_format: "auto" }],
       },
       (error, result) => {
         if (error) return reject(error);
         resolve(result!.secure_url);
-      }
+      },
     );
     uploadStream.end(fileBuffer);
   });
+};
+
+export const deleteImage = async (
+  imageUrl: string | null,
+): Promise<boolean> => {
+  if (!imageUrl) return false;
+
+  const path = imageUrl.split("/upload/");
+  if (path.length !== 2) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Invalid Cloudinary URL provided to deleteImage");
+    }
+    return false;
+  }
+
+  const publicId = path[1]
+    .replace(/^v\d+\//, "")
+    .replace(/\.[^/.]+(?=$|\?)/, "");
+
+  if (process.env.NODE_ENV === "development") {
+    console.log("Attempting to delete image with public ID:", publicId);
+  }
+
+  try {
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: "image",
+      invalidate: true,
+    });
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("Cloudinary deletion result:", result);
+    }
+    return result.result === "ok";
+  } catch (error) {
+    console.error("Failed to delete image from Cloudinary:", error);
+    return false;
+  }
 };

@@ -1,30 +1,34 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldError,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Eye, EyeOff, LoaderCircle } from "lucide-react"
-import { extractErrorMessage } from "@/lib/extractErrorMessage"
-import { useStore } from "@/store/useStore"
-import { toast } from 'sonner'
-import * as z from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { useNavigate } from "react-router-dom"
-import { loginRequest } from "@/api/auth"
-import Logo from "./shared/icon/Logo"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { extractErrorMessage } from "@/lib/extractErrorMessage";
+import { useStore } from "@/store/useStore";
+import { toast } from "sonner";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+import { loginRequest } from "@/api/auth";
+import Logo from "./shared/icon/Logo";
 
 const loginSchema = z.object({
-  username: z.string().min(5, { message: 'Username must be at least 5 characters long' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters long' }),
+  username: z
+    .string()
+    .min(5, { message: "Username must be at least 5 characters long" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters long" }),
 });
 
 type LoginFields = z.infer<typeof loginSchema>;
@@ -33,41 +37,51 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const navigate = useNavigate()
-  const { dark, toggleDark } = useStore()
-  const [showPassword, setShowPassword] = React.useState(false)
+  const navigate = useNavigate();
+  const { dark, toggleDark } = useStore();
+  const [showPassword, setShowPassword] = React.useState(false);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFields>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFields>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: '',
-      password: '',
+      username: "",
+      password: "",
     },
   });
 
   const onSubmit = async (values: LoginFields) => {
     try {
-        const result = await loginRequest(values)
-        localStorage.setItem('daily_brew_user', JSON.stringify(result))
-        useStore.getState().loadUser()
-      navigate('/', { replace: true })
+      const result = await loginRequest(values);
+      localStorage.setItem("daily_brew_user", JSON.stringify(result));
+      useStore.getState().loadUser();
+      navigate("/", { replace: true });
     } catch (error) {
-        toast.error(extractErrorMessage(error, 'Login failed. Please try again.'))
+      toast.error(
+        extractErrorMessage(error, "Login failed. Please try again."),
+      );
     }
-  }
+  };
 
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div>
         <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup className="gap-5">
             <div className="flex flex-col items-center gap-3 text-center">
               <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-black/10">
-                <Logo color={dark ? '#18181b' : '#ffffff'} width={28} />
+                <Logo color={dark ? "#18181b" : "#ffffff"} width={28} />
               </div>
               <div className="flex flex-col justify-center items-center">
-                <h1 className="text-2xl font-semibold tracking-tight">Welcome to Daily Brew</h1>
-                <FieldDescription className="mt-1">POS & inventory operations</FieldDescription>
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  Welcome to Daily Brew
+                </h1>
+                <FieldDescription className="mt-1">
+                  POS & inventory operations
+                </FieldDescription>
               </div>
             </div>
 
@@ -79,7 +93,7 @@ export function LoginForm({
                 placeholder="admin_user"
                 autoComplete="username"
                 aria-invalid={!!errors.username}
-                {...register('username')}
+                {...register("username")}
               />
               <FieldError errors={[errors.username]} />
             </Field>
@@ -89,44 +103,57 @@ export function LoginForm({
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   autoComplete="current-password"
                   aria-invalid={!!errors.password}
                   className="pr-11"
-                  {...register('password')}
+                  {...register("password")}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
                   className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition hover:text-foreground"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </button>
               </div>
               <FieldError errors={[errors.password]} />
             </Field>
 
-            <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? (
                 <span className="inline-flex items-center gap-2">
                   <LoaderCircle className="size-4 animate-spin" /> Signing in...
                 </span>
               ) : (
-                'Login'
+                "Login"
               )}
             </Button>
           </FieldGroup>
         </form>
 
         <div className="mt-5 flex items-center justify-between text-xs text-muted-foreground">
-          <span>{dark ? 'Dark mode enabled' : 'Light mode enabled'}</span>
-          <button type="button" onClick={toggleDark} className="font-medium text-foreground underline-offset-4 hover:underline">
+          <span>{dark ? "Dark mode enabled" : "Light mode enabled"}</span>
+          <button
+            type="button"
+            onClick={toggleDark}
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
             Toggle theme
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

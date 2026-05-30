@@ -1,24 +1,36 @@
-import { prisma } from '../../config/db';
-import bcrypt from 'bcrypt';
-import crypto from 'crypto';
-import { AuditService } from '../audit/audit.service';
-import { LogCategory, LogType, Prisma } from '../../generated/prisma/client';
-import { z } from 'zod';
-import { RegisterSchema, UpdateProfileSchema, AdminUpdateUserSchema } from './users.validation';
-import { streamUpload } from '../../config/cloudinary';
+import { prisma } from "../../config/db";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { AuditService } from "../audit/audit.service";
+import { LogCategory, LogType, Prisma } from "../../generated/prisma/client";
+import { z } from "zod";
+import {
+  RegisterSchema,
+  UpdateProfileSchema,
+  AdminUpdateUserSchema,
+} from "./users.validation";
+import { streamUpload, deleteImage } from "../../config/cloudinary";
 
-const createHttpError = (message: string, statusCode: number) => Object.assign(new Error(message), { statusCode });
+const createHttpError = (message: string, statusCode: number) =>
+  Object.assign(new Error(message), { statusCode });
 
 const isKnownPrismaError = (error: unknown, code: string) =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === code;
 
-const PASSWORD_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const PASSWORD_ALPHABET =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 const generatePassword = (length = 8) =>
-  Array.from({ length }, () => PASSWORD_ALPHABET[crypto.randomInt(0, PASSWORD_ALPHABET.length)]).join('');
+  Array.from(
+    { length },
+    () => PASSWORD_ALPHABET[crypto.randomInt(0, PASSWORD_ALPHABET.length)],
+  ).join("");
 
 export class UsersService {
-  static async register(input: z.infer<typeof RegisterSchema>, currentActorId?: string) {
+  static async register(
+    input: z.infer<typeof RegisterSchema>,
+    currentActorId?: string,
+  ) {
     try {
       const generatedPassword = generatePassword(8);
       const hashedPassword = await bcrypt.hash(generatedPassword, 12);
@@ -29,7 +41,7 @@ export class UsersService {
           last_name: input.last_name,
           username: input.username,
           password: hashedPassword,
-          role: input.role || 'staff',
+          role: input.role || "staff",
           is_password_temp: true,
           deleted_at: null,
         },
@@ -52,21 +64,34 @@ export class UsersService {
         password: generatedPassword,
       };
     } catch (error) {
-      if (isKnownPrismaError(error, 'P2002')) {
-        throw createHttpError('Validation Failure: Username already assigned to an employee.', 409);
+      if (isKnownPrismaError(error, "P2002")) {
+        throw createHttpError(
+          "Validation Failure: Username already assigned to an employee.",
+          409,
+        );
       }
-      throw createHttpError('Validation Failure: Registration failed.', 500);
+      throw createHttpError("Validation Failure: Registration failed.", 500);
     }
   }
 
   static async updateAvatar(fileBuffer: Buffer, userId: string) {
-    const userExists = await prisma.user.findFirst({ where: { id: userId, deleted_at: null } });
+    const userExists = await prisma.user.findFirst({
+      where: { id: userId, deleted_at: null },
+    });
     if (!userExists) {
-      throw createHttpError('Validation Failure: Target resource not found.', 404);
+      throw createHttpError(
+        "Validation Failure: Target resource not found.",
+        404,
+      );
     }
 
     try {
-      const secureUrl = await streamUpload(fileBuffer, 'avatars');
+      const secureUrl = await streamUpload(fileBuffer, "avatars");
+
+      const existingUser = await prisma.user.findFirst({
+        where: { id: userId },
+        select: { avatar_url: true },
+      });
 
       const updatedUser = await prisma.user.update({
         where: { id: userId },
@@ -82,6 +107,15 @@ export class UsersService {
         },
       });
 
+      if (existingUser && existingUser.avatar_url) {
+        const oldImg = existingUser.avatar_url;
+        const newImg = secureUrl;
+
+        if (!newImg || oldImg !== newImg) {
+          await deleteImage(oldImg);
+        }
+      }
+
       void AuditService.log({
         message: `PROFILE UPDATE: User [${updatedUser.username}] updated their profile avatar image.`,
         category: LogCategory.authentication,
@@ -91,17 +125,29 @@ export class UsersService {
 
       return updatedUser;
     } catch (error) {
-      throw createHttpError('Validation Failure: Avatar upload failed.', 500);
+      throw createHttpError("Validation Failure: Avatar upload failed.", 500);
     }
   }
 
   static async deleteAvatar(userId: string) {
-    const userExists = await prisma.user.findFirst({ where: { id: userId, deleted_at: null } });
+    const userExists = await prisma.user.findFirst({
+      where: { id: userId, deleted_at: null },
+    });
     if (!userExists) {
-      throw createHttpError('Validation Failure: Target resource not found.', 404);
+      throw createHttpError(
+        "Validation Failure: Target resource not found.",
+        404,
+      );
     }
 
     try {
+      const existingUser = await prisma.user.findFirst({
+        where: { id: userId },
+        select: { avatar_url: true },
+      });
+
+      await deleteImage(existingUser?.avatar_url || null);
+
       const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: { avatar_url: null },
@@ -125,14 +171,22 @@ export class UsersService {
 
       return updatedUser;
     } catch (error) {
-      throw createHttpError('Validation Failure: Avatar deletion failed.', 500);
+      throw createHttpError("Validation Failure: Avatar deletion failed.", 500);
     }
   }
 
-  static async updateProfile(userId: string, input: z.infer<typeof UpdateProfileSchema>) {
-    const userExists = await prisma.user.findFirst({ where: { id: userId, deleted_at: null } });
+  static async updateProfile(
+    userId: string,
+    input: z.infer<typeof UpdateProfileSchema>,
+  ) {
+    const userExists = await prisma.user.findFirst({
+      where: { id: userId, deleted_at: null },
+    });
     if (!userExists) {
-      throw createHttpError('Validation Failure: Target resource not found.', 404);
+      throw createHttpError(
+        "Validation Failure: Target resource not found.",
+        404,
+      );
     }
 
     try {
@@ -162,31 +216,50 @@ export class UsersService {
 
       return updatedUser;
     } catch (error) {
-      if (isKnownPrismaError(error, 'P2025')) {
-        throw createHttpError('Validation Failure: Target resource not found.', 404);
+      if (isKnownPrismaError(error, "P2025")) {
+        throw createHttpError(
+          "Validation Failure: Target resource not found.",
+          404,
+        );
       }
-      throw createHttpError('Validation Failure: Profile update failed.', 500);
+      throw createHttpError("Validation Failure: Profile update failed.", 500);
     }
   }
 
-  static async updatePassword(userId: string, currentPassword: string | undefined, newPassword: string) {
+  static async updatePassword(
+    userId: string,
+    currentPassword: string | undefined,
+    newPassword: string,
+  ) {
     const user = await prisma.user.findFirst({
       where: { id: userId, deleted_at: null },
       select: { id: true, password: true, is_password_temp: true },
     });
 
     if (!user) {
-      throw createHttpError('Validation Failure: Target resource not found.', 404);
+      throw createHttpError(
+        "Validation Failure: Target resource not found.",
+        404,
+      );
     }
 
     if (!user.is_password_temp) {
       if (!currentPassword) {
-        throw createHttpError('Validation Failure: Current password is required.', 400);
+        throw createHttpError(
+          "Validation Failure: Current password is required.",
+          400,
+        );
       }
 
-      const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password,
+      );
       if (!isPasswordValid) {
-        throw createHttpError('Validation Failure: Incorrect current password.', 400);
+        throw createHttpError(
+          "Validation Failure: Incorrect current password.",
+          400,
+        );
       }
     }
 
@@ -205,10 +278,13 @@ export class UsersService {
         userId,
       });
     } catch (error) {
-      if (isKnownPrismaError(error, 'P2025')) {
-        throw createHttpError('Validation Failure: Target resource not found.', 404);
+      if (isKnownPrismaError(error, "P2025")) {
+        throw createHttpError(
+          "Validation Failure: Target resource not found.",
+          404,
+        );
       }
-      throw createHttpError('Validation Failure: Password update failed.', 500);
+      throw createHttpError("Validation Failure: Password update failed.", 500);
     }
   }
 
@@ -223,7 +299,10 @@ export class UsersService {
       });
 
       if (!existingUser) {
-        throw createHttpError('Validation Failure: Target user not found.', 404);
+        throw createHttpError(
+          "Validation Failure: Target user not found.",
+          404,
+        );
       }
 
       const updatedUser = await prisma.user.update({
@@ -244,26 +323,40 @@ export class UsersService {
         temporaryPassword: tempPassword,
       };
     } catch (error) {
-      if (isKnownPrismaError(error, 'P2025')) {
-        throw createHttpError('Validation Failure: Target user not found.', 404);
+      if (isKnownPrismaError(error, "P2025")) {
+        throw createHttpError(
+          "Validation Failure: Target user not found.",
+          404,
+        );
       }
-      throw createHttpError('Validation Failure: Admin password reset failed.', 500);
+      throw createHttpError(
+        "Validation Failure: Admin password reset failed.",
+        500,
+      );
     }
   }
 
-  static async list(opts?: { page?: number; perPage?: number; q?: string; role?: 'admin' | 'staff' }) {
+  static async list(opts?: {
+    page?: number;
+    perPage?: number;
+    q?: string;
+    role?: "admin" | "staff";
+  }) {
     const page = opts?.page && opts.page > 0 ? Math.floor(opts.page) : 1;
-    const perPage = opts?.perPage && opts.perPage > 0 ? Math.min(100, Math.floor(opts.perPage)) : 20;
+    const perPage =
+      opts?.perPage && opts.perPage > 0
+        ? Math.min(100, Math.floor(opts.perPage))
+        : 20;
     const skip = (page - 1) * perPage;
 
-    const where: any = { deleted_at: null, username: { not: 'system' } };
+    const where: any = { deleted_at: null, username: { not: "system" } };
     if (opts?.role) where.role = opts.role;
     if (opts?.q) {
       const q = opts.q;
       where.OR = [
-        { username: { contains: q, mode: 'insensitive' } },
-        { first_name: { contains: q, mode: 'insensitive' } },
-        { last_name: { contains: q, mode: 'insensitive' } },
+        { username: { contains: q, mode: "insensitive" } },
+        { first_name: { contains: q, mode: "insensitive" } },
+        { last_name: { contains: q, mode: "insensitive" } },
       ];
     }
 
@@ -279,7 +372,7 @@ export class UsersService {
           role: true,
           is_password_temp: true,
         },
-        orderBy: { created_at: 'asc' },
+        orderBy: { created_at: "asc" },
         skip,
         take: perPage,
       }),
@@ -289,13 +382,24 @@ export class UsersService {
     return { items, total, page, perPage };
   }
 
-  static async adminUpdateProfile(targetUserId: string, input: z.infer<typeof AdminUpdateUserSchema>, adminActorId: string) {
-    const userExists = await prisma.user.findFirst({ where: { id: targetUserId, deleted_at: null } });
+  static async adminUpdateProfile(
+    targetUserId: string,
+    input: z.infer<typeof AdminUpdateUserSchema>,
+    adminActorId: string,
+  ) {
+    const userExists = await prisma.user.findFirst({
+      where: { id: targetUserId, deleted_at: null },
+    });
     if (!userExists) {
-      throw createHttpError('Validation Failure: Target resource not found.', 404);
+      throw createHttpError(
+        "Validation Failure: Target resource not found.",
+        404,
+      );
     }
 
     try {
+      await deleteImage(userExists.avatar_url);
+
       const dataToUpdate: any = {
         first_name: input.first_name,
         last_name: input.last_name,
@@ -327,21 +431,38 @@ export class UsersService {
 
       return updated;
     } catch (error) {
-      if (isKnownPrismaError(error, 'P2025')) {
-        throw createHttpError('Validation Failure: Target resource not found.', 404);
+      if (isKnownPrismaError(error, "P2025")) {
+        throw createHttpError(
+          "Validation Failure: Target resource not found.",
+          404,
+        );
       }
-      throw createHttpError('Validation Failure: Admin profile update failed.', 500);
+      throw createHttpError(
+        "Validation Failure: Admin profile update failed.",
+        500,
+      );
     }
   }
 
-  static async adminUpdateAvatar(fileBuffer: Buffer, targetUserId: string, adminActorId: string) {
-    const userExists = await prisma.user.findFirst({ where: { id: targetUserId, deleted_at: null } });
+  static async adminUpdateAvatar(
+    fileBuffer: Buffer,
+    targetUserId: string,
+    adminActorId: string,
+  ) {
+    const userExists = await prisma.user.findFirst({
+      where: { id: targetUserId, deleted_at: null },
+    });
     if (!userExists) {
-      throw createHttpError('Validation Failure: Target resource not found.', 404);
+      throw createHttpError(
+        "Validation Failure: Target resource not found.",
+        404,
+      );
     }
 
+    await deleteImage(userExists.avatar_url);
+
     try {
-      const secureUrl = await streamUpload(fileBuffer, 'avatars');
+      const secureUrl = await streamUpload(fileBuffer, "avatars");
 
       const updatedUser = await prisma.user.update({
         where: { id: targetUserId },
@@ -366,15 +487,22 @@ export class UsersService {
 
       return updatedUser;
     } catch (error) {
-      throw createHttpError('Validation Failure: Avatar upload failed.', 500);
+      throw createHttpError("Validation Failure: Avatar upload failed.", 500);
     }
   }
 
   static async adminDeleteAvatar(targetUserId: string, adminActorId: string) {
-    const userExists = await prisma.user.findFirst({ where: { id: targetUserId, deleted_at: null } });
+    const userExists = await prisma.user.findFirst({
+      where: { id: targetUserId, deleted_at: null },
+    });
     if (!userExists) {
-      throw createHttpError('Validation Failure: Target resource not found.', 404);
+      throw createHttpError(
+        "Validation Failure: Target resource not found.",
+        404,
+      );
     }
+
+    await deleteImage(userExists.avatar_url);
 
     try {
       const updatedUser = await prisma.user.update({
@@ -400,27 +528,38 @@ export class UsersService {
 
       return updatedUser;
     } catch (error) {
-      throw createHttpError('Validation Failure: Avatar deletion failed.', 500);
+      throw createHttpError("Validation Failure: Avatar deletion failed.", 500);
     }
   }
 
   static async deleteUser(targetUserId: string, adminActorId: string) {
     try {
       if (targetUserId === adminActorId) {
-        throw createHttpError('Validation Failure: You cannot delete your own account.', 400);
+        throw createHttpError(
+          "Validation Failure: You cannot delete your own account.",
+          400,
+        );
       }
 
       const user = await prisma.user.findFirst({
         where: { id: targetUserId, deleted_at: null },
-        select: { id: true, username: true },
+        select: { id: true, username: true, avatar_url: true },
       });
 
       if (!user) {
-        throw createHttpError('Validation Failure: Target user not found.', 404);
+        throw createHttpError(
+          "Validation Failure: Target user not found.",
+          404,
+        );
       }
 
-      if (user.username === 'master') {
-        throw createHttpError('Validation Failure: The master account cannot be deleted.', 400);
+      await deleteImage(user.avatar_url);
+
+      if (user.username === "master") {
+        throw createHttpError(
+          "Validation Failure: The master account cannot be deleted.",
+          400,
+        );
       }
 
       const deletedAt = new Date();
@@ -449,11 +588,14 @@ export class UsersService {
         throw error;
       }
 
-      if (isKnownPrismaError(error, 'P2025')) {
-        throw createHttpError('Validation Failure: Target user not found.', 404);
+      if (isKnownPrismaError(error, "P2025")) {
+        throw createHttpError(
+          "Validation Failure: Target user not found.",
+          404,
+        );
       }
 
-      throw createHttpError('Validation Failure: User deletion failed.', 500);
+      throw createHttpError("Validation Failure: User deletion failed.", 500);
     }
   }
 }
