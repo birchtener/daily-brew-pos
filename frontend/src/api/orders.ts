@@ -73,7 +73,7 @@ export async function finalizeParkedOrder(
     payment_method: string;
   },
 ) {
-  const { data } = await apiClient.put<ApiResponse<Order>>(
+  const { data } = await apiClient.patch<ApiResponse<Order>>(
     `/orders/parked/${id}/finalize`,
     payload,
   );

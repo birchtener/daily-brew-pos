@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
 export type Supplier = {
   id: string;
@@ -18,7 +18,9 @@ type ApiResponse<T> = {
 };
 
 export async function getSuppliers() {
-  const { data } = await apiClient.get<ApiResponse<Supplier[]>>('/inventory/suppliers');
+  const { data } = await apiClient.get<ApiResponse<Supplier[]>>(
+    "/inventory/suppliers",
+  );
   return data.data;
 }
 
@@ -27,7 +29,10 @@ export async function createSupplier(payload: {
   contact_name?: string;
   contact_number?: string;
 }) {
-  const { data } = await apiClient.post<ApiResponse<Supplier>>('/inventory/suppliers', payload);
+  const { data } = await apiClient.post<ApiResponse<Supplier>>(
+    "/inventory/suppliers",
+    payload,
+  );
   return data.data;
 }
 
@@ -37,13 +42,18 @@ export async function updateSupplier(
     name?: string;
     contact_name?: string;
     contact_number?: string;
-  }
+  },
 ) {
-  const { data } = await apiClient.put<ApiResponse<Supplier>>(`/inventory/suppliers/${id}`, payload);
+  const { data } = await apiClient.patch<ApiResponse<Supplier>>(
+    `/inventory/suppliers/${id}`,
+    payload,
+  );
   return data.data;
 }
 
 export async function deleteSupplier(id: string) {
-  const { data } = await apiClient.delete<ApiResponse<Supplier>>(`/inventory/suppliers/${id}`);
+  const { data } = await apiClient.delete<ApiResponse<Supplier>>(
+    `/inventory/suppliers/${id}`,
+  );
   return data.data;
 }

@@ -1,6 +1,15 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
-export type Unit = 'kg' | 'g' | 'mg' | 'l' | 'ml' | 'oz' | 'pcs' | 'box' | 'can';
+export type Unit =
+  | "kg"
+  | "g"
+  | "mg"
+  | "l"
+  | "ml"
+  | "oz"
+  | "pcs"
+  | "box"
+  | "can";
 
 export type Ingredient = {
   id: string;
@@ -22,12 +31,16 @@ type ApiResponse<T> = {
 };
 
 export async function getIngredients() {
-  const { data } = await apiClient.get<ApiResponse<Ingredient[]>>('/inventory/ingredients');
+  const { data } = await apiClient.get<ApiResponse<Ingredient[]>>(
+    "/inventory/ingredients",
+  );
   return data.data;
 }
 
 export async function getIngredient(id: string) {
-  const { data } = await apiClient.get<ApiResponse<Ingredient>>(`/inventory/ingredients/${id}`);
+  const { data } = await apiClient.get<ApiResponse<Ingredient>>(
+    `/inventory/ingredients/${id}`,
+  );
   return data.data;
 }
 
@@ -38,18 +51,22 @@ export async function createIngredient(payload: {
   image?: File | null;
 }) {
   const formData = new FormData();
-  formData.append('name', payload.name);
-  formData.append('unit', payload.unit);
+  formData.append("name", payload.name);
+  formData.append("unit", payload.unit);
   if (payload.low_stock_threshold !== undefined) {
-    formData.append('low_stock_threshold', String(payload.low_stock_threshold));
+    formData.append("low_stock_threshold", String(payload.low_stock_threshold));
   }
   if (payload.image) {
-    formData.append('image', payload.image);
+    formData.append("image", payload.image);
   }
 
-  const { data } = await apiClient.post<ApiResponse<Ingredient>>('/inventory/ingredients', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await apiClient.post<ApiResponse<Ingredient>>(
+    "/inventory/ingredients",
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
   return data.data;
 }
 
@@ -61,28 +78,37 @@ export async function updateIngredient(
     low_stock_threshold?: number;
     image?: File | null;
     img_path?: string | null;
-  }
+  },
 ) {
   const formData = new FormData();
-  if (payload.name !== undefined) formData.append('name', payload.name);
-  if (payload.unit !== undefined) formData.append('unit', payload.unit);
+  if (payload.name !== undefined) formData.append("name", payload.name);
+  if (payload.unit !== undefined) formData.append("unit", payload.unit);
   if (payload.low_stock_threshold !== undefined) {
-    formData.append('low_stock_threshold', String(payload.low_stock_threshold));
+    formData.append("low_stock_threshold", String(payload.low_stock_threshold));
   }
   if (payload.image) {
-    formData.append('image', payload.image);
+    formData.append("image", payload.image);
   }
   if (payload.img_path !== undefined) {
-    formData.append('img_path', payload.img_path === null ? 'null' : payload.img_path);
+    formData.append(
+      "img_path",
+      payload.img_path === null ? "null" : payload.img_path,
+    );
   }
 
-  const { data } = await apiClient.put<ApiResponse<Ingredient>>(`/inventory/ingredients/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await apiClient.patch<ApiResponse<Ingredient>>(
+    `/inventory/ingredients/${id}`,
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
   return data.data;
 }
 
 export async function deleteIngredient(id: string) {
-  const { data } = await apiClient.delete<ApiResponse<Ingredient>>(`/inventory/ingredients/${id}`);
+  const { data } = await apiClient.delete<ApiResponse<Ingredient>>(
+    `/inventory/ingredients/${id}`,
+  );
   return data.data;
 }
